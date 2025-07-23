@@ -18,7 +18,7 @@
             <div class="col-md-4 col-sm-4">
                 <div class="footer-thumb">
                     <h4 class="wow fadeInUp" data-wow-delay="0.4s">Opening Hours</h4>
-                    <p>Monday - Saturday <span>09:00 AM - 09:00 PM</span></p>
+                    <p>Monday - Friday <span>09:00 AM - 05:00 PM</span></p>
                     <p>Sunday <span>Closed</span></p>
                     <ul class="social-icon">
                         <li><a class="fa fa-facebook-square"></a></li>
