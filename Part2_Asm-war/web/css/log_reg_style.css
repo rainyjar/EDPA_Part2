@@ -1,0 +1,64 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f0f4f8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+.box {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    width: 300px;
+}
+h2 {
+    text-align: center;
+    color: #0077cc;
+}
+.register_header {
+    text-align: center;
+    color: #28a745;
+}
+.register_btn {
+    width: 100%;
+    background-color: #28a745;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.login_btn {
+    width: 100%;
+    background-color: #0077cc;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+input[type="text"], input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin: 12px 0;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+select{
+    width: 100%;
+    padding: 10px;
+    margin: 12px 0;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+.msg {
+    background: #ffe0e0;
+    color: #d8000c;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #d8000c;
+    border-radius: 6px;
+    text-align: center;
+}
