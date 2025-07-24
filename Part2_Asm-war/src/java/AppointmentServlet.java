@@ -43,31 +43,6 @@ public class AppointmentServlet extends HttpServlet {
     @EJB
     private CounterStaffFacade counterStaffFacade;
 
-    /**
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
-     * methods.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-//    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-//            throws ServletException, IOException {
-//        response.setContentType("text/html;charset=UTF-8");
-//        try (PrintWriter out = response.getWriter()) {
-//            /* TODO output your page here. You may use following sample code. */
-//            out.println("<!DOCTYPE html>");
-//            out.println("<html>");
-//            out.println("<head>");
-//            out.println("<title>Servlet AppointmentServlet</title>");            
-//            out.println("</head>");
-//            out.println("<body>");
-//            out.println("<h1>Servlet AppointmentServlet at " + request.getContextPath() + "</h1>");
-//            out.println("</body>");
-//            out.println("</html>");
-//        }
-//    }
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -84,13 +59,57 @@ public class AppointmentServlet extends HttpServlet {
             request.setAttribute("appointments", appointments);
             request.getRequestDispatcher("manager/view_apt.jsp").forward(request, response);
 
+        } else if ("reschedule".equals(action)) {
+            // Load reschedule form
             handleLoadReschedule(request, response);
+        } else if (action == null || "book".equals(action)) {
+            // Show form for booking
+            request.setAttribute("doctorList", doctorFacade.findAll());
+            request.setAttribute("treatmentList", treatmentFacade.findAll());
+            request.getRequestDispatcher("customer/appointment.jsp").forward(request, response);
+        } else {
+            // Default: Load appointment booking form
+            if (loggedInCustomer == null) {
+                response.sendRedirect(request.getContextPath() + "/login.jsp");
+                return;
+            }
 
+            try {
+                // Load data for appointment form
+                loadAppointmentFormData(request, response);
+
+                // Forward to appointment JSP
+                request.getRequestDispatcher("/customer/appointment.jsp").forward(request, response);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                response.sendRedirect(request.getContextPath() + "/customer/cust_homepage.jsp?error=load_failed");
+            }
         }
     }
 
-        } else if ("reschedule".equals(action)) {
-            // Load reschedule form
+    /**
+     * Load necessary data for appointment form
+     */
+    private void loadAppointmentFormData(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            // Load all treatments
+            List<Treatment> treatmentList = treatmentFacade.findAll();
+            request.setAttribute("treatmentList", treatmentList);
+
+            // Load all doctors
+            List<Doctor> doctorList = doctorFacade.findAll();
+            request.setAttribute("doctorList", doctorList);
+
+            // Log for debugging
+            System.out.println("=== APPOINTMENT DATA LOADED ===");
+            System.out.println("Treatments loaded: " + (treatmentList != null ? treatmentList.size() : 0));
+            System.out.println("Doctors loaded: " + (doctorList != null ? doctorList.size() : 0));
+            System.out.println("===============================");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error loading appointment form data: " + e.getMessage());
         }
     }
 
@@ -133,24 +152,130 @@ public class AppointmentServlet extends HttpServlet {
         }
     }
 
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        String action = request.getParameter("action");
+
+        if ("book".equals(action)) {
+            handleBookAppointment(request, response);
+        } else if ("cancel".equals(action)) {
+            handleCancelAppointment(request, response);
+        } else if ("reschedule".equals(action)) {
+            handleRescheduleAppointment(request, response);
         } else {
-            // Default: Load appointment booking form
+            response.sendRedirect(request.getContextPath() + "/customer/appointment.jsp");
+        }
+    }
+
+    /**
+     * Handle appointment booking request
+     */
+    private void handleBookAppointment(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        try {
+            // Get customer from session
+            HttpSession session = request.getSession();
+            Customer loggedInCustomer = (Customer) session.getAttribute("customer");
+
             if (loggedInCustomer == null) {
                 response.sendRedirect(request.getContextPath() + "/login.jsp");
                 return;
             }
 
-            try {
-                // Load data for appointment form
-                loadAppointmentFormData(request, response);
+            // Extract form parameters
+            String treatmentIdStr = request.getParameter("treatment_id");
+            String doctorIdStr = request.getParameter("doctor_id");
+            String appointmentDateStr = request.getParameter("appointment_date");
+            String appointmentTimeStr = request.getParameter("appointment_time");
+            String customerMessage = request.getParameter("customer_message");
 
-                // Forward to appointment JSP
-                request.getRequestDispatcher("/customer/appointment.jsp").forward(request, response);
+            // Validate required fields
+            ValidationResult validation = validateBookingData(
+                    treatmentIdStr, doctorIdStr, appointmentDateStr, appointmentTimeStr
+            );
 
-            } catch (Exception e) {
-                e.printStackTrace();
-                response.sendRedirect(request.getContextPath() + "/customer/cust_homepage.jsp?error=load_failed");
+            if (!validation.isValid()) {
+                response.sendRedirect(request.getContextPath() + "/customer/appointment.jsp?error=" + validation.getErrorCode());
+                return;
             }
+
+            // Parse and validate data
+            int treatmentId = Integer.parseInt(treatmentIdStr);
+            int doctorId = Integer.parseInt(doctorIdStr);
+            Date appointmentDate = parseDate(appointmentDateStr);
+            Time appointmentTime = parseTime(appointmentTimeStr);
+
+            // Validate entities exist
+            Treatment treatment = treatmentFacade.find(treatmentId);
+            Doctor doctor = doctorFacade.find(doctorId);
+
+            if (treatment == null || doctor == null) {
+                response.sendRedirect(request.getContextPath() + "/customer/appointment.jsp?error=invalid_selection");
+                return;
+            }
+
+            // Validate appointment date (must be future date, weekday, within one week)
+            if (!isValidAppointmentDate(appointmentDate)) {
+                response.sendRedirect(request.getContextPath() + "/customer/appointment.jsp?error=invalid_date");
+                return;
+            }
+
+            // Validate appointment time (9 AM - 5 PM, 30-minute slots)
+            if (!isValidAppointmentTime(appointmentTime)) {
+                response.sendRedirect(request.getContextPath() + "/customer/appointment.jsp?error=invalid_time");
+                return;
+            }
+
+            // Check for existing appointment conflicts
+            if (hasAppointmentConflict(doctorId, appointmentDate, appointmentTime)) {
+                response.sendRedirect(request.getContextPath() + "/customer/appointment.jsp?error=time_conflict");
+                return;
+            }
+
+            // Assign counter staff (random assignment for now)
+            CounterStaff assignedStaff = assignCounterStaff();
+
+            // Create new appointment
+            Appointment newAppointment = new Appointment();
+            newAppointment.setCustomer(loggedInCustomer);
+            newAppointment.setDoctor(doctor);
+            newAppointment.setTreatment(treatment);
+            newAppointment.setCounterStaff(assignedStaff);
+            newAppointment.setAppointmentDate(appointmentDate);
+            newAppointment.setAppointmentTime(appointmentTime);
+            newAppointment.setCustMessage(customerMessage != null ? customerMessage.trim() : "");
+            newAppointment.setStatus("pending"); // Default status
+            newAppointment.setDocMessage(null); // Will be set after consultation
+
+            // Save appointment
+            appointmentFacade.create(newAppointment);
+
+            // Log successful booking
+            System.out.println("=== APPOINTMENT BOOKED SUCCESSFULLY ===");
+            System.out.println("Customer: " + loggedInCustomer.getName());
+            System.out.println("Doctor: " + doctor.getName());
+            System.out.println("Treatment: " + treatment.getName());
+            System.out.println("Date: " + appointmentDate);
+            System.out.println("Time: " + appointmentTime);
+            System.out.println("Status: pending");
+            System.out.println("======================================");
+
+            // Redirect to success page or appointment history
+            response.sendRedirect(request.getContextPath() + "/customer/appointment_history.jsp?success=booked");
+
+        } catch (NumberFormatException e) {
+            response.sendRedirect(request.getContextPath() + "/customer/appointment.jsp?error=invalid_data");
+        } catch (ParseException e) {
+            response.sendRedirect(request.getContextPath() + "/customer/appointment.jsp?error=invalid_datetime");
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect(request.getContextPath() + "/customer/appointment.jsp?error=booking_failed");
+        }
+    }
+
     private void handleCancelAppointment(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
             String appointmentIdStr = request.getParameter("appointmentId");
