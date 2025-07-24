@@ -10,13 +10,26 @@ function initializeAppointmentBooking() {
     const finalConfirmBtn = document.getElementById('final-confirm');
     const form = document.getElementById('appointment-form');
     
-    // Set minimum date to today
-    const today = new Date().toISOString().split('T')[0];
+    // Set date restrictions: today to next week, weekdays only
+    const today = new Date();
+    const nextWeek = new Date();
+    nextWeek.setDate(today.getDate() + 7);
+    
     if (dateInput) {
-        dateInput.setAttribute('min', today);
+        dateInput.setAttribute('min', formatDateForInput(today));
+        dateInput.setAttribute('max', formatDateForInput(nextWeek));
+        
+        // Add change event for weekday validation
+        dateInput.addEventListener('change', function() {
+            if (this.value && validateWeekday(this.value)) {
+                loadAvailableDoctors();
+                showSection('doctor-section');
+                updateStepIndicator(3);
+            }
+        });
     }
     
-    let selectedDoctor = null;
+    let selectedDoctor = null;  
     let selectedTimeSlot = null;
     
     // Step 1: Treatment selection
@@ -25,17 +38,6 @@ function initializeAppointmentBooking() {
             if (this.value) {
                 showSection('date-section');
                 updateStepIndicator(2);
-            }
-        });
-    }
-    
-    // Step 2: Date selection
-    if (dateInput) {
-        dateInput.addEventListener('change', function() {
-            if (this.value) {
-                loadAvailableDoctors();
-                showSection('doctor-section');
-                updateStepIndicator(3);
             }
         });
     }
@@ -295,8 +297,159 @@ function showConfirmationModal() {
         }
         
 function generateReceipt(appointmentId) {
-        // Generate receipt (will be implemented later)
-        alert('Receipt generation will be implemented. Appointment ID: ' + appointmentId);
-        // Future implementation: window.open('receipt.jsp?appointment_id=' + appointmentId);
+    console.log('Generating receipt for appointment ID:', appointmentId);
+    
+    if (!appointmentId) {
+        showError('Invalid appointment ID');
+        return;
     }
+    
+    // Show loading state
+    const button = document.querySelector(`button[onclick="generateReceipt(${appointmentId})"]`);
+    if (button) {
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Generating...';
+        button.disabled = true;
+        
+        // Reset button after delay
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }, 3000);
+    }
+    
+    try {
+        // Create URL for receipt viewing
+        const receiptUrl = `SimpleReceiptServlet?action=view&appointment_id=${appointmentId}`;
+        
+        // Open receipt in new window/tab
+        const receiptWindow = window.open(receiptUrl, '_blank', 'width=900,height=700,scrollbars=yes,resizable=yes');
+        
+        if (receiptWindow) {
+            // Show success message
+            setTimeout(() => {
+                showReceiptSuccessMessage();
+            }, 500);
+        } else {
+            // Fallback if popup is blocked - redirect current page
+            window.location.href = receiptUrl;
+        }
+        
+    } catch (error) {
+        console.error('Error generating receipt:', error);
+        showError('Failed to generate receipt. Please try again.');
+    }
+}
+
+// Show success message after receipt generation
+function showReceiptSuccessMessage() {
+    const successMsg = document.createElement('div');
+    successMsg.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #28a745;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        z-index: 10000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        max-width: 300px;
+    `;
+    successMsg.innerHTML = `
+        <i class="fa fa-check-circle" style="margin-right: 8px;"></i>
+        <strong>Receipt Opened!</strong><br>
+        <small>Your receipt is now available in a new window. You can print or save it as PDF.</small>
+    `;
+    
+    document.body.appendChild(successMsg);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (document.body.contains(successMsg)) {
+            document.body.removeChild(successMsg);
+        }
+    }, 5000);
+}
+    
+// Enhanced date formatting and validation functions for booking restrictions
+function formatDateForInput(date) {
+    return date.getFullYear() + '-' + 
+           String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+           String(date.getDate()).padStart(2, '0');
+}
+
+function validateWeekday(dateValue) {
+    if (!dateValue) return false;
+    
+    const selectedDate = new Date(dateValue + 'T00:00:00');
+    const dayOfWeek = selectedDate.getDay(); // 0 = Sunday, 6 = Saturday
+    
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+        alert('Appointments are only available on weekdays (Monday to Friday). Please select a different date.');
+        document.getElementById('appointment_date').value = '';
+        return false;
+    }
+    
+    return true;
+}
+
+// Generate 30-minute time slots from 9 AM to 5 PM
+function generateTimeSlots() {
+    const timeSlots = [];
+    const startHour = 9; // 9 AM
+    const endHour = 17; // 5 PM (exclusive)
+    const slotDuration = 30; // 30 minutes
+    
+    for (let hour = startHour; hour < endHour; hour++) {
+        for (let minute = 0; minute < 60; minute += slotDuration) {
+            const timeString = String(hour).padStart(2, '0') + ':' + String(minute).padStart(2, '0');
+            const displayTime = formatTime12Hour(hour, minute);
+            timeSlots.push({
+                value: timeString,
+                display: displayTime
+            });
+        }
+    }
+    
+    return timeSlots;
+}
+
+// Format time to 12-hour format
+function formatTime12Hour(hour, minute) {
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+    return displayHour + ':' + String(minute).padStart(2, '0') + ' ' + period;
+}
+
+// Show error message
+function showError(message) {
+    const errorMsg = document.createElement('div');
+    errorMsg.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #dc3545;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        z-index: 10000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        max-width: 300px;
+    `;
+    errorMsg.innerHTML = `
+        <i class="fa fa-exclamation-triangle" style="margin-right: 8px;"></i>
+        <strong>Error!</strong><br>
+        <small>${message}</small>
+    `;
+    
+    document.body.appendChild(errorMsg);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (document.body.contains(errorMsg)) {
+            document.body.removeChild(errorMsg);
+        }
+    }, 5000);
+}
 }

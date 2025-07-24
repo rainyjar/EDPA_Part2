@@ -8,13 +8,23 @@
             <web-module-libraries>
                 <library dirs="100">
                     <file>${reference.Part2_Asm-ejb.dist}</file>
+                    <path-in-war>WEB-INF/lib</path-in-war>
                 </library>
                 <library dirs="200">
                     <file>${libs.CopyLibs_2.classpath}</file>
                     <path-in-war>WEB-INF/lib</path-in-war>
                 </library>
+                <library dirs="200">
+                    <file>${file.reference.itextpdf-5.5.13.3.jar}</file>
+                    <path-in-war>WEB-INF/lib</path-in-war>
+                </library>
             </web-module-libraries>
-            <web-module-additional-libraries/>
+            <web-module-additional-libraries>
+                <library dirs="200">
+                    <file>${file.reference.itextpdf-5.5.13.3.jar}</file>
+                    <path-in-war>/</path-in-war>
+                </library>
+            </web-module-additional-libraries>
             <source-roots>
                 <root id="src.dir"/>
             </source-roots>

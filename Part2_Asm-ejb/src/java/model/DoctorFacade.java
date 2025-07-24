@@ -39,4 +39,23 @@ public class DoctorFacade extends AbstractFacade<Doctor> {
         }
         return null;
     }
+    
+    /**
+     * Update the rating for a specific doctor
+     * @param doctorId The doctor ID
+     * @param rating The new rating to set
+     * @return true if update was successful, false otherwise
+     */
+    public boolean updateDoctorRating(int doctorId, double rating) {
+        try {
+            Query updateQuery = em.createQuery("UPDATE Doctor d SET d.rating = :rating WHERE d.id = :doctorId");
+            updateQuery.setParameter("rating", rating);
+            updateQuery.setParameter("doctorId", doctorId);
+            int updatedRows = updateQuery.executeUpdate();
+            return updatedRows > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

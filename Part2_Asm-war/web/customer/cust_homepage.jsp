@@ -12,7 +12,7 @@
         response.sendRedirect(request.getContextPath() + "/login.jsp");
         return;
     } else {
-        System.out.println(loggedInCustomer.getName() + " logged in successfully!");
+        System.out.println(loggedInCustomer.getName() + " logged in succesfully!");
     }
 
     // Retrieve the list of doctors and treatments from the request attributes
@@ -24,6 +24,55 @@
     <head>
         <title>APU Medical Center</title>
         <%@ include file="/includes/head.jsp" %>
+        <style>
+            .center-doc-img {
+                display: flex;
+                justify-content: center;   
+                align-items: center;       
+                aspect-ratio: 4/3;        
+                overflow: hidden;         
+                background-color: #f9f9f9;
+            }
+            .custom-image {
+                max-height: 100%;
+                max-width: 100%;
+                object-fit: cover;         
+            }
+            .custom-treat-image {
+                aspect-ratio: 16/9;
+                object-fit: cover;         
+            }
+            .treatments-thumb {
+                max-height: 370px;          /* Set a max height for the whole card */
+                /*                min-height: 400px;           Optional: keep uniform size */
+                overflow: hidden;           /* Prevents overflow */
+                /*display: flex;*/
+                /*                flex-direction: column;
+                                justify-content: space-between;*/
+                /*padding: 15px;*/
+                border: 1px solid #ddd;
+                border-radius: 10px;
+                background-color: #fff;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            }
+
+            .treatments-info p {
+                max-height: 60px;           /* Limit text height */
+                overflow: hidden;
+                text-overflow: ellipsis;
+                line-height: 1.3em;
+                display: -webkit-box;
+                -webkit-line-clamp: 3;      /* Show 3 lines max */
+                -webkit-box-orient: vertical;
+            }
+            @media (max-width: 768px) {
+                .treatments-thumb {
+                    max-height: none;
+                    min-height: auto;
+                }
+            }
+
+        </style>
     </head>
 
 
@@ -199,7 +248,7 @@
                                         <p><i class="fa fa-phone"></i> <%= phone%></p>
                                         <% if (hasValidEmail) {%>
                                         <p><i class="fa fa-envelope-o"></i> <a href="mailto:<%= email%>"><%= email%></a></p>
-                                        <% } else { %>
+                                            <% } else { %>
                                         <p><i class="fa fa-envelope-o"></i> Email not available</p>
                                         <% } %>
                                         <% if (doc.getRating() != null && doc.getRating().doubleValue() > 0) {%>
@@ -229,9 +278,10 @@
                         <% if (doctorList.size() > MAX_DOCTORS_HOMEPAGE) {%>
                         <p class="text-muted">Showing <%= doctorCount%> of <%= doctorList.size()%> doctors</p>
                         <% }%>
-                        <a href="team.jsp" class="section-btn btn btn-default">
+                        <a href="customer/team.jsp" class="section-btn btn btn-default">
                             View All <%= doctorList.size()%> Doctors
                         </a>
+                        edit this
                     </div>
 
                     <%
@@ -314,19 +364,22 @@
                         %>
                         <div class="<%= colClass%>">
                             <!-- TREATMENT THUMB -->
-                            <div class="treatments-thumb wow fadeInUp" data-wow-delay="<%= delay%>s" data-treatment-id="<%= treatment.getId()%>">
-                                <div class="treatment-image clickable-treatment">
-                                    <img src="<%= request.getContextPath()%>/images/treatment/<%= imagePath%>" class="img-responsive custom-treat-image" alt="<%= displayName%>">
+                            <a href="<%= request.getContextPath()%>/TreatmentServlet?action=viewDetail&id=<%= treatment.getId()%>">
+
+                                <div class="treatments-thumb wow fadeInUp" data-wow-delay="<%= delay%>s" data-treatment-id="<%= treatment.getId()%>">
+                                    <div class="treatment-image clickable-treatment">
+                                        <img src="<%= request.getContextPath()%>/images/treatment/<%= imagePath%>" class="img-responsive custom-treat-image" alt="<%= displayName%>">
+                                    </div>
+                                    <div class="treatments-info">
+                                        <h3>
+                                            <span class="treatment-name clickable-treatment">
+                                                <%= treatment.getName() != null ? treatment.getName() : "No name available"%>
+                                            </span>
+                                        </h3>
+                                        <p><%= treatment.getShortDescription() != null ? treatment.getShortDescription() : "No short description."%></p>
+                                    </div>
                                 </div>
-                                <div class="treatments-info">
-                                    <h3>
-                                        <span class="treatment-name clickable-treatment">
-                                            <%= treatment.getName() != null ? treatment.getName() : "No name available"%>
-                                        </span>
-                                    </h3>
-                                    <p><%= treatment.getShortDescription() != null ? treatment.getShortDescription() : "No short description."%></p>
-                                </div>
-                            </div>
+                            </a>
                         </div>
                         <%
                                 delay += 0.2;
@@ -339,7 +392,8 @@
                         <% if (treatmentList.size() > MAX_TREATMENTS_HOMEPAGE) {%>
                         <p class="text-muted">Showing <%= treatmentCount%> of <%= treatmentList.size()%> treatments</p>
                         <% }%>
-                        <a href="treatment.jsp" class="section-btn btn btn-default">
+
+                        <a href="<%= request.getContextPath()%>/TreatmentServlet?action=viewAll" class="section-btn btn btn-default">
                             View All <%= treatmentList.size()%> Treatments
                         </a>
                     </div>
@@ -362,6 +416,18 @@
 
         <%@ include file="/includes/footer.jsp" %>
         <%@ include file="/includes/scripts.jsp" %>
+
+<!--        <script>
+            document.querySelectorAll('.clickable-treatment').forEach(function (element) {
+                element.addEventListener('click', function () {
+                    const id = this.closest('[data-treatment-id]').getAttribute('data-treatment-id');
+                    if (id) {
+                        window.location.href = `TreatmentDetail?id=${id}`;
+                    }
+                });
+            });
+
+        </script>-->
 
     </body>
 

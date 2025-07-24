@@ -27,5 +27,30 @@ public class ReceiptFacade extends AbstractFacade<Receipt> {
     public ReceiptFacade() {
         super(Receipt.class);
     }
-    
+
+    /**
+     * Find receipt by appointment ID
+     */
+    public Receipt findByAppointmentId(int appointmentId) {
+        try {
+            return em.createQuery("SELECT r FROM Receipt r WHERE r.appointment.id = :appointmentId", Receipt.class)
+                    .setParameter("appointmentId", appointmentId)
+                    .getSingleResult();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Find receipt by payment ID
+     */
+    public Receipt findByPaymentId(int paymentId) {
+        try {
+            return em.createQuery("SELECT r FROM Receipt r WHERE r.payment.id = :paymentId", Receipt.class)
+                    .setParameter("paymentId", paymentId)
+                    .getSingleResult();
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }

@@ -27,5 +27,18 @@ public class PaymentFacade extends AbstractFacade<Payment> {
     public PaymentFacade() {
         super(Payment.class);
     }
-    
+
+    /**
+     * Find payment by appointment ID
+     */
+    public Payment findByAppointmentId(int appointmentId) {
+        try {
+            return em.createQuery("SELECT p FROM Payment p WHERE p.appointment.id = :appointmentId", Payment.class)
+                    .setParameter("appointmentId", appointmentId)
+                    .getSingleResult();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
 }

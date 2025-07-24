@@ -39,5 +39,24 @@ public class CounterStaffFacade extends AbstractFacade<CounterStaff> {
         }
         return null;
     }
+    
+    /**
+     * Update the rating for a specific counter staff
+     * @param staffId The counter staff ID
+     * @param rating The new rating to set
+     * @return true if update was successful, false otherwise
+     */
+    public boolean updateCounterStaffRating(int staffId, double rating) {
+        try {
+            Query updateQuery = em.createQuery("UPDATE CounterStaff cs SET cs.rating = :rating WHERE cs.id = :staffId");
+            updateQuery.setParameter("rating", rating);
+            updateQuery.setParameter("staffId", staffId);
+            int updatedRows = updateQuery.executeUpdate();
+            return updatedRows > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
 }

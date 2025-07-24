@@ -62,6 +62,8 @@
                 Appointment cancelled successfully.
             <% } else if ("rescheduled".equals(successMsg)) { %>
                 Appointment rescheduled successfully. Check your updated appointment details below.
+            <% } else if ("feedback_submitted".equals(successMsg)) { %>
+                Thank you! Your feedback has been submitted successfully.
             <% } %>
         </div>
         <% } %>
@@ -80,6 +82,22 @@
                 This appointment cannot be rescheduled.
             <% } else if ("system_error".equals(errorMsg)) { %>
                 A system error occurred. Please try again.
+            <% } else if ("unauthorized".equals(errorMsg)) { %>
+                You are not authorized to access this appointment.
+            <% } else if ("not_completed".equals(errorMsg)) { %>
+                Receipt is only available for completed appointments.
+            <% } else if ("payment_not_found".equals(errorMsg)) { %>
+                Payment record not found or payment is not completed.
+            <% } else if ("receipt_error".equals(errorMsg)) { %>
+                An error occurred while generating the receipt. Please try again later.
+            <% } else if ("invalid_appointment".equals(errorMsg)) { %>
+                Invalid appointment ID provided.
+            <% } else if ("appointment_not_found".equals(errorMsg)) { %>
+                Appointment not found.
+            <% } else if ("feedback_exists".equals(errorMsg)) { %>
+                You have already submitted feedback for this appointment.
+            <% } else { %>
+                An unexpected error occurred. Please try again.
             <% } %>
         </div>
         <% } %>
@@ -142,31 +160,22 @@
 
                                     // Find related doctor
                                     Doctor appointmentDoctor = null;
-                                    if (doctorList != null) {
-                                        for (Doctor doc : doctorList) {
-                                            if (doc.getId() == appointment.getId()) {
-                                                appointmentDoctor = doc;
-                                                break;
-                                            }
-                                        }
+                                    if (appointment.getDoctor() != null) {
+                                        appointmentDoctor = appointment.getDoctor();
                                     }
 
                                     // Find related treatment
                                     Treatment appointmentTreatment = null;
-                                    if (treatmentList != null) {
-                                        for (Treatment treatment : treatmentList) {
-                                            if (treatment.getId() == appointment.getId()) {
-                                                appointmentTreatment = treatment;
-                                                break;
-                                            }
-                                        }
+                                    if (appointment.getTreatment() != null) {
+                                        appointmentTreatment = appointment.getTreatment();
                                     }
 
                                     // Find related payment
                                     Payment appointmentPayment = null;
                                     if (paymentList != null) {
                                         for (Payment payment : paymentList) {
-                                            if (payment.getId() == appointment.getId()) {
+                                            if (payment.getAppointment() != null && 
+                                                payment.getAppointment().getId() == appointment.getId()) {
                                                 appointmentPayment = payment;
                                                 break;
                                             }
@@ -419,6 +428,19 @@
                 }, 5000);
             });
         });
+        
+        // Function to submit feedback for a completed appointment
+        function submitFeedback(appointmentId) {
+            console.log('Submitting feedback for appointment ID:', appointmentId);
+            
+            if (!appointmentId) {
+                alert('Invalid appointment ID');
+                return;
+            }
+            
+            // Redirect to feedback form with appointment ID
+            window.location.href = 'ScheduleServlet?action=show_feedback_form&appointment_id=' + appointmentId;
+        }
         </script>
 
 
