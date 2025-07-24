@@ -12,7 +12,7 @@
         response.sendRedirect(request.getContextPath() + "/login.jsp");
         return;
     } else {
-        System.out.println(loggedInCustomer.getName() + " logged in successfuly!");
+        System.out.println(loggedInCustomer.getName() + " logged in successfully!");
     }
 
     // Retrieve the list of doctors and treatments from the request attributes
