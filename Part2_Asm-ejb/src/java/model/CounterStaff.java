@@ -38,7 +38,7 @@ public class CounterStaff implements Serializable {
     @Column(name = "dob")
     private Date dob;
 
-    @Column(precision = 3, scale = 2)
+    @Column(precision = 4, scale = 2)
     private BigDecimal rating;
 
     @OneToMany(mappedBy = "counterStaff", cascade = CascadeType.ALL)

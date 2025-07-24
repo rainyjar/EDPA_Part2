@@ -115,10 +115,10 @@ public class Login extends HttpServlet {
                 } else if (user instanceof Customer) {
 //                    s.setAttribute("name", ((Customer) user).getName());
                     s.setAttribute("customer", (Customer) user);
-                    response.sendRedirect(role + "/cust_homepage.jsp");
+//                    response.sendRedirect(role + "/cust_homepage.jsp");
+                    response.sendRedirect("CustomerHomepageServlet");
                     System.out.print(((Customer) user).getId());
                 }
-                
 
             } catch (Exception e) {
                 request.setAttribute("error", "Login failed: " + e.getMessage());

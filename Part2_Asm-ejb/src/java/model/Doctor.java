@@ -37,7 +37,7 @@ public class Doctor implements Serializable {
     @Temporal(TemporalType.DATE)
     @Column(name = "dob")
     private Date dob;
-    @Column(precision = 3, scale = 2)
+    @Column(precision = 4, scale = 2)
     private BigDecimal rating;
 
     @ManyToMany(mappedBy = "doctors")
