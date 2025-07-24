@@ -12,7 +12,7 @@
         response.sendRedirect(request.getContextPath() + "/login.jsp");
         return;
     } else {
-        System.out.println(loggedInCustomer.getName() + " logged in succesffuly!");
+        System.out.println(loggedInCustomer.getName() + " logged in successfuly!");
     }
 
     // Retrieve the list of doctors and treatments from the request attributes
@@ -24,55 +24,6 @@
     <head>
         <title>APU Medical Center</title>
         <%@ include file="/includes/head.jsp" %>
-        <style>
-            .center-doc-img {
-                display: flex;
-                justify-content: center;   
-                align-items: center;       
-                aspect-ratio: 4/3;        
-                overflow: hidden;         
-                background-color: #f9f9f9;
-            }
-            .custom-image {
-                max-height: 100%;
-                max-width: 100%;
-                object-fit: cover;         
-            }
-            .custom-treat-image {
-                aspect-ratio: 16/9;
-                object-fit: cover;         
-            }
-            .treatments-thumb {
-                max-height: 370px;          /* Set a max height for the whole card */
-                /*                min-height: 400px;           Optional: keep uniform size */
-                overflow: hidden;           /* Prevents overflow */
-                /*display: flex;*/
-                /*                flex-direction: column;
-                                justify-content: space-between;*/
-                /*padding: 15px;*/
-                border: 1px solid #ddd;
-                border-radius: 10px;
-                background-color: #fff;
-                box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            }
-
-            .treatments-info p {
-                max-height: 60px;           /* Limit text height */
-                overflow: hidden;
-                text-overflow: ellipsis;
-                line-height: 1.3em;
-                display: -webkit-box;
-                -webkit-line-clamp: 3;      /* Show 3 lines max */
-                -webkit-box-orient: vertical;
-            }
-            @media (max-width: 768px) {
-                .treatments-thumb {
-                    max-height: none;
-                    min-height: auto;
-                }
-            }
-
-        </style>
     </head>
 
 

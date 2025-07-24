@@ -48,6 +48,42 @@
         <%@ include file="/includes/header.jsp" %>
         <%@ include file="/includes/navbar.jsp" %>
 
+        <%
+        String successMsg = request.getParameter("success");
+        String errorMsg = request.getParameter("error");
+        %>
+
+        <!-- Success/Error Messages -->
+        <% if (successMsg != null) { %>
+        <div class="alert alert-success alert-dismissible" style="margin: 20px; position: fixed; top: 80px; right: 20px; z-index: 1000; width: 300px;">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <strong>Success!</strong> 
+            <% if ("cancelled".equals(successMsg)) { %>
+                Appointment cancelled successfully.
+            <% } else if ("rescheduled".equals(successMsg)) { %>
+                Appointment rescheduled successfully. Check your updated appointment details below.
+            <% } %>
+        </div>
+        <% } %>
+
+        <% if (errorMsg != null) { %>
+        <div class="alert alert-danger alert-dismissible" style="margin: 20px; position: fixed; top: 80px; right: 20px; z-index: 1000; width: 300px;">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <strong>Error!</strong> 
+            <% if ("invalid_id".equals(errorMsg)) { %>
+                Invalid appointment ID provided.
+            <% } else if ("not_found".equals(errorMsg)) { %>
+                Appointment not found.
+            <% } else if ("cannot_cancel".equals(errorMsg)) { %>
+                This appointment cannot be cancelled.
+            <% } else if ("cannot_reschedule".equals(errorMsg)) { %>
+                This appointment cannot be rescheduled.
+            <% } else if ("system_error".equals(errorMsg)) { %>
+                A system error occurred. Please try again.
+            <% } %>
+        </div>
+        <% } %>
+
         <!-- APPOINTMENT HISTORY -->
         <section class="appointment-history" style="padding: 100px 0;">
             <div class="container">
@@ -68,8 +104,8 @@
                                 <label for="statusFilter">Select Appointment Status:</label>
                                 <select id="statusFilter" name="status" class="form-control" onchange="filterAppointments()">
                                     <option value="all" <%= "all".equals(selectedStatus) ? "selected" : ""%>>All Appointments</option>
-                                    <option value="pending" <%= "pending".equals(selectedStatus) ? "selected" : ""%>>Pending</option>
-                                    <option value="approved" <%= "approved".equals(selectedStatus) ? "selected" : ""%>>Approved</option>
+                                    <option value="pending" <%= "pending".equals(selectedStatus) ? "selected" : ""%>>Pending</option> // allow reschedule (using the same appointment id, remain the status to pending for approval) or cancel appointment
+                                    <option value="approved" <%= "approved".equals(selectedStatus) ? "selected" : ""%>>Approved</option> // allow reschedule (using the same appointment id,but change back the status from approved back to pending for new approval) or cancel appointment
                                     <option value="completed" <%= "completed".equals(selectedStatus) ? "selected" : ""%>>Completed</option>
                                     <option value="cancelled" <%= "cancelled".equals(selectedStatus) ? "selected" : ""%>>Cancelled</option>
                                 </select>
@@ -95,7 +131,7 @@
                                     // Filter appointments by status
                                     if (selectedStatus != null
                                             && ("pending".equals(selectedStatus)
-                                            || "ongoing".equals(selectedStatus)
+                                            || "approved".equals(selectedStatus)
                                             || "completed".equals(selectedStatus)
                                             || "cancelled".equals(selectedStatus))
                                             && !selectedStatus.equals(appointment.getStatus())) {
@@ -298,7 +334,23 @@
 
                                 <!-- Action Buttons -->
                                 <div class="action-buttons">
-                                    <% if ("completed".equals(appointment.getStatus())) {%>
+                                    <% 
+                                    String appointmentStatus = appointment.getStatus();
+                                    
+                                    // Show reschedule and cancel buttons for pending and approved appointments
+                                    if ("pending".equals(appointmentStatus) || "approved".equals(appointmentStatus)) {
+                                    %>
+                                    <button type="button" class="btn-action btn-reschedule" 
+                                            onclick="rescheduleAppointment(<%= appointment.getId()%>)">
+                                        <i class="fa fa-calendar"></i> Reschedule
+                                    </button>
+                                    <button type="button" class="btn-action btn-cancel" 
+                                            onclick="cancelAppointment(<%= appointment.getId()%>, '<%= appointmentStatus %>')">
+                                        <i class="fa fa-times"></i> Cancel Appointment
+                                    </button>
+                                    <% } %>
+                                    
+                                    <% if ("completed".equals(appointmentStatus)) {%>
                                     <button type="button" class="btn-action btn-feedback" 
                                             onclick="submitFeedback(<%= appointment.getId()%>)">
                                         <i class="fa fa-star"></i> Submit Feedback
@@ -353,6 +405,21 @@
 
         <%@ include file="/includes/footer.jsp" %>
         <%@ include file="/includes/scripts.jsp" %>
+
+        <script>
+        // Auto-hide success/error messages after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                setTimeout(function() {
+                    alert.style.opacity = '0';
+                    setTimeout(function() {
+                        alert.style.display = 'none';
+                    }, 500);
+                }, 5000);
+            });
+        });
+        </script>
 
 
     </body>
