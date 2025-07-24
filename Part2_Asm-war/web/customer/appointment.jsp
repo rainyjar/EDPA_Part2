@@ -38,7 +38,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-8 col-md-offset-2">
-                    <img src="images/appointment-image.jpg" class="img-responsive">
+                    <img src="<%= request.getContextPath() %>/images/cust_homepage/appointment-image.jpg" class="img-responsive">
                     <div class="appointment-form-wrapper">
                         
                         <!-- Step Indicator -->
@@ -87,7 +87,6 @@
                                                 }
                                         %>
                                             <option value="<%= treatment.getId() %>" 
-                                                    data-specialization="<%= treatment.getSpecialization() != null ? treatment.getSpecialization() : "" %>" 
                                                     data-base-charge="<%= treatment.getBaseConsultationCharge() %>"
                                                     <%= selected %>>
                                                 <%= treatmentName %>

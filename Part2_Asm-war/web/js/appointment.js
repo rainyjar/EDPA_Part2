@@ -283,4 +283,20 @@ function showConfirmationModal() {
         modal.classList.add('show');
         document.body.classList.add('modal-open');
     }
+    
+    function filterAppointments() {
+            const status = document.getElementById('statusFilter').value;
+            window.location.href = 'appointment_history.jsp?status=' + status;
+        }
+        
+    function submitFeedback(appointmentId) {
+        // Redirect to feedback page with appointment ID
+        window.location.href = 'feedback.jsp?appointment_id=' + appointmentId;
+        }
+        
+function generateReceipt(appointmentId) {
+        // Generate receipt (will be implemented later)
+        alert('Receipt generation will be implemented. Appointment ID: ' + appointmentId);
+        // Future implementation: window.open('receipt.jsp?appointment_id=' + appointmentId);
+    }
 }

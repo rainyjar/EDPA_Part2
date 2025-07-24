@@ -26,10 +26,10 @@
           <div class="collapse navbar-collapse">
                <ul class="nav navbar-nav navbar-right">
                     <li <%= pageName.equals("customer/cust_homepage.jsp") ? "class='active'" : "" %>><a href="<%= request.getContextPath() %>/customer/cust_homepage.jsp">Home</a></li>
-                    <li><a href="#about" class="smoothScroll">About Us</a></li>
                     <li <%= pageName.equals("customer/team.jsp") ? "class='active'" : "" %>><a href="<%= request.getContextPath() %>/customer/team.jsp">Our Doctors</a></li>
                     <li <%= pageName.equals("customer/treatment.jsp") ? "class='active'" : "" %>><a href="<%= request.getContextPath() %>/customer/treatment.jsp">Treatment Types</a></li>
-                    <li><a href="<%= request.getContextPath() %>/customer/cust_homepage.jsp#profile" class="smoothScroll">Profile</a></li>
+                    <li <%= pageName.equals("customer/appointment_history.jsp") ? "class='active'" : "" %>><a href="<%= request.getContextPath() %>/customer/appointment_history.jsp">Appointments</a></li>
+                    <li <%= pageName.equals("customer/cust_profile.jsp") ? "class='active'" : "" %>><a href="<%= request.getContextPath() %>/customer/cust_profile.jsp" class="smoothScroll">Profile</a></li>
                     <li class="appointment-btn"><a href="<%= request.getContextPath() %>/customer/appointment.jsp">Make an appointment</a></li>
                </ul>
           </div>
