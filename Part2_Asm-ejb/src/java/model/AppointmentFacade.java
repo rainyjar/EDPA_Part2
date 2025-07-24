@@ -5,6 +5,7 @@
  */
 package model;
 
+import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -27,5 +28,12 @@ public class AppointmentFacade extends AbstractFacade<Appointment> {
     public AppointmentFacade() {
         super(Appointment.class);
     }
+    
+    public List<Appointment> findByCustomer(Customer customer) {
+    return em.createQuery("SELECT a FROM Appointment a WHERE a.customer = :customer", Appointment.class)
+             .setParameter("customer", customer)
+             .getResultList();
+}
+
     
 }

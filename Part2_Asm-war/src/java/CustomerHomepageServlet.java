@@ -71,6 +71,7 @@ public class CustomerHomepageServlet extends HttpServlet {
         request.setAttribute("treatmentList", treatmentList);
 
         request.getRequestDispatcher("customer/cust_homepage.jsp").forward(request, response);
+
     }
 
     @Override
