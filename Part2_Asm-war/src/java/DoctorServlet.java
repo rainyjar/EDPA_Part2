@@ -1,6 +1,5 @@
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.sql.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -12,7 +11,9 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import javax.servlet.http.Part;
+import model.Customer;
 import model.DoctorFacade;
 import model.Doctor;
 
@@ -28,31 +29,6 @@ public class DoctorServlet extends HttpServlet {
     @EJB
     private DoctorFacade doctorFacade;
 
-    /**
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
-     * methods.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-//    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-//            throws ServletException, IOException {
-//        response.setContentType("text/html;charset=UTF-8");
-//        try (PrintWriter out = response.getWriter()) {
-//            /* TODO output your page here. You may use following sample code. */
-//            out.println("<!DOCTYPE html>");
-//            out.println("<html>");
-//            out.println("<head>");
-//            out.println("<title>Servlet DoctorServlet</title>");            
-//            out.println("</head>");
-//            out.println("<body>");
-//            out.println("<h1>Servlet DoctorServlet at " + request.getContextPath() + "</h1>");
-//            out.println("</body>");
-//            out.println("</html>");
-//        }
-//    }
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setContentType("text/html");
         String action = request.getParameter("action");
@@ -164,7 +140,30 @@ public class DoctorServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String action = request.getParameter("action");
+        HttpSession session = request.getSession(false);
 
+        Customer loggedInCustomer = (session != null) ? (Customer) session.getAttribute("customer") : null;
+        System.out.println("Doctor Servlet: " + loggedInCustomer);
+
+        if (loggedInCustomer != null) {
+            // Authenticated as customer, show team page
+            List<Doctor> doctorList = doctorFacade.findAll();
+            request.setAttribute("doctorList", doctorList);
+            request.getRequestDispatcher("/customer/team.jsp").forward(request, response);
+        } else {
+            // Not a customer, check if admin or manager or redirect to login
+            Object manager = session != null ? session.getAttribute("manager") : null;
+
+            if (manager != null) {
+                // Admin/manager viewing doctor list
+                List<Doctor> doctorList = doctorFacade.findAll();
+                request.setAttribute("doctorList", doctorList);
+                request.getRequestDispatcher("/manager/list_doctor.jsp").forward(request, response);
+            } else {
+                // Not logged in
+                response.sendRedirect(request.getContextPath() + "/login.jsp");
+            }
+        }
         if ("edit".equals(action)) {
             int id = Integer.parseInt(request.getParameter("id"));
             Doctor doctor = doctorFacade.find(id);

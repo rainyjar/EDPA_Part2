@@ -25,38 +25,21 @@
         <title>APU Medical Center</title>
         <%@ include file="/includes/head.jsp" %>
         <style>
-            .center-doc-img {
-                display: flex;
-                justify-content: center;   
-                align-items: center;       
-                aspect-ratio: 4/3;        
-                overflow: hidden;         
-                background-color: #f9f9f9;
-            }
-            .custom-image {
-                max-height: 100%;
-                max-width: 100%;
-                object-fit: cover;         
-            }
             .custom-treat-image {
                 aspect-ratio: 16/9;
                 object-fit: cover;         
             }
             .treatments-thumb {
-                max-height: 370px;          /* Set a max height for the whole card */
-                /*                min-height: 400px;           Optional: keep uniform size */
+                max-height: 450px;         
+                min-height: 400px;         
                 overflow: hidden;           /* Prevents overflow */
-                /*display: flex;*/
-                /*                flex-direction: column;
-                                justify-content: space-between;*/
-                /*padding: 15px;*/
                 border: 1px solid #ddd;
                 border-radius: 10px;
                 background-color: #fff;
                 box-shadow: 0 2px 6px rgba(0,0,0,0.1);
             }
 
-            .treatments-info p {
+            .treatments-info p{
                 max-height: 60px;           /* Limit text height */
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -65,6 +48,16 @@
                 -webkit-line-clamp: 3;      /* Show 3 lines max */
                 -webkit-box-orient: vertical;
             }
+
+            .two-line-text h3, .two-line-text p{
+                display: -webkit-box; /* Required for -webkit-line-clamp */
+                -webkit-box-orient: vertical; /* Required for -webkit-line-clamp */
+                -webkit-line-clamp: 2; /* Limits the text to 2 lines */
+                overflow: hidden; /* Hides any overflowing content */
+                text-overflow: ellipsis; /* Adds an ellipsis (...) to truncated text */
+                white-space: normal; /* Allows text to wrap within the two lines */
+            }
+
             @media (max-width: 768px) {
                 .treatments-thumb {
                     max-height: none;
@@ -237,10 +230,8 @@
                         %>
                         <div class="<%= colClass%>">
                             <div class="team-thumb wow fadeInUp" data-wow-delay="<%= delay%>s">
-                                <div class="center-doc-img">
-                                    <img src="<%= request.getContextPath()%>/images/profile_pictures/<%= profilePic%>" class="img-responsive custom-image" alt="<%= doctorName%> Profile Picture">
-                                </div>
 
+                                <img src="<%= request.getContextPath()%>/images/profile_pictures/<%= profilePic%>" class="img-responsive" alt="<%= doctorName%> Profile Picture">
                                 <div class="team-info">
                                     <h3><%= doctorName%></h3>
                                     <p class="doctor-specialization"><%= specialization%></p>
@@ -278,10 +269,9 @@
                         <% if (doctorList.size() > MAX_DOCTORS_HOMEPAGE) {%>
                         <p class="text-muted">Showing <%= doctorCount%> of <%= doctorList.size()%> doctors</p>
                         <% }%>
-                        <a href="customer/team.jsp" class="section-btn btn btn-default">
-                            View All <%= doctorList.size()%> Doctors
+                        <a href="<%= request.getContextPath()%>/DoctorServlet" class="section-btn btn btn-default">
+                            View All Doctors
                         </a>
-                        edit this
                     </div>
 
                     <%
@@ -370,7 +360,7 @@
                                     <div class="treatment-image clickable-treatment">
                                         <img src="<%= request.getContextPath()%>/images/treatment/<%= imagePath%>" class="img-responsive custom-treat-image" alt="<%= displayName%>">
                                     </div>
-                                    <div class="treatments-info">
+                                    <div class="treatments-info two-line-text">
                                         <h3>
                                             <span class="treatment-name clickable-treatment">
                                                 <%= treatment.getName() != null ? treatment.getName() : "No name available"%>
@@ -394,7 +384,7 @@
                         <% }%>
 
                         <a href="<%= request.getContextPath()%>/TreatmentServlet?action=viewAll" class="section-btn btn btn-default">
-                            View All <%= treatmentList.size()%> Treatments
+                            View All Treatments
                         </a>
                     </div>
 
@@ -416,18 +406,6 @@
 
         <%@ include file="/includes/footer.jsp" %>
         <%@ include file="/includes/scripts.jsp" %>
-
-<!--        <script>
-            document.querySelectorAll('.clickable-treatment').forEach(function (element) {
-                element.addEventListener('click', function () {
-                    const id = this.closest('[data-treatment-id]').getAttribute('data-treatment-id');
-                    if (id) {
-                        window.location.href = `TreatmentDetail?id=${id}`;
-                    }
-                });
-            });
-
-        </script>-->
 
     </body>
 

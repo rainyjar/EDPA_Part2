@@ -45,6 +45,17 @@ public class Login extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
 
+        // handle lougout
+        String logout = request.getParameter("logout");
+        if (logout != null && logout.equals("true")) {
+            HttpSession session = request.getSession(false);
+            if (session != null) {
+                session.invalidate();
+            }
+            response.sendRedirect("login.jsp");
+            return;
+        }
+
         try (PrintWriter out = response.getWriter()) {
             String email = request.getParameter("email");
             String password = request.getParameter("password");
@@ -113,9 +124,7 @@ public class Login extends HttpServlet {
                     s.setAttribute("name", ((CounterStaff) user).getName());
                     response.sendRedirect(role + "/dashboard.jsp");
                 } else if (user instanceof Customer) {
-//                    s.setAttribute("name", ((Customer) user).getName());
                     s.setAttribute("customer", (Customer) user);
-//                    response.sendRedirect(role + "/cust_homepage.jsp");
                     response.sendRedirect("CustomerHomepageServlet");
                     System.out.print(((Customer) user).getId());
                 }

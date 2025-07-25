@@ -11,6 +11,55 @@
     <head>
         <title>All Treatments - APU Medical Center</title>
         <%@ include file="/includes/head.jsp" %>
+        <style>
+            .custom-treat-image {
+                aspect-ratio: 16/9;
+                object-fit: cover;         
+            }
+            .treatments-thumb {
+                max-height: 450px;         
+                min-height: 400px;  
+                overflow: hidden;           /* Prevents overflow */
+                border: 1px solid #ddd;
+                border-radius: 10px;
+                background-color: #fff;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            }
+
+            .treatments-info p, .treatments-name p {
+                max-height: 60px;           /* Limit text height */
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                line-height: 1.3em;
+                display: -webkit-box;
+                -webkit-line-clamp: 3;      /* Show 3 lines max */
+                -webkit-box-orient: vertical;
+            }
+
+            .two-line-text h3{
+                display: -webkit-box; /* Required for -webkit-line-clamp */
+                -webkit-box-orient: vertical; /* Required for -webkit-line-clamp */
+                -webkit-line-clamp: 2; /* Limits the text to 2 lines */
+                overflow: hidden; /* Hides any overflowing content */
+                text-overflow: ellipsis; /* Adds an ellipsis (...) to truncated text */
+                white-space: normal; /* Allows text to wrap within the two lines */
+            }
+
+            @media (max-width: 768px) {
+                .treatments-thumb {
+                    max-height: none;
+                    min-height: auto;
+                }
+            }
+
+            @media (min-width: 992px) {
+                .col-md-4 {
+                    width: 33.33333333%;
+                    margin-bottom: 40px;
+                }
+            }
+        </style>
     </head>
 
     <body id="top" data-spy="scroll" data-target=".navbar-collapse" data-offset="50">
@@ -52,7 +101,6 @@
                     <div class="row">
                         <%
                             }
-
                             // Extract treatment name (characters before "-")
                             String displayName = treatment.getName();
                             if (displayName != null && displayName.contains("-")) {
@@ -81,7 +129,7 @@
                                     <div class="treatment-image clickable-treatment">
                                         <img src="<%= request.getContextPath()%>/images/treatment/<%= imagePath%>" class="img-responsive custom-treat-image" alt="<%= displayName%>">
                                     </div>
-                                    <div class="treatments-info">
+                                    <div class="treatments-info treatments-name two-line-text">
                                         <h3>
                                             <%= treatment.getName() != null ? treatment.getName() : "No name available"%>
 
