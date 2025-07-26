@@ -1,29 +1,96 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="model.Customer" %>
+<%@ page import="model.Doctor" %>
+<%@ page import="model.CounterStaff" %>
+<%@ page import="model.Manager" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="java.util.Date" %>
 
 <%
-    // Check if user is logged in
-    Customer loggedInCustomer = (Customer) session.getAttribute("customer");
-
-    if (loggedInCustomer == null) {
+    // Determine user type and get user object
+    Object currentUser = null;
+    String userType = null;
+    String userName = "";
+    String userEmail = "";
+    String userPhone = "";
+    String userGender = "";
+    String profilePicName = "";
+    int userId = 0;
+    Date userDob = null;
+    
+    // Doctor-specific fields
+    String doctorSpecialization = "";
+    Double doctorRating = null;
+    
+    // Staff-specific fields  
+    Double staffRating = null;
+    
+    // Check session for different user types
+    Customer customer = (Customer) session.getAttribute("customer");
+    Doctor doctor = (Doctor) session.getAttribute("doctor");
+    CounterStaff staff = (CounterStaff) session.getAttribute("staff");
+    Manager manager = (Manager) session.getAttribute("manager");
+    
+    if (customer != null) {
+        currentUser = customer;
+        userType = "customer";
+        userId = customer.getId();
+        userName = customer.getName();
+        userEmail = customer.getEmail();
+        userPhone = customer.getPhone() != null ? customer.getPhone() : "";
+        userGender = customer.getGender() != null ? customer.getGender() : "";
+        userDob = customer.getDob();
+        profilePicName = customer.getProfilePic();
+    } else if (doctor != null) {
+        currentUser = doctor;
+        userType = "doctor";
+        userId = doctor.getId();
+        userName = doctor.getName();
+        userEmail = doctor.getEmail();
+        userPhone = doctor.getPhone() != null ? doctor.getPhone() : "";
+        userGender = doctor.getGender() != null ? doctor.getGender() : "";
+        userDob = doctor.getDob();
+        profilePicName = doctor.getProfilePic();
+        doctorSpecialization = doctor.getSpecialization() != null ? doctor.getSpecialization() : "";
+        doctorRating = doctor.getRating() != null ? doctor.getRating().doubleValue() : null;
+    } else if (staff != null) {
+        currentUser = staff;
+        userType = "staff";
+        userId = staff.getId();
+        userName = staff.getName();
+        userEmail = staff.getEmail();
+        userPhone = staff.getPhone() != null ? staff.getPhone() : "";
+        userGender = staff.getGender() != null ? staff.getGender() : "";
+        userDob = staff.getDob();
+        profilePicName = staff.getProfilePic();
+        staffRating = staff.getRating() != null ? staff.getRating().doubleValue() : null;
+    } else if (manager != null) {
+        currentUser = manager;
+        userType = "manager";
+        userId = manager.getId();
+        userName = manager.getName();
+        userEmail = manager.getEmail();
+        userPhone = manager.getPhone() != null ? manager.getPhone() : "";
+        userGender = manager.getGender() != null ? manager.getGender() : "";
+        userDob = manager.getDob();
+        profilePicName = manager.getProfilePic();
+    } else {
         response.sendRedirect(request.getContextPath() + "/login.jsp");
         return;
     }
 
     // Date formatter for displaying date of birth
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-    String dobString = loggedInCustomer.getDob() != null ? dateFormat.format(loggedInCustomer.getDob()) : "";
+    String dobString = userDob != null ? dateFormat.format(userDob) : "";
+
+    // Profile picture URL
+    String profilePicUrl = (profilePicName != null && !profilePicName.isEmpty())
+            ? request.getContextPath() + "/images/profile_pictures/" + java.net.URLEncoder.encode(profilePicName, "UTF-8") + "?t=" + System.currentTimeMillis()
+            : request.getContextPath() + "/images/profile_pictures/default-doc.png";
 
     // Get success/error messages
     String successMsg = request.getParameter("success");
     String errorMsg = request.getParameter("error");
-
-    String profilePicName = loggedInCustomer.getProfilePic();
-    String profilePicUrl = (profilePicName != null && !profilePicName.isEmpty())
-            ? request.getContextPath() + "/images/profile_pictures/" + java.net.URLEncoder.encode(profilePicName, "UTF-8") + "?t=" + System.currentTimeMillis()
-            : request.getContextPath() + "/images/profile_pictures/default-doc.png";
 %>
 
 <!DOCTYPE html>
@@ -38,7 +105,7 @@
         <%@ include file="/includes/navbar.jsp" %>
 
         <!-- PROFILE SECTION -->
-        <section id="profile" class="section" style="min-height: 100vh; background: #f5f5f5;">
+        <section id="profile" class="section" style="min-height: 100vh; background: linear-gradient(135deg, #f8f4ff 0%, #fff5f0 100%);">
             <div class="container">
                 <div class="row">
                     <div class="col-md-8 col-md-offset-2">
@@ -47,13 +114,12 @@
                             <div class="profile-header">
                                 <div class="profile-pic-container">
                                     <img src="<%= profilePicUrl%>" class="profile-pic" id="profilePicDisplay" alt="Profile Picture">
-
                                     <button type="button" class="pic-upload-btn" onclick="document.getElementById('profilePicInput').click();">
                                         <i class="fa fa-camera"></i>
                                     </button>
                                 </div>
-                                <div class="profile-name"><%= loggedInCustomer.getName()%></div>
-                                <div class="profile-email"><%= loggedInCustomer.getEmail()%></div>
+                                <div class="profile-name"><%= userName%></div>
+                                <div class="profile-email"><%= userEmail%></div>
                             </div>
 
                             <!-- Profile Body -->
@@ -103,6 +169,10 @@
                                     Failed to refresh profile data. Please logout and login again.
                                     <% } else if ("database_error".equals(errorMsg)) { %>
                                     Database error occurred. Please try again later.
+                                    <% } else if ("system_error".equals(errorMsg)) { %>
+                                    System error occurred. Please try again later.
+                                    <% } else if ("invalid_action".equals(errorMsg)) { %>
+                                    Invalid action requested.
                                     <% } else { %>
                                     An error occurred. Please try again.
                                     <% } %>
@@ -112,39 +182,42 @@
                                 <h3 class="section-title-profile">Personal Information</h3>
 
                                 <!-- Profile Update Form -->
-                                <form action="<%= request.getContextPath()%>/ProfileServlet" method="post" id="profileForm">
+                                <form action="<%= request.getContextPath()%>/Profile" method="post" id="profileForm">
                                     <input type="hidden" name="action" value="updateProfile">
 
+                                    <!-- Basic Information Row -->
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="form-group">
-                                                <label class="form-label">Customer ID</label>
-                                                <input type="text" class="form-control" value="<%= loggedInCustomer.getId()%>" disabled>
+                                                <label class="form-label"><%= userType.substring(0,1).toUpperCase() + userType.substring(1)%> ID</label>
+                                                <input type="text" class="form-control" value="<%= userId%>" disabled>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label class="form-label">Full Name *</label>
-                                                <input type="text" class="form-control" name="name" value="<%= loggedInCustomer.getName()%>" required>
+                                                <input type="text" class="form-control" name="name" value="<%= userName%>" required>
                                             </div>
                                         </div>
                                     </div>
 
+                                    <!-- Contact Information Row -->
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label class="form-label">Email Address *</label>
-                                                <input type="email" class="form-control" name="email" value="<%= loggedInCustomer.getEmail()%>" required>
+                                                <input type="email" class="form-control" name="email" value="<%= userEmail%>" required>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label class="form-label">Phone Number *</label>
-                                                <input type="tel" class="form-control" name="phone" value="<%= loggedInCustomer.getPhone() != null ? loggedInCustomer.getPhone() : ""%>" required>
+                                                <input type="tel" class="form-control" name="phone" value="<%= userPhone%>" required>
                                             </div>
                                         </div>
                                     </div>
 
+                                    <!-- Personal Details Row -->
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="form-group">
@@ -158,17 +231,91 @@
                                                 <label class="form-label">Gender *</label>
                                                 <div style="margin-top: 8px;">
                                                     <label class="gender-radio">
-                                                        <input type="radio" name="gender" value="M" <%= "M".equals(loggedInCustomer.getGender()) ? "checked" : ""%>>
+                                                        <input type="radio" name="gender" value="M" <%= "M".equals(userGender) ? "checked" : ""%>>
                                                         Male
                                                     </label>
                                                     <label class="gender-radio">
-                                                        <input type="radio" name="gender" value="F" <%= "F".equals(loggedInCustomer.getGender()) ? "checked" : ""%>>
+                                                        <input type="radio" name="gender" value="F" <%= "F".equals(userGender) ? "checked" : ""%>>
                                                         Female
                                                     </label>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
+
+                                    <!-- Role-Specific Fields (Read-Only) -->
+                                    <% if ("doctor".equals(userType)) { %>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label">Specialization</label>
+                                                <input type="text" class="form-control" value="<%= doctorSpecialization%>" disabled>
+                                                <small class="form-text text-muted">Contact administrator to update specialization</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label">Rating</label>
+                                                <div class="rating-display">
+                                                    <% if (doctorRating != null && doctorRating > 0) { %>
+                                                        <div class="star-rating">
+                                                            <% 
+                                                            int fullStars = (int) Math.floor(doctorRating);
+                                                            boolean hasHalfStar = (doctorRating - fullStars) >= 0.5;
+                                                            
+                                                            for (int i = 1; i <= 5; i++) {
+                                                                if (i <= fullStars) { %>
+                                                                    <i class="fa fa-star star-filled"></i>
+                                                                <% } else if (i == fullStars + 1 && hasHalfStar) { %>
+                                                                    <i class="fa fa-star-half-o star-half"></i>
+                                                                <% } else { %>
+                                                                    <i class="fa fa-star-o star-empty"></i>
+                                                                <% }
+                                                            } %>
+                                                            <span class="rating-text">(<%= String.format("%.1f", doctorRating)%>/5.0)</span>
+                                                        </div>
+                                                    <% } else { %>
+                                                        <div class="no-rating">
+                                                            <i class="fa fa-star-o"></i> No ratings yet
+                                                        </div>
+                                                    <% } %>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <% } else if ("staff".equals(userType)) { %>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label class="form-label">Rating</label>
+                                                <div class="rating-display">
+                                                    <% if (staffRating != null && staffRating > 0) { %>
+                                                        <div class="star-rating">
+                                                            <% 
+                                                            int fullStars = (int) Math.floor(staffRating);
+                                                            boolean hasHalfStar = (staffRating - fullStars) >= 0.5;
+                                                            
+                                                            for (int i = 1; i <= 5; i++) {
+                                                                if (i <= fullStars) { %>
+                                                                    <i class="fa fa-star star-filled"></i>
+                                                                <% } else if (i == fullStars + 1 && hasHalfStar) { %>
+                                                                    <i class="fa fa-star-half-o star-half"></i>
+                                                                <% } else { %>
+                                                                    <i class="fa fa-star-o star-empty"></i>
+                                                                <% }
+                                                            } %>
+                                                            <span class="rating-text">(<%= String.format("%.1f", staffRating)%>/5.0)</span>
+                                                        </div>
+                                                    <% } else { %>
+                                                        <div class="no-rating">
+                                                            <i class="fa fa-star-o"></i> No ratings yet
+                                                        </div>
+                                                    <% } %>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <% } %>
 
                                     <div class="text-center" style="margin-top: 30px;">
                                         <button type="submit" class="btn btn-custom btn-primary-custom">
@@ -181,11 +328,9 @@
                             <!-- Profile Actions -->
                             <div class="profile-actions">
                                 <h4 style="margin-bottom: 25px; color: #333;">Account Actions</h4>
-
                                 <button type="button" class="btn btn-custom btn-warning-custom" onclick="openChangePasswordModal()">
                                     <i class="fa fa-key"></i> Change Password
                                 </button>
-
                                 <button type="button" class="btn btn-custom btn-danger-custom" onclick="confirmLogout()">
                                     <i class="fa fa-sign-out"></i> Logout
                                 </button>
@@ -197,7 +342,7 @@
         </section>
 
         <!-- Hidden Profile Picture Upload Form -->
-        <form action="<%= request.getContextPath()%>/ProfileServlet" method="post" enctype="multipart/form-data" id="profilePicForm" style="display: none;">
+        <form action="<%= request.getContextPath()%>/Profile" method="post" enctype="multipart/form-data" id="profilePicForm" style="display: none;">
             <input type="hidden" name="action" value="updateProfilePic">
             <input type="file" id="profilePicInput" name="profilePic" accept="image/*" onchange="uploadProfilePicture()">
         </form>
@@ -208,7 +353,7 @@
                 <span class="close" onclick="closeChangePasswordModal()">&times;</span>
                 <h3 style="margin-bottom: 25px; color: #333;">Change Password</h3>
 
-                <form action="<%= request.getContextPath()%>/ProfileServlet" method="post" id="changePasswordForm">
+                <form action="<%= request.getContextPath()%>/Profile" method="post" id="changePasswordForm">
                     <input type="hidden" name="action" value="changePassword">
 
                     <div class="form-group">
@@ -248,7 +393,7 @@
         <%@ include file="/includes/footer.jsp" %>
 
         <script>
-            // Debug function to check session status
+               // Debug function to check session status
             function checkSessionStatus() {
                 fetch('<%= request.getContextPath()%>/ProfileServlet', {
                     method: 'GET',
@@ -397,15 +542,15 @@
                     matchIndicator.innerHTML = '<span style="color: #dc3545;">✗ Passwords do not match</span>';
                 }
             }
-
-            // Logout confirmation
+            
+            // Just updating the logout confirmation to be universal
             function confirmLogout() {
                 if (confirm('Are you sure you want to logout?')) {
                     window.location.href = '<%= request.getContextPath()%>/Login?action=logout';
                 }
             }
-
-            // Close modal when clicking outside
+            
+             // Close modal when clicking outside
             window.onclick = function (event) {
                 const modal = document.getElementById('changePasswordModal');
                 if (event.target === modal) {

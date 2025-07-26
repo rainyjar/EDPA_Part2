@@ -37,8 +37,8 @@
                 <li <%= pageName.equals("customer/appointment_history.jsp") ? "class='active'" : ""%>>
                     <a href="<%= request.getContextPath()%>/customer/appointment_history.jsp">Appointments</a>
                 </li>
-                <li <%= request.getServletPath().contains("ProfileServlet") ? "class='active'" : ""%>>
-                    <a href="<%= request.getContextPath()%>/ProfileServlet">Profile</a>
+                <li <%= request.getServletPath().contains("Profile") ? "class='active'" : ""%>>
+                    <a href="<%= request.getContextPath()%>/Profile">Profile</a>
                 </li>
                 <li <%= request.getRequestURI().contains("AppointmentServlet") ? "class='active'" : ""%>class="appointment-btn">
                     <a href="<%= request.getContextPath()%>/AppointmentServlet?action=book">Book an Appointment</a>
