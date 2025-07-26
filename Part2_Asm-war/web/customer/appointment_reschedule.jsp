@@ -8,14 +8,14 @@
     // Check if user is logged in
     Customer loggedInCustomer = (Customer) session.getAttribute("customer");
     if (loggedInCustomer == null) {
-        response.sendRedirect("login.jsp");
+        response.sendRedirect(request.getContextPath() + "/login.jsp");
         return;
     }
     
     // Get appointment ID from parameter
     String appointmentIdParam = request.getParameter("id");
     if (appointmentIdParam == null || appointmentIdParam.trim().isEmpty()) {
-        response.sendRedirect("appointment_history.jsp");
+        response.sendRedirect(request.getContextPath() + "/AppointmentServlet?action=history&error=invalid_id");
         return;
     }
     
@@ -26,15 +26,15 @@
     
     // If appointment data not loaded, redirect back
     if (existingAppointment == null) {
-        response.sendRedirect("appointment_history.jsp");
+        response.sendRedirect(request.getContextPath() + "/AppointmentServlet?action=history&error=not_found");
         return;
     }
     
-    // Validate that appointment belongs to logged in customer and is reschedable
+    // Validate that appointment belongs to logged in customer and is reschedule-able
     if (existingAppointment.getCustomer() == null || 
         existingAppointment.getCustomer().getId() != loggedInCustomer.getId() || 
         (!("pending".equals(existingAppointment.getStatus()) || "approved".equals(existingAppointment.getStatus())))) {
-        response.sendRedirect("appointment_history.jsp");
+        response.sendRedirect(request.getContextPath() + "/AppointmentServlet?action=history&error=cannot_reschedule");
         return;
     }
 %>
@@ -53,32 +53,6 @@
     <%@ include file="/includes/header.jsp" %>
     <%@ include file="/includes/navbar.jsp" %>
 
-    <%
-    String errorMsg = request.getParameter("error");
-    String successMsg = request.getParameter("success");
-    %>
-
-    <!-- Error Messages -->
-    <% if (errorMsg != null) { %>
-    <div class="alert alert-danger alert-dismissible" style="margin: 20px; position: fixed; top: 80px; right: 20px; z-index: 1000; width: 350px;">
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-        <strong>Error!</strong> 
-        <% if ("invalid_id".equals(errorMsg)) { %>
-            Invalid appointment ID provided.
-        <% } else if ("invalid_data".equals(errorMsg)) { %>
-            Invalid data provided. Please check your inputs.
-        <% } else if ("invalid_date".equals(errorMsg)) { %>
-            Invalid date format. Please select a valid date.
-        <% } else if ("invalid_time".equals(errorMsg)) { %>
-            Invalid time format. Please select a valid time.
-        <% } else if ("invalid_datetime".equals(errorMsg)) { %>
-            Invalid date or time format. Please check your selections.
-        <% } else if ("system_error".equals(errorMsg)) { %>
-            A system error occurred. Please try again.
-        <% } %>
-    </div>
-    <% } %>
-
     <!-- APPOINTMENT RESCHEDULE SECTION -->
     <section class="appointment-container">
         <div class="container">
@@ -87,22 +61,69 @@
                     <img src="<%= request.getContextPath() %>/images/cust_homepage/appointment-image.jpg" class="img-responsive">
                     <div class="appointment-form-wrapper">
                         
+                        <!-- Error and Success Messages -->
+                        <%
+                            String errorParam = request.getParameter("error");
+                            String successParam = request.getParameter("success");
+                        %>
+                        <% if (errorParam != null) { %>
+                            <div class="alert alert-danger alert-dismissible" role="alert">
+                                <% if ("invalid_date".equals(errorParam)) { %>
+                                    Please select a future date for your appointment (weekdays only, within the next week).
+                                <% } else if ("invalid_time".equals(errorParam)) { %>
+                                    Please select a valid time slot (9:00 AM - 5:00 PM, 30-minute intervals).
+                                <% } else if ("time_conflict".equals(errorParam)) { %>
+                                    The selected time slot is not available. Please choose another time.
+                                <% } else if ("reschedule_failed".equals(errorParam)) { %>
+                                    Rescheduling failed. Please try again or contact support.
+                                <% } else if ("invalid_data".equals(errorParam)) { %>
+                                    Invalid data provided. Please check your selections.
+                                <% } else if ("invalid_datetime".equals(errorParam)) { %>
+                                    Invalid date or time format. Please try again.
+                                <% } else if ("system_error".equals(errorParam)) { %>
+                                    A system error occurred. Please try again.
+                                <% } else { %>
+                                    An error occurred. Please try again.
+                                <% } %>
+                            </div>
+                        <% } %>
+
                         <!-- Reschedule Header -->
-                        <div class="reschedule-header" style="text-align: center; margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 5px;">
-                            <h3 style="color: #007bff; margin: 0;">
-                                <i class="fa fa-calendar"></i> Reschedule Appointment #<%= existingAppointment.getId() %>
+                        <div class="reschedule-header" style="text-align: center; margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff;">
+                            <h3 style="color: #007bff; margin: 0; font-weight: 600;">
+                                <i class="fa fa-calendar-o"></i> Reschedule Appointment #<%= existingAppointment.getId() %>
                             </h3>
                             <p style="margin: 10px 0 0 0; color: #666;">
                                 Current Status: <span class="status-badge status-<%= existingAppointment.getStatus() %>"><%= existingAppointment.getStatus().toUpperCase() %></span>
                             </p>
                         </div>
-                        
+
+                        <!-- Current Appointment Info -->
+                        <div class="current-appointment-info" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #dee2e6;">
+                            <h4 style="color: #495057; margin-bottom: 15px;">
+                                <i class="fa fa-info-circle"></i> Current Appointment Details
+                            </h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Treatment:</strong> <%= existingAppointment.getTreatment() != null ? existingAppointment.getTreatment().getName() : "Not specified" %></p>
+                                    <p><strong>Doctor:</strong> <%= existingAppointment.getDoctor() != null ? existingAppointment.getDoctor().getName() : "Not assigned" %></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Date:</strong> <%= existingAppointment.getAppointmentDate() != null ? existingAppointment.getAppointmentDate() : "Not set" %></p>
+                                    <p><strong>Time:</strong> <%= existingAppointment.getAppointmentTime() != null ? existingAppointment.getAppointmentTime() : "Not set" %></p>
+                                </div>
+                            </div>
+                            <% if (existingAppointment.getCustMessage() != null && !existingAppointment.getCustMessage().trim().isEmpty()) { %>
+                            <p><strong>Your Message:</strong> "<%= existingAppointment.getCustMessage() %>"</p>
+                            <% } %>
+                        </div>
+
                         <!-- Step Indicator -->
                         <div class="step-indicator">
-                            <div class="step active" id="step1">1. Select Treatment</div>
-                            <div class="step" id="step2">2. Choose Date</div>
-                            <div class="step" id="step3">3. Pick Doctor & Time</div>
-                            <div class="step" id="step4">4. Add Message</div>
+                            <div class="step active clickable" id="step1" data-section="treatment-section">1. Select Treatment</div>
+                            <div class="step clickable" id="step2" data-section="date-section">2. Choose Date</div>
+                            <div class="step clickable" id="step3" data-section="doctor-section">3. Pick Doctor & Time</div>
+                            <div class="step clickable" id="step4" data-section="message-section">4. Update Message</div>
                         </div>
 
                         <!-- Customer Info Display -->
@@ -124,7 +145,6 @@
                         <form id="reschedule-form" method="post" action="AppointmentServlet">
                             <input type="hidden" name="action" value="reschedule">
                             <input type="hidden" name="appointmentId" value="<%= existingAppointment.getId() %>">
-                            <input type="hidden" name="customer_id" value="<%= loggedInCustomer.getId() %>">
                             <input type="hidden" name="originalStatus" value="<%= existingAppointment.getStatus() %>">
                             
                             <!-- Step 1: Treatment Selection -->
@@ -133,138 +153,83 @@
                                 <div class="form-group">
                                     <label for="treatment">Choose Treatment:</label>
                                     <select id="treatment" name="treatment_id" class="form-control" required>
-                                        <option value="">Select a treatment...</option>
+                                        <option value="" disabled selected>Select a treatment...</option>
                                         <% if (treatmentList != null && !treatmentList.isEmpty()) {
                                             for (Treatment treatment : treatmentList) {
                                                 String treatmentName = treatment.getName();
                                                 if (treatmentName != null && treatmentName.contains("-")) {
                                                     treatmentName = treatmentName.substring(0, treatmentName.indexOf("-")).trim();
                                                 }
-                                                String selected = "";
-                                                if (existingAppointment.getId() == treatment.getId()) {
-                                                    selected = "selected";
-                                                }
                                         %>
                                             <option value="<%= treatment.getId() %>" 
-                                                    data-base-charge="<%= treatment.getBaseConsultationCharge() %>"
-                                                    <%= selected %>>
+                                                    data-base-charge="<%= treatment.getBaseConsultationCharge() %>">
                                                 <%= treatmentName %>
-                                                <% if (treatment.getBaseConsultationCharge() > 0) { %>
-                                                    - RM <%= String.format("%.2f", treatment.getBaseConsultationCharge()) %>
-                                                <% } %>
                                             </option>
                                         <% 
                                             }
                                         } else { 
                                         %>
-                                            <option value="">No treatments available</option>
+                                            <option value="" disabled>No treatments available</option>
                                         <% } %>
                                     </select>
                                     <small class="form-text text-muted">
-                                        <i class="fa fa-info-circle"></i> Select the treatment you need for this appointment
+                                        <i class="fa fa-info-circle"></i> 
+                                        Select the treatment you need for your rescheduled appointment.
                                     </small>
                                 </div>
                             </div>
 
                             <!-- Step 2: Date Selection -->
                             <div class="form-section" id="date-section" style="display: none;">
-                                <h4 class="section-title"><i class="fa fa-calendar"></i> Step 2: Choose Date</h4>
+                                <h4 class="section-title"><i class="fa fa-calendar"></i> Step 2: Select New Date</h4>
                                 <div class="form-group">
-                                    <label for="appointment_date">Select Date:</label>
-                                    <input type="date" id="appointment_date" name="appointment_date" 
-                                           class="form-control" value="<%= existingAppointment.getAppointmentDate() != null ? existingAppointment.getAppointmentDate() : "" %>" required>
+                                    <label for="appointment_date">Choose Date (Weekdays Only):</label>
+                                    <input type="date" id="appointment_date" name="appointment_date" class="form-control" required>
                                     <small class="form-text text-muted">
-                                        <i class="fa fa-info-circle"></i> Please select a date for your appointment (minimum 1 day from today)
+                                        <i class="fa fa-info-circle"></i> 
+                                        Available: Monday to Friday, 9:00 AM - 5:00 PM. 
+                                        <br>Booking window: Today to 7 days ahead (weekdays only selectable). <br>
+                                        <strong>Note:</strong> If rescheduling after 5:00 PM today, earliest available date is tomorrow (if weekday).
                                     </small>
                                 </div>
                             </div>
 
-                            <!-- Step 3: Doctor and Time Selection -->
-                            <div class="form-section" id="doctor-time-section" style="display: none;">
-                                <h4 class="section-title"><i class="fa fa-user-md"></i> Step 3: Pick Doctor & Time</h4>
-                                
-                                <!-- Doctor Selection -->
+                            <!-- Step 3: Doctor & Time Selection -->
+                            <div class="form-section" id="doctor-section" style="display: none;">
+                                <h4 class="section-title"><i class="fa fa-user-md"></i> Step 3: Select Doctor & Time</h4>
                                 <div class="form-group">
-                                    <label for="doctor">Choose Doctor:</label>
-                                    <select id="doctor" name="doctor_id" class="form-control" required>
-                                        <option value="">Select a doctor...</option>
-                                        <% if (doctorList != null && !doctorList.isEmpty()) {
-                                            for (Doctor doctor : doctorList) {
-                                                String doctorName = doctor.getName();
-                                                String specialization = doctor.getSpecialization();
-                                                if (doctorName != null) {
-                                                    String selected = "";
-                                                    if (existingAppointment.getId() == doctor.getId()) {
-                                                        selected = "selected";
-                                                    }
-                                        %>
-                                            <option value="<%= doctor.getId() %>" <%= selected %>>
-                                                <%= doctorName %>
-                                                <% if (specialization != null && !specialization.trim().isEmpty()) { %>
-                                                    - <%= specialization %>
-                                                <% } %>
-                                            </option>
-                                        <%
-                                                }
-                                            }
-                                        } else {
-                                        %>
-                                            <option value="">No doctors available</option>
-                                        <% } %>
-                                    </select>
-                                    <small class="form-text text-muted">
-                                        <i class="fa fa-info-circle"></i> Select your preferred doctor
+                                    <label>Available Time Slots (9:00 AM - 5:00 PM):</label><br>
+                                    <small class="form-text text-muted" style="margin-bottom: 15px;">
+                                        <i class="fa fa-clock-o"></i> 
+                                        Each appointment slot is 30 minutes. Business hours: 9:00 AM to 5:00 PM, weekdays only.
                                     </small>
                                 </div>
-
-                                <!-- Time Selection -->
-                                <div class="form-group">
-                                    <label for="appointment_time">Select Time:</label>
-                                    <select id="appointment_time" name="appointment_time" class="form-control" required>
-                                        <option value="">Select time slot...</option>
-                                        <option value="09:00" <%= "09:00".equals(existingAppointment.getAppointmentTime()) ? "selected" : "" %>>09:00 AM</option>
-                                        <option value="09:30" <%= "09:30".equals(existingAppointment.getAppointmentTime()) ? "selected" : "" %>>09:30 AM</option>
-                                        <option value="10:00" <%= "10:00".equals(existingAppointment.getAppointmentTime()) ? "selected" : "" %>>10:00 AM</option>
-                                        <option value="10:30" <%= "10:30".equals(existingAppointment.getAppointmentTime()) ? "selected" : "" %>>10:30 AM</option>
-                                        <option value="11:00" <%= "11:00".equals(existingAppointment.getAppointmentTime()) ? "selected" : "" %>>11:00 AM</option>
-                                        <option value="11:30" <%= "11:30".equals(existingAppointment.getAppointmentTime()) ? "selected" : "" %>>11:30 AM</option>
-                                        <option value="14:00" <%= "14:00".equals(existingAppointment.getAppointmentTime()) ? "selected" : "" %>>02:00 PM</option>
-                                        <option value="14:30" <%= "14:30".equals(existingAppointment.getAppointmentTime()) ? "selected" : "" %>>02:30 PM</option>
-                                        <option value="15:00" <%= "15:00".equals(existingAppointment.getAppointmentTime()) ? "selected" : "" %>>03:00 PM</option>
-                                        <option value="15:30" <%= "15:30".equals(existingAppointment.getAppointmentTime()) ? "selected" : "" %>>03:30 PM</option>
-                                        <option value="16:00" <%= "16:00".equals(existingAppointment.getAppointmentTime()) ? "selected" : "" %>>04:00 PM</option>
-                                        <option value="16:30" <%= "16:30".equals(existingAppointment.getAppointmentTime()) ? "selected" : "" %>>04:30 PM</option>
-                                    </select>
-                                    <small class="form-text text-muted">
-                                        <i class="fa fa-info-circle"></i> Choose your preferred time slot
-                                    </small>
+                                <div id="doctor-cards-container">
+                                    <!-- Doctor cards will be populated dynamically -->
                                 </div>
+                                <input type="hidden" id="selected_doctor_id" name="doctor_id" required>
+                                <input type="hidden" id="selected_time_slot" name="appointment_time" required>
                             </div>
 
                             <!-- Step 4: Message -->
                             <div class="form-section" id="message-section" style="display: none;">
-                                <h4 class="section-title"><i class="fa fa-comment"></i> Step 4: Add Message (Optional)</h4>
+                                <h4 class="section-title"><i class="fa fa-comment"></i> Step 4: Update Medical Concerns (Optional)</h4>
                                 <div class="form-group">
-                                    <label for="message">Additional Message:</label>
-                                    <textarea id="message" name="message" class="form-control" rows="4" 
-                                              placeholder="Please describe your symptoms or any special requirements..."><%= existingAppointment.getCustMessage() != null ? existingAppointment.getCustMessage() : "" %></textarea>
-                                    <small class="form-text text-muted">
-                                        <i class="fa fa-info-circle"></i> Optional: Add any additional information for the doctor
-                                    </small>
+                                    <label for="customer_message">Describe your medical concerns or specific requests:</label>
+                                    <textarea id="customer_message" name="customer_message" class="form-control" 
+                                             rows="4" placeholder="Please describe your symptoms, concerns, or any specific requests for the consultation..."><%= existingAppointment.getCustMessage() != null ? existingAppointment.getCustMessage() : "" %></textarea>
+                                    <small class="form-text text-muted">This information will help the doctor prepare for your consultation.</small>
                                 </div>
-                            </div>
-
-                            <!-- Navigation Buttons -->
-                            <div class="form-navigation">
-                                <button type="button" id="prev-btn" class="btn btn-secondary" style="display: none;">
-                                    <i class="fa fa-arrow-left"></i> Previous
-                                </button>
-                                <button type="button" id="next-btn" class="btn btn-primary">
-                                    Next <i class="fa fa-arrow-right"></i>
-                                </button>
-                                <button type="button" id="review-btn" class="btn btn-info" style="display: none;">
-                                    <i class="fa fa-eye"></i> Review Reschedule
-                                </button>
+                                
+                                <!-- Submit Section -->
+                                <div class="text-center" style="margin-top: 30px;">
+                                    <button type="button" id="submit-reschedule" class="btn btn-submit btn-lg">
+                                        <i class="fa fa-check"></i> Reschedule Appointment
+                                    </button>
+                                    <a href="<%= request.getContextPath() %>/AppointmentServlet?action=history" class="btn btn-secondary btn-lg" style="margin-left: 10px;">
+                                        <i class="fa fa-times"></i> Cancel
+                                    </a>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -275,29 +240,42 @@
 
     <!-- Confirmation Modal -->
     <div class="modal fade" id="confirmationModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">
-                        <i class="fa fa-calendar"></i> Confirm Reschedule
-                    </h4>
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
+                    <h4 class="modal-title"><i class="fa fa-check-circle"></i> Confirm Appointment Reschedule</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <h5><strong>Rescheduling Details:</strong></h5>
-                    <div id="confirmation-details"></div>
-                    <hr>
-                    <div class="alert alert-info">
-                        <i class="fa fa-info-circle"></i>
-                        <strong>Please Note:</strong> 
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Patient Information:</h5>
+                            <p><strong>Name:</strong> <%= loggedInCustomer.getName() %></p>
+                            <p><strong>Email:</strong> <%= loggedInCustomer.getEmail() %></p>
+                            <p><strong>Phone:</strong> <%= loggedInCustomer.getPhone() != null ? loggedInCustomer.getPhone() : "Not provided" %></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>New Appointment Details:</h5>
+                            <p><strong>Treatment:</strong> <span id="confirm-treatment"></span></p>
+                            <p><strong>Doctor:</strong> <span id="confirm-doctor"></span></p>
+                            <p><strong>Date:</strong> <span id="confirm-date"></span></p>
+                            <p><strong>Time:</strong> <span id="confirm-time"></span></p>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                        <h5>Medical Concerns:</h5>
+                        <p id="confirm-message" style="font-style: italic; color: #666;"></p>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fa fa-exclamation-triangle"></i>
+                        <strong>Important:</strong> Rescheduling will update your appointment details. 
                         <% if ("approved".equals(existingAppointment.getStatus())) { %>
-                            Since this appointment was already approved, rescheduling will change the status back to "pending" and require new approval from counter staff.
+                        Since your appointment was previously approved, it will be set back to "pending" status for new approval.
                         <% } else { %>
-                            Your rescheduled appointment will remain in "pending" status and require approval from counter staff.
+                        Your appointment will remain in "pending" status for approval.
                         <% } %>
-                        You will receive a confirmation email shortly after rescheduling.
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -315,6 +293,149 @@
     <%@ include file="/includes/footer.jsp" %>
     <%@ include file="/includes/scripts.jsp" %>
     
+    <!-- Custom styles for appointment reschedule -->
+    <style>
+        .step-indicator .step.clickable {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .step-indicator .step.clickable:hover {
+            background-color: #e8f4fd;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .step-indicator .step.completed {
+            background-color: #5cb85c;
+            color: white;
+        }
+        
+        .step-indicator .step.completed:hover {
+            background-color: #449d44;
+        }
+        
+        .step-indicator .step.active {
+            background-color: #337ab7;
+            color: white;
+        }
+        
+        .step-indicator .step.active:hover {
+            background-color: #286090;
+        }
+        
+        .step-indicator .step {
+            border-radius: 5px;
+            padding: 10px 15px;
+            margin: 5px;
+            border: 2px solid #ddd;
+            background-color: #f8f9fa;
+            color: #666;
+        }
+        
+        /* Time slot button styles */
+        .time-slot-btn {
+            margin: 2px;
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            color: #333;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .time-slot-btn:hover {
+            background-color: #e8f4fd;
+            border-color: #337ab7;
+        }
+        
+        .time-slot-btn.selected {
+            background-color: #337ab7;
+            color: white;
+            border-color: #337ab7;
+        }
+        
+        .time-slot-btn.disabled {
+            background-color: #f5f5f5;
+            color: #999;
+            border-color: #ddd;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        .time-slot-btn.disabled:hover {
+            background-color: #f5f5f5;
+            border-color: #ddd;
+        }
+        
+        .time-slots-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .doctor-card {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #fff;
+            transition: all 0.3s ease;
+        }
+        
+        .doctor-card.selected {
+            border-color: #337ab7;
+            background-color: #f8f9fa;
+        }
+        
+        .doctor-info h5 {
+            margin-bottom: 5px;
+            color: #337ab7;
+        }
+        
+        .doctor-info .specialization {
+            color: #666;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+        
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .status-approved {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .current-appointment-info {
+            position: relative;
+        }
+        
+        .current-appointment-info::before {
+            content: "";
+            position: absolute;
+            left: -1px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(to bottom, #007bff, #0056b3);
+            border-radius: 2px;
+        }
+    </style>
+
     <!-- Pass JSP data to JavaScript -->
     <script>
         // Pass doctor data from JSP to JavaScript
@@ -346,49 +467,19 @@
             %>
         ];
         
-        // Mark this as reschedule mode
-        window.isRescheduleMode = true;
-        window.originalAppointmentId = <%= existingAppointment.getId() %>;
-        window.originalStatus = '<%= existingAppointment.getStatus() %>';
+        // Pass current appointment data for reference only (not pre-population)
+        window.currentAppointment = {
+            id: <%= existingAppointment.getId() %>,
+            treatmentId: <%= existingAppointment.getTreatment() != null ? existingAppointment.getTreatment().getId() : "null" %>,
+            doctorId: <%= existingAppointment.getDoctor() != null ? existingAppointment.getDoctor().getId() : "null" %>,
+            date: "<%= existingAppointment.getAppointmentDate() != null ? existingAppointment.getAppointmentDate().toString().split(" ")[0] : "" %>",
+            time: "<%= existingAppointment.getAppointmentTime() != null ? existingAppointment.getAppointmentTime().toString().substring(0, 5) : "" %>",
+            message: "<%= existingAppointment.getCustMessage() != null ? existingAppointment.getCustMessage().replaceAll("\"", "\\\\\"") : "" %>"
+        };
     </script>
 
-    <!-- Reschedule-specific JavaScript -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize reschedule form with appointment.js logic
-            if (typeof initAppointmentForm === 'function') {
-                initAppointmentForm();
-            }
-            
-            // Override final confirmation button text and behavior
-            const finalConfirmBtn = document.getElementById('final-confirm');
-            if (finalConfirmBtn) {
-                // Update button text to reflect reschedule action
-                finalConfirmBtn.innerHTML = '<i class="fa fa-check"></i> Confirm Reschedule';
-                
-                // Override the form submission
-                finalConfirmBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    
-                    // Submit the reschedule form
-                    const form = document.getElementById('reschedule-form');
-                    if (form) {
-                        form.submit();
-                    }
-                });
-            }
-            
-            // Show success message if redirected from successful reschedule
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('success') === 'true') {
-                alert('Appointment rescheduled successfully! Please check your appointment history for the updated details.');
-                // Redirect to appointment history after showing message
-                setTimeout(function() {
-                    window.location.href = 'appointment_history.jsp';
-                }, 2000);
-            }
-        });
-    </script>
+    <!-- Include appointment.js for shared functionality -->
+    <script src="<%= request.getContextPath() %>/js/appointment.js"></script>
 
 </body>
 </html>

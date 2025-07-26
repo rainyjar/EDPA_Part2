@@ -136,7 +136,11 @@ public class Login extends HttpServlet {
         }
     }
 
+<<<<<<< HEAD
      // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
+=======
+    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
+>>>>>>> 4c386113b9f8bf4ccdfae657b7498047657f34e5
     /**
      * Handles the HTTP <code>GET</code> method.
      *
@@ -173,6 +177,10 @@ public class Login extends HttpServlet {
     @Override
     public String getServletInfo() {
         return "Short description";
+<<<<<<< HEAD
     }// </editor-fold>
 
+=======
+    }// </editor-fold>
+>>>>>>> 4c386113b9f8bf4ccdfae657b7498047657f34e5
 }

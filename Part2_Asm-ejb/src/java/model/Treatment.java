@@ -26,8 +26,16 @@ public class Treatment implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-    private String name, longDescription, shortDescription, treatmentPic;
+    private String name, treatmentPic;
     private double baseConsultationCharge, followUpCharge;
+
+    @Lob
+  @Column(length = 32700)  
+    private String shortDescription;
+
+    @Lob
+    @Column(length = 32700)  
+    private String longDescription;
 
     @OneToMany(mappedBy = "treatment", cascade = CascadeType.ALL)
     private List<Prescription> prescriptions;
@@ -126,7 +134,7 @@ public class Treatment implements Serializable {
         this.appointments = appointments;
     }
 
-        @Override
+    @Override
     public int hashCode() {
         int hash = 0;
         hash += (int) id;

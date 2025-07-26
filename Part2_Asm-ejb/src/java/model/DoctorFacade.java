@@ -58,4 +58,24 @@ public class DoctorFacade extends AbstractFacade<Doctor> {
             return false;
         }
     }
+    
+    /**
+     * Find doctors associated with a specific treatment
+     * @param treatmentId The treatment ID
+     * @return List of doctors who can perform this treatment
+     */
+    public List<Doctor> findDoctorsByTreatment(int treatmentId) {
+        try {
+            Query query = em.createQuery(
+                "SELECT DISTINCT d FROM Doctor d " +
+                "JOIN d.treatments t " +
+                "WHERE t.id = :treatmentId"
+            );
+            query.setParameter("treatmentId", treatmentId);
+            return query.getResultList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return java.util.Collections.emptyList();
+        }
+    }
 }

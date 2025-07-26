@@ -6,7 +6,6 @@
 package model;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -38,7 +37,7 @@ public class Doctor implements Serializable {
     @Column(name = "dob")
     private Date dob;
     @Column(precision = 4, scale = 2)
-    private BigDecimal rating;
+    private Double rating;
 
     @ManyToMany(mappedBy = "doctors")
     private Set<Treatment> treatments;
@@ -61,7 +60,7 @@ public class Doctor implements Serializable {
         this.password = password;
     }
 
-    public Doctor(String name, String email, String password, String phone, String gender, String specialization, String profilePic, Date dob, BigDecimal rating) {
+    public Doctor(String name, String email, String password, String phone, String gender, String specialization, String profilePic, Date dob, Double rating) {
         this.name = name;
         this.email = email;
         this.password = password;
@@ -145,11 +144,11 @@ public class Doctor implements Serializable {
         this.dob = dob;
     }
 
-    public BigDecimal getRating() {
+    public Double getRating() {
         return rating;
     }
 
-    public void setRating(BigDecimal rating) {
+    public void setRating(Double rating) {
         this.rating = rating;
     }
 

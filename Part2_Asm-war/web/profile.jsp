@@ -364,7 +364,8 @@
                     <div class="form-group">
                         <label class="form-label">New Password *</label>
                         <input type="password" class="form-control" name="newPassword" id="newPassword" 
-                               onkeyup="checkPasswordStrength()" required>
+                               onkeyup="checkPasswordStrength(); checkPasswordMatch();" 
+                               oninput="checkPasswordMatch();" required>
                         <div id="passwordStrength" class="password-strength"></div>
                         <small style="color: #666; margin-top: 5px; display: block;">
                             Password must be at least 6 characters long
@@ -374,7 +375,8 @@
                     <div class="form-group">
                         <label class="form-label">Confirm New Password *</label>
                         <input type="password" class="form-control" name="confirmPassword" 
-                               onkeyup="checkPasswordMatch()" required>
+                               onkeyup="checkPasswordMatch();" 
+                               oninput="checkPasswordMatch();" required>
                         <small id="passwordMatch" style="margin-top: 5px; display: block;"></small>
                     </div>
 
@@ -395,7 +397,7 @@
         <script>
                // Debug function to check session status
             function checkSessionStatus() {
-                fetch('<%= request.getContextPath()%>/ProfileServlet', {
+                fetch('<%= request.getContextPath()%>/Profile', {
                     method: 'GET',
                     credentials: 'same-origin'
                 })
@@ -507,6 +509,10 @@
                 document.getElementById('changePasswordForm').reset();
                 document.getElementById('passwordStrength').className = 'password-strength';
                 document.getElementById('passwordMatch').innerHTML = '';
+                
+                // Clear any inline styles that might have been added
+                document.getElementById('passwordStrength').style.display = '';
+                document.getElementById('passwordMatch').style.color = '';
             }
 
             // Password strength checker
@@ -531,12 +537,20 @@
                 const confirmPassword = document.querySelector('input[name="confirmPassword"]').value;
                 const matchIndicator = document.getElementById('passwordMatch');
 
+                // If confirm password is empty, don't show any message
                 if (confirmPassword === '') {
                     matchIndicator.innerHTML = '';
                     return;
                 }
 
-                if (newPassword === confirmPassword) {
+                // If new password is empty but confirm password has content, show error
+                if (newPassword === '' && confirmPassword !== '') {
+                    matchIndicator.innerHTML = '<span style="color: #dc3545;">✗ Please enter new password first</span>';
+                    return;
+                }
+
+                // Compare passwords
+                if (newPassword === confirmPassword && newPassword !== '') {
                     matchIndicator.innerHTML = '<span style="color: #28a745;">✓ Passwords match</span>';
                 } else {
                     matchIndicator.innerHTML = '<span style="color: #dc3545;">✗ Passwords do not match</span>';

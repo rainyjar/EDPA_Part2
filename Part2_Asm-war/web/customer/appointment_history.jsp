@@ -64,6 +64,8 @@
                 Appointment rescheduled successfully. Check your updated appointment details below.
             <% } else if ("feedback_submitted".equals(successMsg)) { %>
                 Thank you! Your feedback has been submitted successfully.
+            <% } else if ("receipt_generated".equals(successMsg)) { %>
+                Receipt has been generated and downloaded successfully!
             <% } %>
         </div>
         <% } %>
@@ -122,8 +124,8 @@
                                 <label for="statusFilter">Select Appointment Status:</label>
                                 <select id="statusFilter" name="status" class="form-control" onchange="filterAppointments()">
                                     <option value="all" <%= "all".equals(selectedStatus) ? "selected" : ""%>>All Appointments</option>
-                                    <option value="pending" <%= "pending".equals(selectedStatus) ? "selected" : ""%>>Pending</option> // allow reschedule (using the same appointment id, remain the status to pending for approval) or cancel appointment
-                                    <option value="approved" <%= "approved".equals(selectedStatus) ? "selected" : ""%>>Approved</option> // allow reschedule (using the same appointment id,but change back the status from approved back to pending for new approval) or cancel appointment
+                                    <option value="pending" <%= "pending".equals(selectedStatus) ? "selected" : ""%>>Pending</option>
+                                    <option value="approved" <%= "approved".equals(selectedStatus) ? "selected" : ""%>>Approved</option>
                                     <option value="completed" <%= "completed".equals(selectedStatus) ? "selected" : ""%>>Completed</option>
                                     <option value="cancelled" <%= "cancelled".equals(selectedStatus) ? "selected" : ""%>>Cancelled</option>
                                 </select>
@@ -138,8 +140,9 @@
                         <%
                             if (appointmentList != null && !appointmentList.isEmpty()) {
                                 DecimalFormat df = new DecimalFormat("0.00");
-                                SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy");
+                                SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM dd yyyy");
                                 SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+                                SimpleDateFormat paymentDateFormat = new SimpleDateFormat("EEE MMM dd yyyy HH:mm");
 
                                 boolean hasMatchingAppointments = false;
 
@@ -182,16 +185,8 @@
                                         }
                                     }
 
-                                    // Find counter staff
-                                    CounterStaff counterStaff = null;
-                                    if (staffList != null && appointment.getId() > 0) {
-                                        for (CounterStaff staff : staffList) {
-                                            if (staff.getId() == appointment.getId()) {
-                                                counterStaff = staff;
-                                                break;
-                                            }
-                                        }
-                                    }
+                                    // Get counter staff directly from appointment
+                                    CounterStaff counterStaff = appointment.getCounterStaff();
                         %>
 
                         <!-- Appointment Container -->
@@ -244,14 +239,14 @@
                                     <div class="info-row">
                                         <div class="info-label">Date:</div>
                                         <div class="info-value">
-                                            <%= appointment.getAppointmentDate() != null ? appointment.getAppointmentDate() : "Not scheduled"%>
+                                            <%= appointment.getAppointmentDate() != null ? dateFormat.format(appointment.getAppointmentDate()) : "Not scheduled"%>
                                         </div>
                                     </div>
 
                                     <div class="info-row">
                                         <div class="info-label">Time:</div>
                                         <div class="info-value">
-                                            <%= appointment.getAppointmentTime() != null ? appointment.getAppointmentTime() : "Not scheduled"%>
+                                            <%= appointment.getAppointmentTime() != null ? timeFormat.format(appointment.getAppointmentTime()) : "Not scheduled"%>
                                         </div>
                                     </div>
 
@@ -278,7 +273,7 @@
                                             <% } else if ("completed".equals(appointment.getStatus())) { %>
                                             <span style="color: #999; font-style: italic;">No notes provided by doctor</span>
                                             <% } else { %>
-                                            <span style="color: #999; font-style: italic;">Available after consultation</span>
+                                            <span style="color: #999; font-style: italic;">No notes yet. Available after consultation</span>
                                             <% } %>
                                         </div>
                                     </div>
@@ -321,7 +316,7 @@
                                     <div class="info-row">
                                         <div class="info-label">Payment Date:</div>
                                         <div class="info-value">
-                                            <%= appointmentPayment.getPaymentDate()%>
+                                            <%= paymentDateFormat.format(appointmentPayment.getPaymentDate())%>
                                         </div>
                                     </div>
                                     <% } %>
@@ -362,7 +357,7 @@
                                     <% if ("completed".equals(appointmentStatus)) {%>
                                     <button type="button" class="btn-action btn-feedback" 
                                             onclick="submitFeedback(<%= appointment.getId()%>)">
-                                        <i class="fa fa-star"></i> Submit Feedback
+                                        <i class="fa fa-star"></i> Submit/View Feedback
                                     </button>
                                     <% } %>
 
@@ -393,7 +388,7 @@
                             <p>Try selecting a different status or view all appointments.</p>
                             <% } else { %>
                             <p>You haven't booked any appointments yet.</p>
-                            <a href="appointment.jsp" class="btn btn-primary">Book Your First Appointment</a>
+                            <a href="<%= request.getContextPath() %>/AppointmentServlet?action=book" class="btn btn-primary">Book Your First Appointment</a>
                             <% } %>
                         </div>
                         <%
@@ -404,7 +399,7 @@
                             <i class="fa fa-calendar-times-o" style="font-size: 64px; color: #ccc; margin-bottom: 20px;"></i>
                             <h3>No appointment history</h3>
                             <p>You haven't booked any appointments yet.</p>
-                            <a href="appointment.jsp" class="btn btn-primary">Book Your First Appointment</a>
+                            <a href="<%= request.getContextPath() %>/AppointmentServlet?action=book" class="btn btn-primary">Book Your First Appointment</a>
                         </div>
                         <% }%>
                     </div>
@@ -439,7 +434,82 @@
             }
             
             // Redirect to feedback form with appointment ID
-            window.location.href = 'ScheduleServlet?action=show_feedback_form&appointment_id=' + appointmentId;
+            window.location.href = 'FeedbackServlet?action=show_feedback_form&appointment_id=' + appointmentId;
+        }
+        
+        // Function to cancel an appointment
+        function cancelAppointment(appointmentId, currentStatus) {
+            console.log('Cancelling appointment ID:', appointmentId, 'Current status:', currentStatus);
+            
+            if (!appointmentId) {
+                alert('Invalid appointment ID');
+                return;
+            }
+            
+            // Confirm cancellation with user
+            if (confirm('Are you sure you want to cancel this appointment?\n\nThis action cannot be undone.')) {
+                // Create a form to submit the cancellation request
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'AppointmentServlet';
+                
+                // Add action parameter
+                var actionInput = document.createElement('input');
+                actionInput.type = 'hidden';
+                actionInput.name = 'action';
+                actionInput.value = 'cancel';
+                form.appendChild(actionInput);
+                
+                // Add appointment ID parameter
+                var idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'appointmentId';
+                idInput.value = appointmentId;
+                form.appendChild(idInput);
+                
+                // Add current status parameter
+                var statusInput = document.createElement('input');
+                statusInput.type = 'hidden';
+                statusInput.name = 'currentStatus';
+                statusInput.value = currentStatus;
+                form.appendChild(statusInput);
+                
+                // Submit form
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+        
+        // Function to reschedule an appointment
+        function rescheduleAppointment(appointmentId) {
+            console.log('Rescheduling appointment ID:', appointmentId);
+            
+            if (!appointmentId) {
+                alert('Invalid appointment ID');
+                return;
+            }
+            
+            // Redirect to reschedule form with appointment ID
+            window.location.href = 'AppointmentServlet?action=reschedule&id=' + appointmentId;
+        }
+        
+        // Function to filter appointments by status
+        function filterAppointments() {
+            const status = document.getElementById('statusFilter').value;
+            window.location.href = 'AppointmentServlet?action=history&status=' + status;
+        }
+        
+        // Function to generate receipt for completed appointments
+        function generateReceipt(appointmentId) {
+            console.log('Generating receipt for appointment ID:', appointmentId);
+            
+            if (!appointmentId) {
+                alert('Invalid appointment ID');
+                return;
+            }
+            
+            // Open receipt in new window/tab
+            window.open('ReceiptServlet?appointmentId=' + appointmentId, '_blank');
         }
         </script>
 

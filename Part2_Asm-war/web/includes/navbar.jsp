@@ -35,7 +35,7 @@
                     <a href="<%= request.getContextPath()%>/TreatmentServlet?action=viewAll">Treatment Types</a>
                 </li>
                 <li <%= pageName.equals("customer/appointment_history.jsp") ? "class='active'" : ""%>>
-                    <a href="<%= request.getContextPath()%>/customer/appointment_history.jsp">Appointments</a>
+                    <a href="<%= request.getContextPath()%>/AppointmentServlet?action=history">Appointments</a>
                 </li>
                 <li <%= request.getServletPath().contains("Profile") ? "class='active'" : ""%>>
                     <a href="<%= request.getContextPath()%>/Profile">Profile</a>

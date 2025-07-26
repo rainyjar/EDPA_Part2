@@ -16,11 +16,11 @@ import model.Feedback;
 import model.FeedbackFacade;
 
 /**
- * ScheduleServlet handles feedback operations for the APU Medical Center
+ * FeedbackServlet handles feedback operations for the APU Medical Center
  * This servlet manages feedback submission and validation for completed appointments
  */
-@WebServlet(name = "ScheduleServlet", urlPatterns = {"/ScheduleServlet"})
-public class ScheduleServlet extends HttpServlet {
+@WebServlet(name = "FeedbackServlet", urlPatterns = {"/FeedbackServlet"})
+public class FeedbackServlet extends HttpServlet {
 
     @EJB
     private AppointmentFacade appointmentFacade;
@@ -113,15 +113,11 @@ public class ScheduleServlet extends HttpServlet {
             }
             
             // Check if feedback already exists for this appointment
-            boolean feedbackExists = checkFeedbackExists(appointmentId);
-            if (feedbackExists) {
-                response.sendRedirect(request.getContextPath() + "/AppointmentServlet?action=history&error=feedback_exists");
-                return;
-            }
+            Feedback existingFeedback = getExistingFeedback(appointmentId);
             
-            // Set appointment data and forward to feedback form
+            // Set appointment data and existing feedback (if any) and forward to feedback form
             request.setAttribute("appointment", appointment);
-            request.setAttribute("feedbackExists", feedbackExists);
+            request.setAttribute("existingFeedback", existingFeedback);
             request.getRequestDispatcher("/customer/feedback.jsp").forward(request, response);
             
         } catch (Exception e) {
@@ -132,7 +128,7 @@ public class ScheduleServlet extends HttpServlet {
     
     /**
      * Handle feedback submission
-     * Validates data and creates feedback records for doctor and/or counter staff
+     * Validates data and creates/updates feedback records
      */
     private void handleSubmitFeedback(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -177,91 +173,103 @@ public class ScheduleServlet extends HttpServlet {
                 return;
             }
             
-            // Check if feedback already exists
-            if (checkFeedbackExists(appointmentId)) {
-                response.sendRedirect(request.getContextPath() + "/AppointmentServlet?action=history&error=feedback_exists");
-                return;
-            }
-            
             // Get feedback parameters
+            String feedbackType = request.getParameter("feedback_type"); // "doctor" or "staff"
             String doctorRatingParam = request.getParameter("doctor_rating");
             String staffRatingParam = request.getParameter("staff_rating");
             String doctorComment = request.getParameter("doctor_comment");
             String staffComment = request.getParameter("staff_comment");
-
-            boolean hasValidFeedback = false;
-            double doctorRating = 0.0;
-            double staffRating = 0.0;
             
-            // Validate doctor feedback if provided
-            if (appointment.getDoctor() != null && doctorRatingParam != null && !doctorRatingParam.trim().isEmpty()) {
-                try {
-                    doctorRating = Double.parseDouble(doctorRatingParam);
-                    if (doctorRating >= 1.0 && doctorRating <= 10.0) {
-                        hasValidFeedback = true;
-                    } else {
-                        response.sendRedirect(request.getContextPath() + "/customer/feedback.jsp?appointment_id=" + appointmentId + "&error=invalid_rating");
-                        return;
-                    }
-                } catch (NumberFormatException e) {
-                    response.sendRedirect(request.getContextPath() + "/customer/feedback.jsp?appointment_id=" + appointmentId + "&error=invalid_rating");
-                    return;
-                }
+            // Validate feedback type
+            if (!"doctor".equals(feedbackType) && !"staff".equals(feedbackType)) {
+                response.sendRedirect(request.getContextPath() + "/customer/feedback.jsp?appointment_id=" + appointmentId + "&error=invalid_feedback_type");
+                return;
             }
             
-            // Validate staff feedback if provided
-            if (appointment.getCounterStaff() != null && staffRatingParam != null && !staffRatingParam.trim().isEmpty()) {
-                try {
-                    staffRating = Double.parseDouble(staffRatingParam);
-                    if (staffRating >= 1.0 && staffRating <= 10.0) {
-                        hasValidFeedback = true;
-                    } else {
-                        response.sendRedirect(request.getContextPath() + "/customer/feedback.jsp?appointment_id=" + appointmentId + "&error=invalid_rating");
-                        return;
-                    }
-                } catch (NumberFormatException e) {
-                    response.sendRedirect(request.getContextPath() + "/customer/feedback.jsp?appointment_id=" + appointmentId + "&error=invalid_rating");
-                    return;
-                }
-            }
-            
-            // Create single feedback entity with both doctor and staff feedback
-            if (hasValidFeedback) {
-                Feedback feedback = new Feedback();
+            // Get or create feedback record
+            Feedback feedback = getExistingFeedback(appointmentId);
+            if (feedback == null) {
+                // Create new feedback record
+                feedback = new Feedback();
                 feedback.setAppointment(appointment);
                 feedback.setFromCustomer(loggedInCustomer);
                 feedback.setToDoctor(appointment.getDoctor());
                 feedback.setToStaff(appointment.getCounterStaff());
-                
-                // Set doctor feedback data
-                if (doctorRating > 0) {
-                    feedback.setDocRating(doctorRating);
-                    feedback.setCustDocComment(doctorComment != null ? doctorComment.trim() : "");
-                }
-                
-                // Set staff feedback data
-                if (staffRating > 0) {
-                    feedback.setStaffRating(staffRating);
-                    feedback.setCustStaffComment(staffComment != null ? staffComment.trim() : "");
-                }
-                
-                feedbackFacade.create(feedback);
-                
-                // Update ratings for doctor and/or staff
-                if (doctorRating > 0 && appointment.getDoctor() != null) {
-                    updateDoctorRating(appointment.getDoctor().getId());
-                    System.out.println("Doctor feedback created successfully for appointment: " + appointmentId);
-                }
-                
-                if (staffRating > 0 && appointment.getCounterStaff() != null) {
-                    updateCounterStaffRating(appointment.getCounterStaff().getId());
-                    System.out.println("Staff feedback created successfully for appointment: " + appointmentId);
+                feedback.setDocRating(0.0); // Initialize with 0
+                feedback.setStaffRating(0.0); // Initialize with 0
+                feedback.setCustDocComment("");
+                feedback.setCustStaffComment("");
+            }
+            
+            boolean hasNewFeedback = false;
+            
+            // Process doctor feedback
+            if ("doctor".equals(feedbackType)) {
+                if (doctorRatingParam != null && !doctorRatingParam.trim().isEmpty()) {
+                    try {
+                        double doctorRating = Double.parseDouble(doctorRatingParam);
+                        if (doctorRating >= 1.0 && doctorRating <= 10.0) {
+                            feedback.setDocRating(doctorRating);
+                            feedback.setCustDocComment(doctorComment != null ? doctorComment.trim() : "");
+                            hasNewFeedback = true;
+                        } else {
+                            response.sendRedirect(request.getContextPath() + "/customer/feedback.jsp?appointment_id=" + appointmentId + "&error=invalid_rating");
+                            return;
+                        }
+                    } catch (NumberFormatException e) {
+                        response.sendRedirect(request.getContextPath() + "/customer/feedback.jsp?appointment_id=" + appointmentId + "&error=invalid_rating");
+                        return;
+                    }
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/customer/feedback.jsp?appointment_id=" + appointmentId + "&error=rating_required");
+                    return;
                 }
             }
             
-            if (hasValidFeedback) {
-                // Redirect to appointment history with success message
-                response.sendRedirect(request.getContextPath() + "/AppointmentServlet?action=history&success=feedback_submitted");
+            // Process staff feedback
+            if ("staff".equals(feedbackType)) {
+                if (staffRatingParam != null && !staffRatingParam.trim().isEmpty()) {
+                    try {
+                        double staffRating = Double.parseDouble(staffRatingParam);
+                        if (staffRating >= 1.0 && staffRating <= 10.0) {
+                            feedback.setStaffRating(staffRating);
+                            feedback.setCustStaffComment(staffComment != null ? staffComment.trim() : "");
+                            hasNewFeedback = true;
+                        } else {
+                            response.sendRedirect(request.getContextPath() + "/customer/feedback.jsp?appointment_id=" + appointmentId + "&error=invalid_rating");
+                            return;
+                        }
+                    } catch (NumberFormatException e) {
+                        response.sendRedirect(request.getContextPath() + "/customer/feedback.jsp?appointment_id=" + appointmentId + "&error=invalid_rating");
+                        return;
+                    }
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/customer/feedback.jsp?appointment_id=" + appointmentId + "&error=rating_required");
+                    return;
+                }
+            }
+            
+            if (hasNewFeedback) {
+                // Save or update feedback
+                if (feedback.getId() == 0) {
+                    feedbackFacade.create(feedback);
+                    System.out.println("New feedback created for appointment: " + appointmentId);
+                } else {
+                    feedbackFacade.edit(feedback);
+                    System.out.println("Feedback updated for appointment: " + appointmentId);
+                }
+                
+                // Update ratings for doctor and/or staff
+                if ("doctor".equals(feedbackType) && appointment.getDoctor() != null) {
+                    updateDoctorRating(appointment.getDoctor().getId());
+                }
+                
+                if ("staff".equals(feedbackType) && appointment.getCounterStaff() != null) {
+                    updateCounterStaffRating(appointment.getCounterStaff().getId());
+                }
+                
+                // Redirect back to feedback form with success message
+                response.sendRedirect(request.getContextPath() + "/FeedbackServlet?action=show_feedback_form&appointment_id=" + appointmentId + "&success=" + feedbackType + "_submitted");
             } else {
                 // No valid feedback provided
                 response.sendRedirect(request.getContextPath() + "/customer/feedback.jsp?appointment_id=" + appointmentId + "&error=no_feedback");
@@ -275,10 +283,18 @@ public class ScheduleServlet extends HttpServlet {
     }
     
     /**
-     * Check if feedback already exists for the given appointment
+     * Get existing feedback for the given appointment
      */
-    private boolean checkFeedbackExists(int appointmentId) {
-        return feedbackFacade.feedbackExistsForAppointment(appointmentId);
+    private Feedback getExistingFeedback(int appointmentId) {
+        try {
+            List<Feedback> feedbacks = feedbackFacade.findByAppointmentId(appointmentId);
+            if (feedbacks != null && !feedbacks.isEmpty()) {
+                return feedbacks.get(0); // Return the first (should be only one)
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
     
     /**
@@ -335,6 +351,6 @@ public class ScheduleServlet extends HttpServlet {
     
     @Override
     public String getServletInfo() {
-        return "ScheduleServlet handles feedback operations for APU Medical Center";
+        return "FeedbackServlet handles feedback operations for APU Medical Center";
     }
 }

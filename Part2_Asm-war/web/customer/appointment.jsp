@@ -90,10 +90,10 @@
 
                         <!-- Step Indicator -->
                         <div class="step-indicator">
-                            <div class="step active" id="step1">1. Select Treatment</div>
-                            <div class="step" id="step2">2. Choose Date</div>
-                            <div class="step" id="step3">3. Pick Doctor & Time</div>
-                            <div class="step" id="step4">4. Add Message</div>
+                            <div class="step active clickable" id="step1" data-section="treatment-section">1. Select Treatment</div>
+                            <div class="step clickable" id="step2" data-section="date-section">2. Choose Date</div>
+                            <div class="step clickable" id="step3" data-section="doctor-section">3. Pick Doctor & Time</div>
+                            <div class="step clickable" id="step4" data-section="message-section">4. Add Message</div>
                         </div>
 
                         <!-- Customer Info Display -->
@@ -122,7 +122,7 @@
                                 <div class="form-group">
                                     <label for="treatment">Choose Treatment:</label>
                                     <select id="treatment" name="treatment_id" class="form-control" required>
-                                        <option value="">Select a treatment...</option>
+                                        <option value="" disabled <%= preSelectedTreatment == null ? "selected" : "" %>>Select a treatment...</option>
                                         <% if (treatmentList != null && !treatmentList.isEmpty()) {
                                             for (Treatment treatment : treatmentList) {
                                                 String treatmentName = treatment.getName();
@@ -157,7 +157,9 @@
                                     <input type="date" id="appointment_date" name="appointment_date" class="form-control" required>
                                     <small class="form-text text-muted">
                                         <i class="fa fa-info-circle"></i> 
-                                        Appointments are available from today until next week, Monday to Friday only.
+                                        Available: Monday to Friday, 9:00 AM - 5:00 PM.
+                                        <br>Booking window: Today to 7 days ahead (weekdays only selectable). <br>
+                                        <strong>Note:</strong> If booking after 5:00 PM today, earliest available date is tomorrow (if weekday).
                                     </small>
                                 </div>
                             </div>
@@ -166,7 +168,7 @@
                             <div class="form-section hidden" id="doctor-section">
                                 <h4 class="section-title"><i class="fa fa-user-md"></i> Step 3: Select Doctor & Time</h4>
                                 <div class="form-group">
-                                    <label>Available Time Slots (9:00 AM - 5:00 PM):</label>
+                                    <label>Available Time Slots (9:00 AM - 5:00 PM):</label><br>
                                     <small class="form-text text-muted" style="margin-bottom: 15px;">
                                         <i class="fa fa-clock-o"></i> 
                                         Each appointment slot is 30 minutes. Business hours: 9:00 AM to 5:00 PM, weekdays only.
@@ -254,6 +256,114 @@
     <%@ include file="/includes/footer.jsp" %>
     <%@ include file="/includes/scripts.jsp" %>
     
+    <!-- Custom styles for appointment booking -->
+    <style>
+        .step-indicator .step.clickable {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .step-indicator .step.clickable:hover {
+            background-color: #e8f4fd;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .step-indicator .step.completed {
+            background-color: #5cb85c;
+            color: white;
+        }
+        
+        .step-indicator .step.completed:hover {
+            background-color: #449d44;
+        }
+        
+        .step-indicator .step.active {
+            background-color: #337ab7;
+            color: white;
+        }
+        
+        .step-indicator .step.active:hover {
+            background-color: #286090;
+        }
+        
+        .step-indicator .step {
+            border-radius: 5px;
+            padding: 10px 15px;
+            margin: 5px;
+            border: 2px solid #ddd;
+            background-color: #f8f9fa;
+            color: #666;
+        }
+        
+        /* Time slot button styles */
+        .time-slot-btn {
+            margin: 2px;
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            color: #333;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .time-slot-btn:hover {
+            background-color: #e8f4fd;
+            border-color: #337ab7;
+        }
+        
+        .time-slot-btn.selected {
+            background-color: #337ab7;
+            color: white;
+            border-color: #337ab7;
+        }
+        
+        .time-slot-btn.disabled {
+            background-color: #f5f5f5;
+            color: #999;
+            border-color: #ddd;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        .time-slot-btn.disabled:hover {
+            background-color: #f5f5f5;
+            border-color: #ddd;
+        }
+        
+        .time-slots-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .doctor-card {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #fff;
+            transition: all 0.3s ease;
+        }
+        
+        .doctor-card.selected {
+            border-color: #337ab7;
+            background-color: #f8f9fa;
+        }
+        
+        .doctor-info h5 {
+            margin-bottom: 5px;
+            color: #337ab7;
+        }
+        
+        .doctor-info .specialization {
+            color: #666;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+    </style>
+
     <!-- Pass JSP data to JavaScript -->
     <script>
         // Pass doctor data from JSP to JavaScript
@@ -291,6 +401,9 @@
         // Appointment booking restrictions and validation
         $(document).ready(function() {
             
+            // Initialize step navigation
+            initializeStepNavigation();
+            
             // Initialize date restrictions
             initializeDateRestrictions();
             
@@ -325,13 +438,25 @@
             // Initialize date input restrictions
             function initializeDateRestrictions() {
                 const dateInput = document.getElementById('appointment_date');
-                const today = new Date();
-                const nextWeek = new Date();
-                nextWeek.setDate(today.getDate() + 7);
+                const now = new Date();
+                const currentHour = now.getHours();
                 
-                // Set min and max dates
-                dateInput.min = formatDateForInput(today);
-                dateInput.max = formatDateForInput(nextWeek);
+                // Determine the minimum selectable date based on current time
+                let minDate = new Date();
+                
+                // If it's after 5 PM (17:00), users cannot book for today
+                if (currentHour >= 17) {
+                    minDate.setDate(minDate.getDate() + 1);
+                }
+                
+                // Maximum date is exactly 6 days from TODAY (making it 7 days total including today)
+                // This ensures the booking window is always exactly 7 days from today, regardless of when you start booking
+                const maxDate = new Date();
+                maxDate.setDate(maxDate.getDate() + 6);
+                
+                // Set min and max dates - the range is fixed, weekday validation happens separately
+                dateInput.min = formatDateForInput(minDate);
+                dateInput.max = formatDateForInput(maxDate);
                 
                 // Add change event listener for weekday validation
                 dateInput.addEventListener('change', function() {
@@ -346,15 +471,35 @@
                        String(date.getDate()).padStart(2, '0');
             }
             
-            // Validate selected date is a weekday
+            // Validate selected date is a weekday and within allowed range
             function validateSelectedDate(dateValue) {
                 if (!dateValue) return false;
                 
                 const selectedDate = new Date(dateValue + 'T00:00:00');
                 const dayOfWeek = selectedDate.getDay(); // 0 = Sunday, 6 = Saturday
+                const now = new Date();
+                const currentHour = now.getHours();
+                const today = new Date();
+                today.setHours(0, 0, 0, 0); // Reset time to compare dates only
+                selectedDate.setHours(0, 0, 0, 0);
                 
+                // Check if selected date is a weekend
                 if (dayOfWeek === 0 || dayOfWeek === 6) {
-                    alert('Appointments are only available on weekdays (Monday to Friday). Please select a different date.');
+                    alert('Appointments are only available on weekdays (Monday to Friday). Please select a weekday within the booking range.');
+                    document.getElementById('appointment_date').value = '';
+                    return false;
+                }
+                
+                // Check if user is trying to select today after business hours
+                if (selectedDate.getTime() === today.getTime() && currentHour >= 17) {
+                    alert('Appointments for today cannot be booked after 5:00 PM. Please select a future weekday.');
+                    document.getElementById('appointment_date').value = '';
+                    return false;
+                }
+                
+                // Check if selected date is in the past
+                if (selectedDate.getTime() < today.getTime()) {
+                    alert('Cannot select a past date. Please select a current or future weekday.');
                     document.getElementById('appointment_date').value = '';
                     return false;
                 }
@@ -362,80 +507,8 @@
                 return true;
             }
             
-            // Enhanced doctor card generation with time slots
-            function generateDoctorCards(selectedDate) {
-                const container = document.getElementById('doctor-cards-container');
-                const timeSlots = generateTimeSlots();
-                
-                if (!window.doctorData || window.doctorData.length === 0) {
-                    container.innerHTML = '<div class="alert alert-warning">No doctors available</div>';
-                    return;
-                }
-                
-                let cardsHTML = '';
-                
-                window.doctorData.forEach(function(doctor) {
-                    cardsHTML += `
-                        <div class="doctor-card" data-doctor-id="${doctor.id}">
-                            <div class="doctor-info">
-                                <h5><i class="fa fa-user-md"></i> Dr. ${doctor.name}</h5>
-                                <p class="specialization">${doctor.specialization || 'General Practice'}</p>
-                            </div>
-                            <div class="time-slots-container">
-                                <h6>Available Time Slots:</h6>
-                                <div class="time-slots-grid">
-                    `;
-                    
-                    timeSlots.forEach(function(slot) {
-                        cardsHTML += `
-                            <button type="button" class="time-slot-btn" 
-                                    data-doctor-id="${doctor.id}" 
-                                    data-time="${slot.value}"
-                                    data-display-time="${slot.display}">
-                                ${slot.display}
-                            </button>
-                        `;
-                    });
-                    
-                    cardsHTML += `
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                container.innerHTML = cardsHTML;
-                
-                // Add click handlers for time slots
-                addTimeSlotHandlers();
-            }
-            
-            // Add event handlers for time slot selection
-            function addTimeSlotHandlers() {
-                const timeSlotBtns = document.querySelectorAll('.time-slot-btn');
-                
-                timeSlotBtns.forEach(function(btn) {
-                    btn.addEventListener('click', function() {
-                        // Remove previous selections
-                        document.querySelectorAll('.time-slot-btn').forEach(b => b.classList.remove('selected'));
-                        document.querySelectorAll('.doctor-card').forEach(c => c.classList.remove('selected'));
-                        
-                        // Add selection to clicked button and its doctor card
-                        this.classList.add('selected');
-                        this.closest('.doctor-card').classList.add('selected');
-                        
-                        // Set hidden form values
-                        document.getElementById('selected_doctor_id').value = this.getAttribute('data-doctor-id');
-                        document.getElementById('selected_time_slot').value = this.getAttribute('data-time');
-                        
-                        // Show next step
-                        showNextStep('message-section');
-                    });
-                });
-            }
-            
-            // Enhanced step navigation
-            function showNextStep(sectionId) {
+            // Enhanced step navigation with back/forward capability
+            function showStep(sectionId) {
                 // Hide all sections
                 document.querySelectorAll('.form-section').forEach(section => {
                     section.classList.add('hidden');
@@ -448,10 +521,17 @@
                 updateStepIndicators(sectionId);
             }
             
-            // Update step indicators
+            // Legacy function for backward compatibility
+            function showNextStep(sectionId) {
+                showStep(sectionId);
+            }
+            
+            // Update step indicators with better visual feedback
             function updateStepIndicators(currentSection) {
                 const steps = document.querySelectorAll('.step');
-                steps.forEach(step => step.classList.remove('active'));
+                steps.forEach(step => {
+                    step.classList.remove('active', 'completed');
+                });
                 
                 let stepNumber;
                 switch(currentSection) {
@@ -461,23 +541,83 @@
                     case 'message-section': stepNumber = 4; break;
                 }
                 
-                for (let i = 0; i < stepNumber; i++) {
-                    steps[i].classList.add('active');
+                // Mark completed steps and current active step
+                for (let i = 0; i < stepNumber - 1; i++) {
+                    steps[i].classList.add('completed');
                 }
+                steps[stepNumber - 1].classList.add('active');
+            }
+            
+            // Check if step is accessible based on form completion
+            function isStepAccessible(stepNumber) {
+                switch(stepNumber) {
+                    case 1: // Treatment step is always accessible
+                        return true;
+                    case 2: // Date step requires treatment selection
+                        return document.getElementById('treatment').value !== '';
+                    case 3: // Doctor step requires treatment and date
+                        return document.getElementById('treatment').value !== '' && 
+                               document.getElementById('appointment_date').value !== '';
+                    case 4: // Message step requires treatment, date, and doctor/time
+                        return document.getElementById('treatment').value !== '' && 
+                               document.getElementById('appointment_date').value !== '' &&
+                               document.getElementById('selected_doctor_id').value !== '' &&
+                               document.getElementById('selected_time_slot').value !== '';
+                    default:
+                        return false;
+                }
+            }
+            
+            // Add click handlers for step indicators
+            function initializeStepNavigation() {
+                const steps = document.querySelectorAll('.step.clickable');
+                
+                steps.forEach(function(step, index) {
+                    step.addEventListener('click', function() {
+                        const stepNumber = index + 1;
+                        const targetSection = this.getAttribute('data-section');
+                        
+                        if (isStepAccessible(stepNumber)) {
+                            showStep(targetSection);
+                            
+                            // If going back to doctor section and date is selected, regenerate doctor cards
+                            if (targetSection === 'doctor-section' && document.getElementById('appointment_date').value) {
+                                const treatmentId = document.getElementById('treatment').value;
+                                generateDoctorCards(document.getElementById('appointment_date').value, treatmentId);
+                            }
+                        } else {
+                            // Show warning message for inaccessible steps
+                            let message = '';
+                            switch(stepNumber) {
+                                case 2:
+                                    message = 'Please select a treatment first.';
+                                    break;
+                                case 3:
+                                    message = 'Please select a treatment and date first.';
+                                    break;
+                                case 4:
+                                    message = 'Please complete the previous steps first.';
+                                    break;
+                            }
+                            alert(message);
+                        }
+                    });
+                });
             }
             
             // Treatment selection handler
             document.getElementById('treatment').addEventListener('change', function() {
                 if (this.value) {
-                    showNextStep('date-section');
+                    showStep('date-section');
                 }
             });
             
             // Date selection handler
             document.getElementById('appointment_date').addEventListener('change', function() {
                 if (this.value && validateSelectedDate(this.value)) {
-                    generateDoctorCards(this.value);
-                    showNextStep('doctor-section');
+                    const treatmentId = document.getElementById('treatment').value;
+                    generateDoctorCards(this.value, treatmentId);
+                    showStep('doctor-section');
                 }
             });
             
@@ -558,7 +698,7 @@
             // Initialize with pre-selected treatment if available
             if (window.preSelectedTreatment) {
                 document.getElementById('treatment').value = window.preSelectedTreatment;
-                showNextStep('date-section');
+                showStep('date-section');
             }
         });
     </script>
