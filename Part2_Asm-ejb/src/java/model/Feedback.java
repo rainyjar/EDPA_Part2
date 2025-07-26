@@ -39,21 +39,27 @@ public class Feedback implements Serializable {
     @JoinColumn(name = "to_staff_id")
     private CounterStaff toStaff;
 
-    private String custComment;
-    private int rating;
+    private String custDocComment, custStaffComment;
+
+    // set rating column to Decimal(4,3) to allow for ratings like 4.5
+    @Column(precision = 4, scale = 3)
+    private double docRating, staffRating;
 
     public Feedback() {
     }
 
-    public Feedback(Appointment appointment, Customer fromCustomer, Doctor toDoctor, CounterStaff toStaff, String custComment, int rating) {
+    public Feedback(Appointment appointment, Customer fromCustomer, Doctor toDoctor, CounterStaff toStaff,
+            String custDocComment, String custStaffComment, double docRating, double staffRating) {
         this.appointment = appointment;
         this.fromCustomer = fromCustomer;
         this.toDoctor = toDoctor;
         this.toStaff = toStaff;
-        this.custComment = custComment;
-        this.rating = rating;
+        this.custDocComment = custDocComment;
+        this.custStaffComment = custStaffComment;
+        this.docRating = docRating;
+        this.staffRating = staffRating;
     }
-    
+
     public int getId() {
         return id;
     }
@@ -94,22 +100,38 @@ public class Feedback implements Serializable {
         this.toStaff = toStaff;
     }
 
-    public String getCustComment() {
-        return custComment;
+    public String getCustDocComment() {
+        return custDocComment;
     }
 
-    public void setCustComment(String custComment) {
-        this.custComment = custComment;
+    public void setCustDocComment(String custDocComment) {
+        this.custDocComment = custDocComment;
     }
 
-    public int getRating() {
-        return rating;
+    public String getCustStaffComment() {
+        return custStaffComment;
     }
 
-    public void setRating(int rating) {
-        this.rating = rating;
+    public void setCustStaffComment(String custStaffComment) {
+        this.custStaffComment = custStaffComment;
     }
-    
+
+    public double getDocRating() {
+        return docRating;
+    }
+
+    public void setDocRating(double docRating) {
+        this.docRating = docRating;
+    }
+
+    public double getStaffRating() {
+        return staffRating;
+    }
+
+    public void setStaffRating(double staffRating) {
+        this.staffRating = staffRating;
+    }
+
     @Override
     public int hashCode() {
         int hash = 0;
@@ -129,7 +151,7 @@ public class Feedback implements Serializable {
         }
         return true;
     }
-    
+
     @Override
     public String toString() {
         return "model.Feedback[ id=" + id + " ]";

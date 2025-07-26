@@ -39,7 +39,7 @@ public class CounterStaff implements Serializable {
     private Date dob;
 
     @Column(precision = 4, scale = 2)
-    private BigDecimal rating;
+    private Double rating;
 
     @OneToMany(mappedBy = "counterStaff", cascade = CascadeType.ALL)
     private List<Appointment> appointments;
@@ -56,7 +56,7 @@ public class CounterStaff implements Serializable {
         this.password = password;
     }
 
-    public CounterStaff(String name, String email, String phone, String password, String gender, String profilePic, Date dob, BigDecimal rating) {
+    public CounterStaff(String name, String email, String phone, String password, String gender, String profilePic, Date dob, Double rating) {
         this.name = name;
         this.email = email;
         this.phone = phone;
@@ -131,11 +131,11 @@ public class CounterStaff implements Serializable {
         this.dob = dob;
     }
 
-    public BigDecimal getRating() {
+    public Double getRating() {
         return rating;
     }
 
-    public void setRating(BigDecimal rating) {
+    public void setRating(Double rating) {
         this.rating = rating;
     }
 

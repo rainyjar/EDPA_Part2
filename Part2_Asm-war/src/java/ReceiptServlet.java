@@ -25,6 +25,12 @@ import model.Receipt;
 import model.ReceiptFacade;
 import model.Customer;
 
+// iText PDF library imports for receipt generation (iText 5.x)
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.*;
+import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Image;
+
 // For PDF generation - you'll need to add iText library to your project
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
@@ -36,6 +42,8 @@ import com.itextpdf.text.Phrase;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Image;
 
 @WebServlet(urlPatterns = {"/ReceiptServlet"})
 public class ReceiptServlet extends HttpServlet {
@@ -55,7 +63,8 @@ public class ReceiptServlet extends HttpServlet {
         
         String action = request.getParameter("action");
         
-        if ("download".equals(action)) {
+        // Handle both direct calls and action-based calls
+        if ("download".equals(action) || request.getParameter("appointmentId") != null || request.getParameter("appointment_id") != null) {
             handleReceiptDownload(request, response);
         } else {
             response.sendRedirect(request.getContextPath() + "/customer/appointment_history.jsp");
@@ -78,8 +87,12 @@ public class ReceiptServlet extends HttpServlet {
                 return;
             }
             
-            // Get appointment ID
+            // Get appointment ID - handle both parameter names
             String appointmentIdStr = request.getParameter("appointment_id");
+            if (appointmentIdStr == null || appointmentIdStr.trim().isEmpty()) {
+                appointmentIdStr = request.getParameter("appointmentId");
+            }
+            
             if (appointmentIdStr == null || appointmentIdStr.trim().isEmpty()) {
                 response.sendRedirect(request.getContextPath() + "/customer/appointment_history.jsp?error=invalid_id");
                 return;
@@ -114,26 +127,21 @@ public class ReceiptServlet extends HttpServlet {
                 return;
             }
             
-            // Check if receipt already exists
+            // Check if receipt already exists in database (for record keeping)
             Receipt existingReceipt = findReceiptByAppointment(appointmentId);
-            if (existingReceipt != null && existingReceipt.getFilePath() != null) {
-                // Check if file still exists
-                File existingFile = new File(existingReceipt.getFilePath());
-                if (existingFile.exists()) {
-                    downloadFile(response, existingFile, "Receipt_" + appointmentId + ".pdf");
-                    return;
-                }
+            
+            // Generate PDF filename for download
+            String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+            String patientName = appointment.getCustomer().getName().replaceAll("[^a-zA-Z0-9]", "_");
+            String filename = "AMC_Receipt_" + patientName + "_Appointment" + appointment.getId() + "_" + timestamp + ".pdf";
+            
+            // Generate and stream PDF directly to browser
+            generateAndStreamReceiptPDF(response, appointment, payment, filename);
+            
+            // Save receipt record to database if it doesn't exist
+            if (existingReceipt == null) {
+                saveReceiptRecord(appointment, payment, null); // No file path since we're streaming
             }
-            
-            // Generate new receipt
-            String receiptPath = generateReceiptPDF(appointment, payment);
-            
-            // Save receipt record to database
-            saveReceiptRecord(appointment, payment, receiptPath);
-            
-            // Download the generated receipt
-            File receiptFile = new File(receiptPath);
-            downloadFile(response, receiptFile, "Receipt_" + appointmentId + ".pdf");
             
         } catch (NumberFormatException e) {
             response.sendRedirect(request.getContextPath() + "/customer/appointment_history.jsp?error=invalid_id");
@@ -168,171 +176,344 @@ public class ReceiptServlet extends HttpServlet {
     }
     
     /**
-     * Generate PDF receipt
+     * Generate PDF receipt and stream directly to browser
      */
-    private String generateReceiptPDF(Appointment appointment, Payment payment) 
+    private void generateAndStreamReceiptPDF(HttpServletResponse response, Appointment appointment, Payment payment, String filename) 
             throws DocumentException, IOException {
         
-        // Create downloads directory if it doesn't exist
-        String downloadsPath = "C:\\Users\\leeja\\Downloads";
-        File downloadsDir = new File(downloadsPath);
-        if (!downloadsDir.exists()) {
-            downloadsDir.mkdirs();
-        }
+        // Set response headers for PDF download
+        response.setContentType("application/pdf");
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
         
-        // Generate unique filename
-        String fileName = "APU_Medical_Receipt_" + appointment.getId() + "_" + 
-                         System.currentTimeMillis() + ".pdf";
-        String filePath = downloadsPath + File.separator + fileName;
+        // Create PDF document with smaller margins for more content
+        Document document = new Document(PageSize.A4, 40, 40, 30, 30);
         
-        // Create PDF document
-        Document document = new Document(PageSize.A4);
-        PdfWriter.getInstance(document, new FileOutputStream(filePath));
-        
+        // Write directly to response output stream
+        PdfWriter.getInstance(document, response.getOutputStream());
         document.open();
         
-        // Define fonts
-        Font titleFont = new Font(Font.FontFamily.HELVETICA, 18, Font.BOLD);
-        Font headerFont = new Font(Font.FontFamily.HELVETICA, 14, Font.BOLD);
-        Font normalFont = new Font(Font.FontFamily.HELVETICA, 10);
-        Font boldFont = new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD);
+        // Define professional color scheme
+        BaseColor primaryBlue = new BaseColor(41, 128, 185);    // Professional blue
+        BaseColor lightGray = new BaseColor(236, 240, 241);     // Light background
+        BaseColor darkGray = new BaseColor(52, 73, 94);         // Dark text
+        BaseColor accentGreen = new BaseColor(39, 174, 96);     // Success green
         
-        // Medical center header
-        Paragraph title = new Paragraph("APU MEDICAL CENTER", titleFont);
-        title.setAlignment(Element.ALIGN_CENTER);
-        title.setSpacingAfter(5);
-        document.add(title);
+        // Define enhanced fonts with consistent sizing
+        Font titleFont = new Font(Font.FontFamily.HELVETICA, 22, Font.BOLD, primaryBlue);
+        Font headerFont = new Font(Font.FontFamily.HELVETICA, 14, Font.BOLD, darkGray);
+        Font subHeaderFont = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD, primaryBlue);
+        Font boldFont = new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD, BaseColor.BLACK);
+        Font normalFont = new Font(Font.FontFamily.HELVETICA, 10, Font.NORMAL, BaseColor.BLACK);
+        Font smallFont = new Font(Font.FontFamily.HELVETICA, 8, Font.NORMAL, BaseColor.GRAY);
+        Font amountFont = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD, accentGreen);
         
-        Paragraph address = new Paragraph("Technology Park Malaysia, 57000 Kuala Lumpur", normalFont);
-        address.setAlignment(Element.ALIGN_CENTER);
-        address.setSpacingAfter(20);
-        document.add(address);
+        // === HEADER SECTION ===
+        PdfPTable headerTable = new PdfPTable(2);
+        headerTable.setWidthPercentage(100);
+        headerTable.setWidths(new float[]{1.2f, 2.8f});
+        headerTable.setSpacingAfter(20);
         
-        // Receipt title
-        Paragraph receiptTitle = new Paragraph("MEDICAL APPOINTMENT RECEIPT", headerFont);
-        receiptTitle.setAlignment(Element.ALIGN_CENTER);
-        receiptTitle.setSpacingAfter(20);
-        document.add(receiptTitle);
+        // Logo cell with border
+        PdfPCell logoCell = new PdfPCell();
+        logoCell.setBorder(Rectangle.BOX);
+        logoCell.setBorderColor(lightGray);
+        logoCell.setPadding(10);
+        logoCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
         
-        // Receipt details table
-        PdfPTable detailsTable = new PdfPTable(2);
-        detailsTable.setWidthPercentage(100);
-        detailsTable.setSpacingAfter(20);
+        try {
+            String logoPath = this.getServletContext().getRealPath("/images/amc_logo.png");
+            File logoFile = new File(logoPath);
+            if (logoFile.exists()) {
+                Image logo = Image.getInstance(logoPath);
+                logo.scaleToFit(70, 70);
+                logo.setAlignment(Element.ALIGN_CENTER);
+                logoCell.addElement(logo);
+            } else {
+                // Fallback logo placeholder
+                Paragraph logoText = new Paragraph("AMC", new Font(Font.FontFamily.HELVETICA, 20, Font.BOLD, primaryBlue));
+                logoText.setAlignment(Element.ALIGN_CENTER);
+                logoCell.addElement(logoText);
+            }
+        } catch (Exception e) {
+            // Fallback logo placeholder
+            Paragraph logoText = new Paragraph("AMC", new Font(Font.FontFamily.HELVETICA, 20, Font.BOLD, primaryBlue));
+            logoText.setAlignment(Element.ALIGN_CENTER);
+            logoCell.addElement(logoText);
+        }
+        headerTable.addCell(logoCell);
+        
+        // Medical center info cell with styling
+        PdfPCell infoCell = new PdfPCell();
+        infoCell.setBorder(Rectangle.BOX);
+        infoCell.setBorderColor(lightGray);
+        infoCell.setPadding(10);
+        infoCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        
+        Paragraph centerInfo = new Paragraph();
+        centerInfo.add(new Phrase("APU MEDICAL CENTER\n", new Font(Font.FontFamily.HELVETICA, 18, Font.BOLD, primaryBlue)));
+        centerInfo.add(new Phrase("Professional Healthcare Services\n\n", new Font(Font.FontFamily.HELVETICA, 10, Font.ITALIC, darkGray)));
+        centerInfo.add(new Phrase("+60 10-070-0170\n", smallFont));
+        centerInfo.add(new Phrase("info@amc.com\n", smallFont));
+        centerInfo.add(new Phrase("Technology Park Malaysia\n", smallFont));
+        centerInfo.add(new Phrase("Bukit Jalil, 57000 Kuala Lumpur", smallFont));
+        centerInfo.setAlignment(Element.ALIGN_LEFT);
+        infoCell.addElement(centerInfo);
+        headerTable.addCell(infoCell);
+        
+        document.add(headerTable);
+        
+        // === RECEIPT TITLE SECTION ===
+        PdfPTable titleTable = new PdfPTable(1);
+        titleTable.setWidthPercentage(100);
+        titleTable.setSpacingAfter(15);
+        
+        PdfPCell titleCell = new PdfPCell();
+        titleCell.setBorder(Rectangle.BOX);
+        titleCell.setBorderColor(primaryBlue);
+        titleCell.setBorderWidth(2);
+        titleCell.setBackgroundColor(lightGray);
+        titleCell.setPadding(12);
+        
+        Paragraph titlePara = new Paragraph("PAYMENT RECEIPT", titleFont);
+        titlePara.setAlignment(Element.ALIGN_CENTER);
+        titleCell.addElement(titlePara);
+        titleTable.addCell(titleCell);
+        document.add(titleTable);
         
         // Date formatters
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
         SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
         DecimalFormat currencyFormat = new DecimalFormat("0.00");
         
-        // Add receipt details
-        addTableRow(detailsTable, "Receipt No:", "R" + String.format("%06d", appointment.getId()), boldFont, normalFont);
-        addTableRow(detailsTable, "Issue Date:", dateFormat.format(new Date()), boldFont, normalFont);
-        addTableRow(detailsTable, "Appointment ID:", "A" + String.format("%06d", appointment.getId()), boldFont, normalFont);
+        // === RECEIPT DETAILS SECTION ===
+        PdfPTable detailsTable = new PdfPTable(4);
+        detailsTable.setWidthPercentage(100);
+        detailsTable.setWidths(new float[]{1f, 1.5f, 1f, 1.5f});
+        detailsTable.setSpacingAfter(15);
+        
+        addSectionHeader(detailsTable, "RECEIPT DETAILS", subHeaderFont, lightGray, 4);
+        addDetailRow(detailsTable, "Receipt No:", "AMC-R" + String.format("%06d", appointment.getId()), 
+                    "Issue Date:", dateFormat.format(new Date()), boldFont, normalFont);
+        addDetailRow(detailsTable, "Appointment ID:", "AMC-A" + String.format("%06d", appointment.getId()), 
+                    "Status:", "COMPLETED & PAID", boldFont, normalFont);
         
         document.add(detailsTable);
         
-        // Patient information
-        Paragraph patientHeader = new Paragraph("PATIENT INFORMATION", headerFont);
-        patientHeader.setSpacingAfter(10);
-        document.add(patientHeader);
-        
+        // === PATIENT INFORMATION SECTION ===
         PdfPTable patientTable = new PdfPTable(2);
         patientTable.setWidthPercentage(100);
-        patientTable.setSpacingAfter(20);
+        patientTable.setWidths(new float[]{1f, 2f});
+        patientTable.setSpacingAfter(12);
         
-        addTableRow(patientTable, "Patient Name:", appointment.getCustomer().getName(), boldFont, normalFont);
-        addTableRow(patientTable, "Email:", appointment.getCustomer().getEmail(), boldFont, normalFont);
-        if (appointment.getCustomer().getPhone() != null) {
-            addTableRow(patientTable, "Phone:", appointment.getCustomer().getPhone(), boldFont, normalFont);
+        addSectionHeader(patientTable, "PATIENT INFORMATION", subHeaderFont, lightGray, 2);
+        addStyledDetailRow(patientTable, "Patient Name:", appointment.getCustomer().getName(), boldFont, normalFont);
+        addStyledDetailRow(patientTable, "Email Address:", appointment.getCustomer().getEmail(), boldFont, normalFont);
+        
+        if (appointment.getCustomer().getPhone() != null && !appointment.getCustomer().getPhone().trim().isEmpty()) {
+            addStyledDetailRow(patientTable, "Phone Number:", appointment.getCustomer().getPhone(), boldFont, normalFont);
         }
         
         document.add(patientTable);
         
-        // Appointment information
-        Paragraph appointmentHeader = new Paragraph("APPOINTMENT DETAILS", headerFont);
-        appointmentHeader.setSpacingAfter(10);
-        document.add(appointmentHeader);
-        
+        // === APPOINTMENT DETAILS SECTION ===
         PdfPTable appointmentTable = new PdfPTable(2);
         appointmentTable.setWidthPercentage(100);
-        appointmentTable.setSpacingAfter(20);
+        appointmentTable.setWidths(new float[]{1f, 2f});
+        appointmentTable.setSpacingAfter(12);
         
-        addTableRow(appointmentTable, "Doctor:", 
-                   appointment.getDoctor() != null ? appointment.getDoctor().getName() : "N/A", 
-                   boldFont, normalFont);
+        addSectionHeader(appointmentTable, "APPOINTMENT DETAILS", subHeaderFont, lightGray, 2);
         
-        if (appointment.getDoctor() != null && appointment.getDoctor().getSpecialization() != null) {
-            addTableRow(appointmentTable, "Specialization:", 
-                       appointment.getDoctor().getSpecialization(), boldFont, normalFont);
+        if (appointment.getAppointmentDate() != null) {
+            addStyledDetailRow(appointmentTable, "Appointment Date:", dateFormat.format(appointment.getAppointmentDate()), boldFont, normalFont);
         }
-        
-        addTableRow(appointmentTable, "Treatment:", 
-                   appointment.getTreatment() != null ? appointment.getTreatment().getName() : "N/A", 
-                   boldFont, normalFont);
-        
-        addTableRow(appointmentTable, "Date:", 
-                   appointment.getAppointmentDate() != null ? 
-                   dateFormat.format(appointment.getAppointmentDate()) : "N/A", 
-                   boldFont, normalFont);
-        
-        addTableRow(appointmentTable, "Time:", 
-                   appointment.getAppointmentTime() != null ? 
-                   appointment.getAppointmentTime().toString() : "N/A", 
-                   boldFont, normalFont);
-        
-        addTableRow(appointmentTable, "Status:", appointment.getStatus().toUpperCase(), boldFont, normalFont);
+        if (appointment.getAppointmentTime() != null) {
+            addStyledDetailRow(appointmentTable, "Appointment Time:", appointment.getAppointmentTime().toString(), boldFont, normalFont);
+        }
+        if (appointment.getDoctor() != null) {
+            addStyledDetailRow(appointmentTable, "Attending Doctor:", appointment.getDoctor().getName(), boldFont, normalFont);
+            if (appointment.getDoctor().getSpecialization() != null) {
+                addStyledDetailRow(appointmentTable, "Specialization:", appointment.getDoctor().getSpecialization(), boldFont, normalFont);
+            }
+        }
+        if (appointment.getTreatment() != null) {
+            addStyledDetailRow(appointmentTable, "Treatment/Service:", appointment.getTreatment().getName(), boldFont, normalFont);
+        }
+        if (appointment.getCounterStaff() != null) {
+            addStyledDetailRow(appointmentTable, "Assisted By:", appointment.getCounterStaff().getName(), boldFont, normalFont);
+        }
         
         document.add(appointmentTable);
         
-        // Payment information
-        Paragraph paymentHeader = new Paragraph("PAYMENT DETAILS", headerFont);
-        paymentHeader.setSpacingAfter(10);
-        document.add(paymentHeader);
-        
+        // === PAYMENT INFORMATION SECTION ===
         PdfPTable paymentTable = new PdfPTable(2);
         paymentTable.setWidthPercentage(100);
-        paymentTable.setSpacingAfter(20);
+        paymentTable.setWidths(new float[]{1f, 2f});
+        paymentTable.setSpacingAfter(15);
         
-        addTableRow(paymentTable, "Amount:", "RM " + currencyFormat.format(payment.getAmount()), boldFont, normalFont);
-        addTableRow(paymentTable, "Payment Method:", 
-                   payment.getPaymentMethod() != null ? 
-                   payment.getPaymentMethod().toUpperCase() : "N/A", boldFont, normalFont);
-        addTableRow(paymentTable, "Payment Status:", payment.getStatus().toUpperCase(), boldFont, normalFont);
+        addSectionHeader(paymentTable, "PAYMENT INFORMATION", subHeaderFont, lightGray, 2);
+        
+        // Payment amount with special styling
+        PdfPCell amountLabelCell = new PdfPCell(new Phrase("Total Amount:", boldFont));
+        amountLabelCell.setBorder(Rectangle.LEFT | Rectangle.RIGHT);
+        amountLabelCell.setBorderColor(BaseColor.LIGHT_GRAY);
+        amountLabelCell.setPadding(8);
+        amountLabelCell.setBackgroundColor(new BaseColor(248, 249, 250));
+        paymentTable.addCell(amountLabelCell);
+        
+        PdfPCell amountValueCell = new PdfPCell(new Phrase("RM " + currencyFormat.format(payment.getAmount()), amountFont));
+        amountValueCell.setBorder(Rectangle.LEFT | Rectangle.RIGHT);
+        amountValueCell.setBorderColor(BaseColor.LIGHT_GRAY);
+        amountValueCell.setPadding(8);
+        amountValueCell.setBackgroundColor(new BaseColor(248, 249, 250));
+        paymentTable.addCell(amountValueCell);
+        
+        addStyledDetailRow(paymentTable, "Payment Method:", 
+                   payment.getPaymentMethod() != null ? payment.getPaymentMethod().toUpperCase() : "N/A", boldFont, normalFont);
+        addStyledDetailRow(paymentTable, "Payment Status:", "✓ " + payment.getStatus().toUpperCase(), boldFont, new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD, accentGreen));
         
         if (payment.getPaymentDate() != null) {
-            addTableRow(paymentTable, "Payment Date:", 
-                       dateTimeFormat.format(payment.getPaymentDate()), boldFont, normalFont);
+            addStyledDetailRow(paymentTable, "Payment Date:", dateTimeFormat.format(payment.getPaymentDate()), boldFont, normalFont);
         }
+        
+        // Add bottom border to payment table
+        PdfPCell bottomBorderCell1 = new PdfPCell();
+        bottomBorderCell1.setBorder(Rectangle.BOTTOM);
+        bottomBorderCell1.setBorderColor(BaseColor.LIGHT_GRAY);
+        bottomBorderCell1.setFixedHeight(1);
+        paymentTable.addCell(bottomBorderCell1);
+        
+        PdfPCell bottomBorderCell2 = new PdfPCell();
+        bottomBorderCell2.setBorder(Rectangle.BOTTOM);
+        bottomBorderCell2.setBorderColor(BaseColor.LIGHT_GRAY);
+        bottomBorderCell2.setFixedHeight(1);
+        paymentTable.addCell(bottomBorderCell2);
         
         document.add(paymentTable);
         
-        // Footer
-        Paragraph footer = new Paragraph("\nThank you for choosing APU Medical Center!\n" +
-                                       "For any queries, please contact us at info@apumedical.com", normalFont);
-        footer.setAlignment(Element.ALIGN_CENTER);
-        footer.setSpacingBefore(30);
-        document.add(footer);
+        // === FOOTER SECTION ===
+        // Thank you message with box
+        PdfPTable thankYouTable = new PdfPTable(1);
+        thankYouTable.setWidthPercentage(100);
+        thankYouTable.setSpacingBefore(10);
+        thankYouTable.setSpacingAfter(10);
+        
+        PdfPCell thankYouCell = new PdfPCell();
+        thankYouCell.setBorder(Rectangle.BOX);
+        thankYouCell.setBorderColor(accentGreen);
+        thankYouCell.setBackgroundColor(new BaseColor(232, 245, 233));
+        thankYouCell.setPadding(12);
+        
+        Paragraph thankYouPara = new Paragraph("Thank you for choosing APU Medical Center!", 
+                                             new Font(Font.FontFamily.HELVETICA, 14, Font.BOLD, accentGreen));
+        thankYouPara.setAlignment(Element.ALIGN_CENTER);
+        thankYouCell.addElement(thankYouPara);
+        thankYouTable.addCell(thankYouCell);
+        document.add(thankYouTable);
+        
+        // Footer information
+        Paragraph footerInfo = new Paragraph();
+        footerInfo.add(new Phrase("• This is a computer-generated receipt and does not require a signature\n", smallFont));
+        footerInfo.add(new Phrase("• For inquiries, please contact us at +60 10-070-0170 or info@amc.com\n", smallFont));
+        footerInfo.add(new Phrase("• Keep this receipt for your records and insurance claims", smallFont));
+        footerInfo.setAlignment(Element.ALIGN_CENTER);
+        footerInfo.setSpacingBefore(8);
+        footerInfo.setSpacingAfter(8);
+        document.add(footerInfo);
+        
+        // Generation timestamp in bottom right
+        Paragraph timestamp = new Paragraph("Generated on: " + dateTimeFormat.format(new Date()), 
+                                          new Font(Font.FontFamily.HELVETICA, 8, Font.ITALIC, BaseColor.GRAY));
+        timestamp.setAlignment(Element.ALIGN_RIGHT);
+        document.add(timestamp);
         
         document.close();
-        
-        System.out.println("Receipt generated successfully: " + filePath);
-        
-        return filePath;
     }
     
     /**
-     * Helper method to add table rows
+     * Helper method to add styled table rows
      */
-    private void addTableRow(PdfPTable table, String label, String value, Font labelFont, Font valueFont) {
+    private void addStyledTableRow(PdfPTable table, String label, String value, Font labelFont, Font valueFont) {
         PdfPCell labelCell = new PdfPCell(new Phrase(label, labelFont));
         labelCell.setBorder(PdfPCell.NO_BORDER);
-        labelCell.setPaddingBottom(5);
+        labelCell.setPaddingBottom(8);
+        labelCell.setPaddingTop(5);
         table.addCell(labelCell);
         
         PdfPCell valueCell = new PdfPCell(new Phrase(value, valueFont));
         valueCell.setBorder(PdfPCell.NO_BORDER);
-        valueCell.setPaddingBottom(5);
+        valueCell.setPaddingBottom(8);
+        valueCell.setPaddingTop(5);
         table.addCell(valueCell);
+    }
+    
+    /**
+     * Helper method to add section headers with background color
+     */
+    private void addSectionHeader(PdfPTable table, String headerText, Font headerFont, BaseColor backgroundColor, int colspan) {
+        PdfPCell headerCell = new PdfPCell(new Phrase(headerText, headerFont));
+        headerCell.setColspan(colspan);
+        headerCell.setBorder(Rectangle.BOX);
+        headerCell.setBorderColor(BaseColor.LIGHT_GRAY);
+        headerCell.setBackgroundColor(backgroundColor);
+        headerCell.setPadding(8);
+        headerCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        table.addCell(headerCell);
+    }
+    
+    /**
+     * Helper method to add detail rows for 4-column layout
+     */
+    private void addDetailRow(PdfPTable table, String label1, String value1, String label2, String value2, Font labelFont, Font valueFont) {
+        // First label-value pair
+        PdfPCell labelCell1 = new PdfPCell(new Phrase(label1, labelFont));
+        labelCell1.setBorder(Rectangle.LEFT | Rectangle.RIGHT);
+        labelCell1.setBorderColor(BaseColor.LIGHT_GRAY);
+        labelCell1.setPadding(6);
+        table.addCell(labelCell1);
+        
+        PdfPCell valueCell1 = new PdfPCell(new Phrase(value1, valueFont));
+        valueCell1.setBorder(Rectangle.LEFT | Rectangle.RIGHT);
+        valueCell1.setBorderColor(BaseColor.LIGHT_GRAY);
+        valueCell1.setPadding(6);
+        table.addCell(valueCell1);
+        
+        // Second label-value pair
+        PdfPCell labelCell2 = new PdfPCell(new Phrase(label2, labelFont));
+        labelCell2.setBorder(Rectangle.LEFT | Rectangle.RIGHT);
+        labelCell2.setBorderColor(BaseColor.LIGHT_GRAY);
+        labelCell2.setPadding(6);
+        table.addCell(labelCell2);
+        
+        PdfPCell valueCell2 = new PdfPCell(new Phrase(value2, valueFont));
+        valueCell2.setBorder(Rectangle.LEFT | Rectangle.RIGHT);
+        valueCell2.setBorderColor(BaseColor.LIGHT_GRAY);
+        valueCell2.setPadding(6);
+        table.addCell(valueCell2);
+    }
+    
+    /**
+     * Helper method to add styled detail rows with borders
+     */
+    private void addStyledDetailRow(PdfPTable table, String label, String value, Font labelFont, Font valueFont) {
+        PdfPCell labelCell = new PdfPCell(new Phrase(label, labelFont));
+        labelCell.setBorder(Rectangle.LEFT | Rectangle.RIGHT);
+        labelCell.setBorderColor(BaseColor.LIGHT_GRAY);
+        labelCell.setPadding(6);
+        labelCell.setBackgroundColor(new BaseColor(248, 249, 250));
+        table.addCell(labelCell);
+        
+        PdfPCell valueCell = new PdfPCell(new Phrase(value, valueFont));
+        valueCell.setBorder(Rectangle.LEFT | Rectangle.RIGHT);
+        valueCell.setBorderColor(BaseColor.LIGHT_GRAY);
+        valueCell.setPadding(6);
+        table.addCell(valueCell);
+    }
+    
+    /**
+     * Helper method to add table rows (legacy support)
+     */
+    private void addTableRow(PdfPTable table, String label, String value, Font labelFont, Font valueFont) {
+        addStyledTableRow(table, label, value, labelFont, valueFont);
     }
     
     /**

@@ -5,10 +5,12 @@
  */
 package model;
 
+import java.sql.Date;
 import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 /**
  *
@@ -30,10 +32,19 @@ public class AppointmentFacade extends AbstractFacade<Appointment> {
     }
     
     public List<Appointment> findByCustomer(Customer customer) {
-    return em.createQuery("SELECT a FROM Appointment a WHERE a.customer = :customer", Appointment.class)
-             .setParameter("customer", customer)
-             .getResultList();
-}
-
+        return em.createQuery("SELECT a FROM Appointment a WHERE a.customer = :customer", Appointment.class)
+                 .setParameter("customer", customer)
+                 .getResultList();
+    }
+    
+    /**
+     * Find appointments for a specific doctor on a specific date
+     */
+    public List<Appointment> findByDoctorAndDate(int doctorId, String date) {
+        Query query = em.createQuery("SELECT a FROM Appointment a WHERE a.doctor.id = :doctorId AND a.appointmentDate = :date AND a.status != 'cancelled'");
+        query.setParameter("doctorId", doctorId);
+        query.setParameter("date", Date.valueOf(date));
+        return query.getResultList();
+    }
     
 }
