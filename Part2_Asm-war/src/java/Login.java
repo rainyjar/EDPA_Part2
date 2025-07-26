@@ -45,6 +45,17 @@ public class Login extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
 
+        // handle lougout
+        String logout = request.getParameter("logout");
+        if (logout != null && logout.equals("true")) {
+            HttpSession session = request.getSession(false);
+            if (session != null) {
+                session.invalidate();
+            }
+            response.sendRedirect("login.jsp");
+            return;
+        }
+
         try (PrintWriter out = response.getWriter()) {
             String email = request.getParameter("email");
             String password = request.getParameter("password");
@@ -104,18 +115,16 @@ public class Login extends HttpServlet {
 
                 // Set the name based on role
                 if (user instanceof Manager) {
-                    s.setAttribute("name", ((Manager) user).getName());
+                    s.setAttribute("manager", ((Manager) user);
                     response.sendRedirect(role + "/dashboard.jsp");
                 } else if (user instanceof Doctor) {
-                    s.setAttribute("name", ((Doctor) user).getName());
+                    s.setAttribute("doctor", ((Doctor) user).getName());
                     response.sendRedirect(role + "/dashboard.jsp");
                 } else if (user instanceof CounterStaff) {
-                    s.setAttribute("name", ((CounterStaff) user).getName());
+                    s.setAttribute("staff", ((CounterStaff) user).getName());
                     response.sendRedirect(role + "/dashboard.jsp");
                 } else if (user instanceof Customer) {
-//                    s.setAttribute("name", ((Customer) user).getName());
                     s.setAttribute("customer", (Customer) user);
-//                    response.sendRedirect(role + "/cust_homepage.jsp");
                     response.sendRedirect("CustomerHomepageServlet");
                     System.out.print(((Customer) user).getId());
                 }
@@ -126,44 +135,4 @@ public class Login extends HttpServlet {
             }
         }
     }
-
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        processRequest(request, response);
-    }
-
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        processRequest(request, response);
-    }
-
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
-    @Override
-    public String getServletInfo() {
-        return "Short description";
-    }// </editor-fold>
-
 }

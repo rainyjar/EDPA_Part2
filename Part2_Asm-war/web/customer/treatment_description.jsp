@@ -2,21 +2,6 @@
 <%@ page import="java.util.List" %>
 <%@ page import="model.Treatment" %>
 <%@ page import="model.Prescription" %>
-<%
-    // Get the selected treatment from request attributes
-//    Treatment selectedTreatment = (Treatment) request.getAttribute("selectedTreatment");
-//    List<Prescription> prescriptions = (List<Prescription>) request.getAttribute("prescriptions");
-//    List<Treatment> relatedTreatments = (List<Treatment>) request.getAttribute("relatedTreatments");
-//    
-//    // Get treatment ID from URL parameter as fallback
-//    String treatmentIdParam = request.getParameter("id");
-//    
-//    // Validation: Check if we have a valid treatment
-//    if (selectedTreatment == null && treatmentIdParam != null) {
-//        // If servlet didn't populate selectedTreatment, we have an error state
-//        // This would typically be handled by redirecting back to treatment list
-//    }
-%>
 
 <%
     Treatment selectedTreatment = (Treatment) request.getAttribute("treatment");
@@ -25,10 +10,8 @@
     System.out.print(prescriptions);
 %>
 
-
 <!DOCTYPE html>
 <html lang="en">
-
     <head>
         <% if (selectedTreatment != null) {
                 String treatmentName = selectedTreatment.getName();
@@ -145,7 +128,7 @@
 
                             <!-- Action Buttons -->
                             <div class="treatment-actions" style="margin-top: 30px;">
-                                <a href="<%= request.getContextPath()%>/AppointmentServlet?treatment_id=<%= selectedTreatment.getId()%>" class="section-btn btn btn-default btn-blue">
+                                <a href="<%= request.getContextPath()%>/AppointmentServlet?action=book" class="section-btn btn btn-default btn-blue">
                                     <i class="fa fa-calendar"></i> Book Appointment
                                 </a>
                                 <a href="<%= request.getContextPath()%>/TreatmentServlet?action=viewAll" class="section-btn btn btn-default" style="margin-left: 15px;">

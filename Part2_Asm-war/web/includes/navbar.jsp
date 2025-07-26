@@ -28,9 +28,8 @@
                 <li <%= request.getServletPath().contains("CustomerHomepageServlet") ? "class='active'" : ""%>>
                     <a href="<%= request.getContextPath()%>/CustomerHomepageServlet">Home</a>
                 </li>
-
-                <li <%= pageName.equals("customer/team.jsp") ? "class='active'" : ""%>>
-                    <a href="<%= request.getContextPath()%>/customer/team.jsp">Our Doctors</a>
+                <li <%= request.getServletPath().contains("DoctorServlet") ? "class='active'" : ""%>>
+                    <a href="<%= request.getContextPath()%>/DoctorServlet">Our Doctors</a>
                 </li>
                 <li <%= request.getRequestURI().contains("TreatmentServlet") && "viewAll".equals(request.getParameter("action")) ? "class='active'" : ""%>>
                     <a href="<%= request.getContextPath()%>/TreatmentServlet?action=viewAll">Treatment Types</a>
@@ -38,8 +37,8 @@
                 <li <%= pageName.equals("customer/appointment_history.jsp") ? "class='active'" : ""%>>
                     <a href="<%= request.getContextPath()%>/AppointmentServlet?action=history">Appointments</a>
                 </li>
-                <li <%= pageName.equals("customer/cust_profile.jsp") ? "class='active'" : ""%>>
-                    <a href="<%= request.getContextPath()%>/customer/cust_profile.jsp" class="smoothScroll">Profile</a>
+                <li <%= request.getServletPath().contains("Profile") ? "class='active'" : ""%>>
+                    <a href="<%= request.getContextPath()%>/Profile">Profile</a>
                 </li>
                 <li <%= request.getRequestURI().contains("AppointmentServlet") ? "class='active'" : ""%>class="appointment-btn">
                     <a href="<%= request.getContextPath()%>/AppointmentServlet?action=book">Book an Appointment</a>
