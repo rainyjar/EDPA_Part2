@@ -29,8 +29,19 @@ public class Appointment implements Serializable {
 
     private Date appointmentDate;
     private Time appointmentTime;
-    private String custMessage, docMessage, status;
+    private String status;
 
+    @Lob
+    @Column(length = 32700)
+    private String custMessage;
+    @Lob
+    @Column(length = 32700)
+    private String docMessage;
+
+    @Lob
+    @Column(length = 32700)
+    private String staffMessage;
+    
     @ManyToOne
     @JoinColumn(name = "customer_id")
     private Customer customer;
@@ -57,16 +68,19 @@ public class Appointment implements Serializable {
     public Appointment() {
     }
 
-    public Appointment(Date appointmentDate, Time appointmentTime, String custMessage, String docMessage, String status, Customer customer, Doctor doctor, Treatment treatment, CounterStaff counterStaff) {
+    public Appointment(Date appointmentDate, Time appointmentTime, String custMessage, String docMessage, String staffMessage, String status, Customer customer, Doctor doctor, Treatment treatment, CounterStaff counterStaff, List<Feedback> feedbacks, Receipt receipt) {
         this.appointmentDate = appointmentDate;
         this.appointmentTime = appointmentTime;
         this.custMessage = custMessage;
         this.docMessage = docMessage;
+        this.staffMessage = staffMessage;
         this.status = status;
         this.customer = customer;
         this.doctor = doctor;
         this.treatment = treatment;
         this.counterStaff = counterStaff;
+        this.feedbacks = feedbacks;
+        this.receipt = receipt;
     }
 
     public int getId() {
@@ -107,6 +121,14 @@ public class Appointment implements Serializable {
 
     public void setDocMessage(String docMessage) {
         this.docMessage = docMessage;
+    }
+
+    public String getStaffMessage() {
+        return staffMessage;
+    }
+
+    public void setStaffMessage(String staffMessage) {
+        this.staffMessage = staffMessage;
     }
 
     public String getStatus() {

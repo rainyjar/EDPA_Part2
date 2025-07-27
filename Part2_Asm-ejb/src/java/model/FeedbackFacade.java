@@ -102,7 +102,9 @@ public class FeedbackFacade extends AbstractFacade<Feedback> {
      */
     public double getAverageRatingForDoctor(int doctorId) {
         try {
+            // This excludes 0.0 ratings from the average calculation
             Query query = em.createQuery("SELECT AVG(f.docRating) FROM Feedback f WHERE f.toDoctor.id = :doctorId AND f.docRating > 0");
+
             query.setParameter("doctorId", doctorId);
             Double result = (Double) query.getSingleResult();
             return result != null ? result : 0.0;
@@ -119,6 +121,7 @@ public class FeedbackFacade extends AbstractFacade<Feedback> {
      */
     public double getAverageRatingForCounterStaff(int staffId) {
         try {
+            // This excludes 0.0 ratings from the average calculation
             Query query = em.createQuery("SELECT AVG(f.staffRating) FROM Feedback f WHERE f.toStaff.id = :staffId AND f.staffRating > 0");
             query.setParameter("staffId", staffId);
             Double result = (Double) query.getSingleResult();

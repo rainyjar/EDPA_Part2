@@ -310,28 +310,33 @@ public class Profile extends HttpServlet {
 
     // Helper methods
     private boolean isEmailTaken(String email, UserInfo userInfo) {
-        // Check in all user types except current user
+        // Skip check if user is updating with their own current email
+        if (email.equals(userInfo.email)) {
+            return false; // User is keeping their same email - not taken
+        }
+        
+        // Check if email exists in any user type
         Customer customer = customerFacade.findByEmail(email);
-        if (customer != null && !(userInfo.userType.equals("customer") && customer.getId() == ((Customer) userInfo.user).getId())) {
-            return true;
+        if (customer != null) {
+            return true; // Email taken by a customer
         }
 
         Doctor doctor = doctorFacade.searchEmail(email);
-        if (doctor != null && !(userInfo.userType.equals("doctor") && doctor.getId() == ((Doctor) userInfo.user).getId())) {
-            return true;
+        if (doctor != null) {
+            return true; // Email taken by a doctor
         }
 
         CounterStaff staff = counterStaffFacade.searchEmail(email);
-        if (staff != null && !(userInfo.userType.equals("staff") && staff.getId() == ((CounterStaff) userInfo.user).getId())) {
-            return true;
+        if (staff != null) {
+            return true; // Email taken by counter staff
         }
 
         Manager manager = managerFacade.searchEmail(email);
-        if (manager != null && !(userInfo.userType.equals("manager") && manager.getId() == ((Manager) userInfo.user).getId())) {
-            return true;
+        if (manager != null) {
+            return true; // Email taken by a manager
         }
 
-        return false;
+        return false; // Email is available
     }
 
     private void updateUserFields(Object user, String userType, String name, String email, String phone, String gender, java.sql.Date dob) {

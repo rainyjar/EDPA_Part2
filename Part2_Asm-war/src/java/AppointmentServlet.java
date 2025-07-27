@@ -66,9 +66,13 @@ public class AppointmentServlet extends HttpServlet {
 
         String action = request.getParameter("action");
 
-        // Check if user is logged in for customer actions
-        HttpSession session = request.getSession();
-        Customer loggedInCustomer = (Customer) session.getAttribute("customer");
+        // Check if user is logged in for customer actions - OPTIMIZE TO PREVENT LOOPS
+        HttpSession session = request.getSession(false); // Don't create new session
+        Customer loggedInCustomer = null;
+        
+        if (session != null) {
+            loggedInCustomer = (Customer) session.getAttribute("customer");
+        }
 
         if ("view".equals(action)) {
             // Manager view - show all appointments
@@ -78,6 +82,10 @@ public class AppointmentServlet extends HttpServlet {
 
         } else if ("reschedule".equals(action)) {
             // Load reschedule form
+            if (loggedInCustomer == null) {
+                response.sendRedirect(request.getContextPath() + "/login.jsp");
+                return;
+            }
             handleLoadReschedule(request, response);
         } else if ("getAvailableSlots".equals(action)) {
             // AJAX request to get available time slots for doctors on selected date
@@ -87,9 +95,17 @@ public class AppointmentServlet extends HttpServlet {
             handleGetDoctorsForTreatment(request, response);
         } else if ("history".equals(action)) {
             // Load appointment history page with data
+            if (loggedInCustomer == null) {
+                response.sendRedirect(request.getContextPath() + "/login.jsp");
+                return;
+            }
             handleAppointmentHistory(request, response);
         } else if (action == null || "book".equals(action)) {
-            // Show form for booking
+            // Show form for booking - check if user is logged in first
+            if (loggedInCustomer == null) {
+                response.sendRedirect(request.getContextPath() + "/login.jsp");
+                return;
+            }
             request.setAttribute("doctorList", doctorFacade.findAll());
             request.setAttribute("treatmentList", treatmentFacade.findAll());
             request.getRequestDispatcher("customer/appointment.jsp").forward(request, response);
@@ -484,21 +500,67 @@ public class AppointmentServlet extends HttpServlet {
                 return;
             }
 
+            // Simple overdue check - just reads status from database (no updates)
+            // DISABLED - even this simple check might cause issues for "all" or no-status requests
+            // performSimpleOverdueCheck();
+
             // Load all necessary data for appointment history page
             
             // 1. Load appointments for the logged-in customer only
             List<Appointment> appointmentList = appointmentFacade.findByCustomer(loggedInCustomer);
             
-            // 2. Load all doctors (needed for displaying doctor information)
+            // 2. Check if status filter is requested
+            String statusFilter = request.getParameter("status");
+            if (statusFilter != null && !statusFilter.trim().isEmpty()) {
+                String filterStatus = statusFilter.trim().toLowerCase();
+                
+                System.out.println("Filtering appointments by status: " + filterStatus);
+                
+                // Handle "all" status - don't filter, show everything
+                if (!"all".equals(filterStatus)) {
+                    List<Appointment> filteredAppointments = new ArrayList<>();
+                    
+                    for (Appointment apt : appointmentList) {
+                        if (apt.getStatus() != null) {
+                            String aptStatus = apt.getStatus().trim().toLowerCase();
+                            
+                            // Handle specific filtering cases with CASE-INSENSITIVE comparison
+                            if ("overdue".equals(filterStatus) && "overdue".equals(aptStatus)) {
+                                filteredAppointments.add(apt);
+                            } else if ("reschedule".equals(filterStatus) && "reschedule".equals(aptStatus)) {
+                                filteredAppointments.add(apt);
+                            } else if ("approved".equals(filterStatus) && ("approved".equals(aptStatus) || "confirmed".equals(aptStatus))) {
+                                filteredAppointments.add(apt);
+                            } else if ("completed".equals(filterStatus) && "completed".equals(aptStatus)) {
+                                filteredAppointments.add(apt);
+                            } else if ("cancelled".equals(filterStatus) && "cancelled".equals(aptStatus)) {
+                                filteredAppointments.add(apt);
+                            } else if ("pending".equals(filterStatus) && "pending".equals(aptStatus)) {
+                                filteredAppointments.add(apt);
+                            }
+                        }
+                    }
+                    
+                    appointmentList = filteredAppointments;
+                    System.out.println("Filtered to " + appointmentList.size() + " appointments with status: " + filterStatus);
+                } else {
+                    System.out.println("Status filter is 'all' - showing all " + appointmentList.size() + " appointments");
+                }
+            } else {
+                // No status parameter - treat as "all" appointments
+                System.out.println("No status filter provided - showing all " + appointmentList.size() + " appointments");
+            }
+            
+            // 3. Load all doctors (needed for displaying doctor information)
             List<Doctor> doctorList = doctorFacade.findAll();
             
-            // 3. Load all treatments (needed for displaying treatment information)
+            // 4. Load all treatments (needed for displaying treatment information)
             List<Treatment> treatmentList = treatmentFacade.findAll();
             
-            // 4. Load all payments (needed for displaying payment status)
+            // 5. Load all payments (needed for displaying payment status)
             List<Payment> paymentList = paymentFacade.findAll();
             
-            // 5. Load all counter staff (needed for displaying staff information)
+            // 6. Load all counter staff (needed for displaying staff information)
             List<CounterStaff> staffList = counterStaffFacade.findAll();
 
             // Set attributes for the JSP
@@ -507,11 +569,19 @@ public class AppointmentServlet extends HttpServlet {
             request.setAttribute("treatmentList", treatmentList);
             request.setAttribute("paymentList", paymentList);
             request.setAttribute("staffList", staffList);
+            
+            // Set status filter for JSP display (CRITICAL - pass as parameter too!)
+            if (statusFilter != null && !statusFilter.trim().isEmpty()) {
+                request.setAttribute("statusFilter", statusFilter.trim().toLowerCase());
+                // ALSO set as parameter for JSP compatibility
+                request.setAttribute("javax.servlet.forward.query_string", "status=" + statusFilter.trim().toLowerCase());
+            }
 
-            // Debug logging
+            // Debug logging with enhanced appointment details
             System.out.println("=== APPOINTMENT HISTORY DATA LOADED ===");
             System.out.println("Customer ID: " + loggedInCustomer.getId());
             System.out.println("Customer Name: " + loggedInCustomer.getName());
+            System.out.println("Status Filter: " + (statusFilter != null ? statusFilter : "none"));
             System.out.println("Appointments loaded: " + (appointmentList != null ? appointmentList.size() : 0));
             System.out.println("Doctors loaded: " + (doctorList != null ? doctorList.size() : 0));
             System.out.println("Treatments loaded: " + (treatmentList != null ? treatmentList.size() : 0));
@@ -519,13 +589,16 @@ public class AppointmentServlet extends HttpServlet {
             System.out.println("Staff loaded: " + (staffList != null ? staffList.size() : 0));
             
             if (appointmentList != null) {
+                System.out.println("=== DETAILED APPOINTMENT LIST ===");
                 for (Appointment app : appointmentList) {
                     System.out.println("Appointment ID: " + app.getId() + 
-                                     ", Status: " + app.getStatus() + 
+                                     ", Status: '" + app.getStatus() + "'" + 
                                      ", Date: " + app.getAppointmentDate() + 
                                      ", Doctor: " + (app.getDoctor() != null ? app.getDoctor().getName() : "None") +
-                                     ", Treatment: " + (app.getTreatment() != null ? app.getTreatment().getName() : "None"));
+                                     ", Treatment: " + (app.getTreatment() != null ? app.getTreatment().getName() : "None") +
+                                     ", Customer: " + (app.getCustomer() != null ? app.getCustomer().getName() : "None"));
                 }
+                System.out.println("=== END APPOINTMENT LIST ===");
             }
             System.out.println("=======================================");
 
@@ -557,9 +630,9 @@ public class AppointmentServlet extends HttpServlet {
                 return;
             }
 
-            // Validate that appointment can be rescheduled (only pending or approved)
+            // Validate that appointment can be rescheduled (only pending, approved, overdue, or reschedule required)
             String status = appointment.getStatus();
-            if (!"pending".equals(status) && !"approved".equals(status)) {
+            if (!"pending".equals(status) && !"approved".equals(status) && !"overdue".equals(status) && !"reschedule".equals(status)) {
                 response.sendRedirect("customer/appointment_history.jsp?error=cannot_reschedule");
                 return;
             }
@@ -587,6 +660,7 @@ public class AppointmentServlet extends HttpServlet {
                 System.out.println("Status: " + appointment.getStatus());
                 System.out.println("Treatments loaded: " + (treatmentList != null ? treatmentList.size() : 0));
                 System.out.println("Doctors loaded: " + (doctorList != null ? doctorList.size() : 0));
+                System.out.println("Staff Message: " + (appointment.getStaffMessage() != null ? appointment.getStaffMessage() : "None"));
                 System.out.println("==============================");
 
             } catch (Exception e) {
@@ -702,15 +776,12 @@ public class AppointmentServlet extends HttpServlet {
 
             System.out.println("No conflicts - proceeding with appointment creation");
 
-            // Assign counter staff (random assignment for now)
-            CounterStaff assignedStaff = assignCounterStaff();
-
             // Create new appointment
             Appointment newAppointment = new Appointment();
             newAppointment.setCustomer(loggedInCustomer);
             newAppointment.setDoctor(doctor);
             newAppointment.setTreatment(treatment);
-            newAppointment.setCounterStaff(assignedStaff);
+            newAppointment.setCounterStaff(null);
             newAppointment.setAppointmentDate(appointmentDate);
             newAppointment.setAppointmentTime(appointmentTime);
             newAppointment.setCustMessage(customerMessage != null ? customerMessage.trim() : "");
@@ -730,8 +801,8 @@ public class AppointmentServlet extends HttpServlet {
             System.out.println("Status: pending");
             System.out.println("======================================");
 
-            // Redirect to success page or appointment history
-            response.sendRedirect(request.getContextPath() + "/AppointmentServlet?action=history&success=booked");
+            // Redirect to success page showing pending appointments (since new appointment is pending)
+            response.sendRedirect(request.getContextPath() + "/AppointmentServlet?action=history&status=pending&success=booked");
 
         } catch (NumberFormatException e) {
             response.sendRedirect(request.getContextPath() + "/customer/appointment.jsp?error=invalid_data");
@@ -762,9 +833,9 @@ public class AppointmentServlet extends HttpServlet {
                 return;
             }
 
-            // Validate that appointment can be cancelled (only pending or approved)
+            // Validate that appointment can be cancelled (only pending, approved, overdue, or reschedule required)
             String status = appointment.getStatus();
-            if (!"pending".equals(status) && !"approved".equals(status)) {
+            if (!"pending".equals(status) && !"approved".equals(status) && !"overdue".equals(status) && !"reschedule".equals(status)) {
                 response.sendRedirect("customer/appointment_history.jsp?error=cannot_cancel");
                 return;
             }
@@ -792,38 +863,77 @@ public class AppointmentServlet extends HttpServlet {
             String doctorIdStr = request.getParameter("doctor_id");
             String appointmentDate = request.getParameter("appointment_date");
             String appointmentTime = request.getParameter("appointment_time");
-            String message = request.getParameter("customer_message"); // Fixed parameter name
+            String message = request.getParameter("customer_message");
 
-            // Debug logging - can be removed later
-            System.out.println("=== RESCHEDULE DEBUG ===");
-            System.out.println("Appointment ID: " + appointmentIdStr);
-            System.out.println("Treatment ID: " + treatmentIdStr);
-            System.out.println("Doctor ID: " + doctorIdStr);
-            System.out.println("Date: " + appointmentDate);
-            System.out.println("Time: " + appointmentTime);
-            System.out.println("Message: " + message);
-            System.out.println("Original Status: " + originalStatus);
+            // Enhanced debug logging
+            System.out.println("=== RESCHEDULE APPOINTMENT DEBUG ===");
+            System.out.println("Appointment ID parameter: " + appointmentIdStr);
+            System.out.println("Original Status parameter: " + originalStatus);
+            System.out.println("Treatment ID parameter: " + treatmentIdStr);
+            System.out.println("Doctor ID parameter: " + doctorIdStr);
+            System.out.println("Date parameter: " + appointmentDate);
+            System.out.println("Time parameter: " + appointmentTime);
+            System.out.println("Message parameter: " + message);
 
+            // Validate appointment ID first
             if (appointmentIdStr == null || appointmentIdStr.trim().isEmpty()) {
-                System.out.println("ERROR: Missing appointment ID");
+                System.out.println("ERROR: Missing appointment ID parameter");
                 response.sendRedirect("customer/appointment_reschedule.jsp?error=invalid_id");
                 return;
             }
 
-            int appointmentId = Integer.parseInt(appointmentIdStr);
+            int appointmentId;
+            try {
+                appointmentId = Integer.parseInt(appointmentIdStr.trim());
+                System.out.println("Parsed appointment ID: " + appointmentId);
+            } catch (NumberFormatException e) {
+                System.out.println("ERROR: Invalid appointment ID format: " + appointmentIdStr);
+                response.sendRedirect("customer/appointment_reschedule.jsp?error=invalid_id");
+                return;
+            }
 
-            // Find the appointment
+            // Find the existing appointment
+            System.out.println("Searching for appointment with ID: " + appointmentId);
             Appointment appointment = appointmentFacade.find(appointmentId);
+            
             if (appointment == null) {
+                System.out.println("ERROR: Appointment not found with ID: " + appointmentId);
                 response.sendRedirect("customer/appointment_history.jsp?error=not_found");
                 return;
             }
 
-            // Validate that appointment can be rescheduled (only pending or approved)
+            System.out.println("Found existing appointment:");
+            System.out.println("  - ID: " + appointment.getId());
+            System.out.println("  - Current Status: " + appointment.getStatus());
+            System.out.println("  - Customer ID: " + (appointment.getCustomer() != null ? appointment.getCustomer().getId() : "null"));
+            System.out.println("  - Current Treatment: " + (appointment.getTreatment() != null ? appointment.getTreatment().getName() : "null"));
+            System.out.println("  - Current Doctor: " + (appointment.getDoctor() != null ? appointment.getDoctor().getName() : "null"));
+            System.out.println("  - Current Date: " + appointment.getAppointmentDate());
+            System.out.println("  - Current Time: " + appointment.getAppointmentTime());
+
+            // Validate appointment status can be rescheduled
             String currentStatus = appointment.getStatus();
-            if (!"pending".equals(currentStatus) && !"approved".equals(currentStatus)) {
+            if (!"pending".equals(currentStatus) && !"approved".equals(currentStatus) && 
+                !"overdue".equals(currentStatus) && !"reschedule".equals(currentStatus)) {
                 System.out.println("ERROR: Cannot reschedule appointment with status: " + currentStatus);
                 response.sendRedirect("customer/appointment_history.jsp?error=cannot_reschedule");
+                return;
+            }
+
+            // Validate customer ownership
+            HttpSession session = request.getSession();
+            Customer loggedInCustomer = (Customer) session.getAttribute("customer");
+            if (loggedInCustomer == null) {
+                System.out.println("ERROR: No logged in customer found");
+                response.sendRedirect(request.getContextPath() + "/login.jsp");
+                return;
+            }
+            
+            if (appointment.getCustomer() == null || appointment.getCustomer().getId() != loggedInCustomer.getId()) {
+                System.out.println("ERROR: Appointment does not belong to logged in customer");
+                System.out.println("  - Appointment customer ID: " + (appointment.getCustomer() != null ? appointment.getCustomer().getId() : "null"));
+                System.out.println("  - Logged in customer ID: " + loggedInCustomer.getId());
+                response.sendRedirect("customer/appointment_history.jsp?error=unauthorized");
                 return;
             }
 
@@ -833,73 +943,120 @@ public class AppointmentServlet extends HttpServlet {
                 appointmentDate == null || appointmentDate.trim().isEmpty() ||
                 appointmentTime == null || appointmentTime.trim().isEmpty()) {
                 System.out.println("ERROR: Missing required fields for reschedule");
+                System.out.println("  - Treatment ID: " + treatmentIdStr);
+                System.out.println("  - Doctor ID: " + doctorIdStr);
+                System.out.println("  - Date: " + appointmentDate);
+                System.out.println("  - Time: " + appointmentTime);
                 response.sendRedirect("customer/appointment_reschedule.jsp?id=" + appointmentId + "&error=invalid_data");
                 return;
             }
 
-            // Update appointment details
-            if (treatmentIdStr != null && !treatmentIdStr.trim().isEmpty()) {
-                int treatmentId = Integer.parseInt(treatmentIdStr);
-                Treatment treatment = treatmentFacade.find(treatmentId);
-                if (treatment != null) {
-                    appointment.setTreatment(treatment);
-                }
+            // Check for time conflicts before updating (excluding current appointment)
+            int doctorId = Integer.parseInt(doctorIdStr.trim());
+            Date newDate = new SimpleDateFormat("yyyy-MM-dd").parse(appointmentDate.trim());
+            Time newTime = new Time(new SimpleDateFormat("HH:mm").parse(appointmentTime.trim()).getTime());
+            
+            if (hasRescheduleConflict(appointmentId, doctorId, newDate, newTime)) {
+                System.out.println("ERROR: Time conflict detected for reschedule");
+                response.sendRedirect("customer/appointment_reschedule.jsp?id=" + appointmentId + "&error=time_conflict");
+                return;
             }
-            if (doctorIdStr != null && !doctorIdStr.trim().isEmpty()) {
-                int doctorId = Integer.parseInt(doctorIdStr);
-                Doctor doctor = doctorFacade.find(doctorId);
-                if (doctor != null) {
-                    appointment.setDoctor(doctor);
-                }
+
+            System.out.println("=== UPDATING APPOINTMENT FIELDS ===");
+            
+            // Update treatment
+            int treatmentId = Integer.parseInt(treatmentIdStr.trim());
+            Treatment treatment = treatmentFacade.find(treatmentId);
+            if (treatment != null) {
+                System.out.println("Updating treatment from '" + 
+                    (appointment.getTreatment() != null ? appointment.getTreatment().getName() : "null") + 
+                    "' to '" + treatment.getName() + "'");
+                appointment.setTreatment(treatment);
+            } else {
+                System.out.println("ERROR: Treatment not found with ID: " + treatmentId);
+                response.sendRedirect("customer/appointment_reschedule.jsp?id=" + appointmentId + "&error=invalid_treatment");
+                return;
             }
-            if (appointmentDate != null && !appointmentDate.trim().isEmpty()) {
-                try {
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                    Date date = dateFormat.parse(appointmentDate);
-                    appointment.setAppointmentDate(date);
-                } catch (ParseException e) {
-                    response.sendRedirect("customer/appointment_reschedule.jsp?error=invalid_date");
-                    return;
-                }
+
+            // Update doctor
+            Doctor doctor = doctorFacade.find(doctorId);
+            if (doctor != null) {
+                System.out.println("Updating doctor from '" + 
+                    (appointment.getDoctor() != null ? appointment.getDoctor().getName() : "null") + 
+                    "' to '" + doctor.getName() + "'");
+                appointment.setDoctor(doctor);
+            } else {
+                System.out.println("ERROR: Doctor not found with ID: " + doctorId);
+                response.sendRedirect("customer/appointment_reschedule.jsp?id=" + appointmentId + "&error=invalid_doctor");
+                return;
             }
-            if (appointmentTime != null && !appointmentTime.trim().isEmpty()) {
-                try {
-                    // Convert time string (HH:mm) to Time object
-                    SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
-                    Date timeDate = timeFormat.parse(appointmentTime);
-                    Time time = new Time(timeDate.getTime());
-                    appointment.setAppointmentTime(time);
-                } catch (ParseException e) {
-                    response.sendRedirect("customer/appointment_reschedule.jsp?error=invalid_time");
-                    return;
-                }
-            }
-            if (message != null) {
-                appointment.setCustMessage(message);
-            }
+
+            // Update date and time
+            System.out.println("Updating date from '" + appointment.getAppointmentDate() + "' to '" + newDate + "'");
+            System.out.println("Updating time from '" + appointment.getAppointmentTime() + "' to '" + newTime + "'");
+            appointment.setAppointmentDate(newDate);
+            appointment.setAppointmentTime(newTime);
+
+            // Update message
+            String oldMessage = appointment.getCustMessage();
+            appointment.setCustMessage(message != null ? message.trim() : "");
+            System.out.println("Updating message from '" + oldMessage + "' to '" + appointment.getCustMessage() + "'");
 
             // Set status based on original status
-            if ("approved".equals(originalStatus)) {
-                // If was approved, change back to pending for new approval
-                appointment.setStatus("pending");
-            } else {
-                // If was pending, keep as pending
-                appointment.setStatus("pending");
+            String newStatus = "pending"; // Always set to pending for new approval
+            System.out.println("Updating status from '" + appointment.getStatus() + "' to '" + newStatus + "'");
+            appointment.setStatus(newStatus);
+
+            // Clear messages for fresh approval process
+            appointment.setDocMessage(null);
+            appointment.setStaffMessage(null);
+            System.out.println("Cleared doctor and staff messages for fresh approval");
+
+            System.out.println("=== SAVING TO DATABASE ===");
+            System.out.println("Appointment ID being updated: " + appointment.getId());
+            
+            try {
+                // Use merge instead of edit to ensure the entity is properly updated
+                appointmentFacade.edit(appointment);
+                System.out.println("✓ Appointment successfully updated in database!");
+                
+                // Verify the update by re-fetching the appointment
+                Appointment updatedAppointment = appointmentFacade.find(appointmentId);
+                if (updatedAppointment != null) {
+                    System.out.println("=== VERIFICATION: Updated appointment details ===");
+                    System.out.println("  - ID: " + updatedAppointment.getId());
+                    System.out.println("  - Status: " + updatedAppointment.getStatus());
+                    System.out.println("  - Treatment: " + (updatedAppointment.getTreatment() != null ? updatedAppointment.getTreatment().getName() : "null"));
+                    System.out.println("  - Doctor: " + (updatedAppointment.getDoctor() != null ? updatedAppointment.getDoctor().getName() : "null"));
+                    System.out.println("  - Date: " + updatedAppointment.getAppointmentDate());
+                    System.out.println("  - Time: " + updatedAppointment.getAppointmentTime());
+                    System.out.println("  - Message: " + updatedAppointment.getCustMessage());
+                } else {
+                    System.out.println("WARNING: Could not re-fetch appointment for verification");
+                }
+                
+            } catch (Exception dbException) {
+                System.out.println("ERROR: Database update failed!");
+                dbException.printStackTrace();
+                response.sendRedirect("customer/appointment_reschedule.jsp?id=" + appointmentId + "&error=database_error");
+                return;
             }
 
-            // Clear doctor's message as it's a new/modified appointment
-            appointment.setDocMessage(null);
-
-            System.out.println("About to update appointment in database...");
-            appointmentFacade.edit(appointment);
-            System.out.println("Appointment updated successfully in database!");
-
+            System.out.println("=== RESCHEDULE COMPLETED SUCCESSFULLY ===");
+            
             // Redirect back to appointment history with success message
             response.sendRedirect(request.getContextPath() + "/AppointmentServlet?action=history&success=rescheduled");
 
         } catch (NumberFormatException e) {
+            System.out.println("ERROR: Number format exception in reschedule");
+            e.printStackTrace();
             response.sendRedirect("customer/appointment_reschedule.jsp?error=invalid_data");
+        } catch (ParseException e) {
+            System.out.println("ERROR: Date/time parse exception in reschedule");
+            e.printStackTrace();
+            response.sendRedirect("customer/appointment_reschedule.jsp?error=invalid_datetime");
         } catch (Exception e) {
+            System.out.println("ERROR: General exception in reschedule");
             e.printStackTrace();
             response.sendRedirect("customer/appointment_reschedule.jsp?error=system_error");
         }
@@ -1045,6 +1202,88 @@ public class AppointmentServlet extends HttpServlet {
     }
 
     /**
+     * Check for appointment time conflicts during reschedule (excludes the appointment being rescheduled)
+     */
+    private boolean hasRescheduleConflict(int appointmentId, int doctorId, Date appointmentDate, Time appointmentTime) {
+        try {
+            // Get appointments for this doctor on this date
+            List<Appointment> doctorAppointments = null;
+            
+            try {
+                // Try to get appointments for specific doctor and date
+                doctorAppointments = appointmentFacade.findByDoctorAndDate(doctorId, 
+                    new SimpleDateFormat("yyyy-MM-dd").format(appointmentDate));
+                System.out.println("Found " + (doctorAppointments != null ? doctorAppointments.size() : 0) + 
+                    " appointments for doctor " + doctorId + " on " + appointmentDate);
+            } catch (Exception e) {
+                System.out.println("Specific query not available, falling back to findAll() for reschedule conflict check");
+                // Fallback to getting all appointments
+                List<Appointment> allAppointments = appointmentFacade.findAll();
+                doctorAppointments = new ArrayList<>();
+                
+                if (allAppointments != null) {
+                    for (Appointment app : allAppointments) {
+                        if (app != null && app.getDoctor() != null && app.getDoctor().getId() == doctorId) {
+                            doctorAppointments.add(app);
+                        }
+                    }
+                }
+            }
+            
+            // If no existing appointments for this doctor, no conflict possible
+            if (doctorAppointments == null || doctorAppointments.isEmpty()) {
+                System.out.println("No existing appointments for doctor ID " + doctorId + " - no reschedule conflict");
+                return false;
+            }
+            
+            System.out.println("Checking for reschedule conflicts among " + doctorAppointments.size() + 
+                " appointments (excluding appointment ID " + appointmentId + ")");
+
+            for (Appointment appointment : doctorAppointments) {
+                // Skip null appointments or appointments with null data
+                if (appointment == null || appointment.getDoctor() == null || 
+                    appointment.getAppointmentDate() == null || appointment.getAppointmentTime() == null) {
+                    continue;
+                }
+                
+                // Skip the appointment being rescheduled (most important difference from hasAppointmentConflict)
+                if (appointment.getId() == appointmentId) {
+                    System.out.println("Skipping appointment ID " + appointmentId + " (being rescheduled)");
+                    continue;
+                }
+                
+                // Skip cancelled appointments
+                if ("cancelled".equals(appointment.getStatus())) {
+                    System.out.println("Skipping cancelled appointment ID: " + appointment.getId());
+                    continue;
+                }
+                
+                // Check if same date and time
+                if (isSameDate(appointment.getAppointmentDate(), appointmentDate)
+                        && isSameTime(appointment.getAppointmentTime(), appointmentTime)) {
+                    System.out.println("RESCHEDULE CONFLICT FOUND: Same date and time with another appointment");
+                    System.out.println("Conflicting appointment ID: " + appointment.getId());
+                    System.out.println("Conflicting date: " + appointment.getAppointmentDate());
+                    System.out.println("Conflicting time: " + appointment.getAppointmentTime());
+                    System.out.println("New date: " + appointmentDate);
+                    System.out.println("New time: " + appointmentTime);
+                    return true; // Conflict found
+                }
+            }
+
+            System.out.println("No reschedule conflicts found - appointment can be rescheduled");
+            return false; // No conflict
+
+        } catch (Exception e) {
+            System.out.println("ERROR in hasRescheduleConflict: " + e.getMessage());
+            e.printStackTrace();
+            
+            // For safety, assume conflict if there's a real database error
+            return true;
+        }
+    }
+
+    /**
      * Check for appointment time conflicts
      */
     private boolean hasAppointmentConflict(int doctorId, Date appointmentDate, Time appointmentTime) {
@@ -1154,26 +1393,113 @@ public class AppointmentServlet extends HttpServlet {
     }
 
     /**
-     * Assign a counter staff (random assignment for now) In a real system, this
-     * could be based on workload, availability, etc.
+     * Simple and efficient overdue checking - just check database status
+     * No complex date calculations or mass updates needed
      */
-    private CounterStaff assignCounterStaff() {
+    private void performSimpleOverdueCheck() {
         try {
-            List<CounterStaff> staffList = counterStaffFacade.findAll();
-
-            if (staffList != null && !staffList.isEmpty()) {
-                // Random assignment
-                Random random = new Random();
-                int randomIndex = random.nextInt(staffList.size());
-                return staffList.get(randomIndex);
-            }
-
-            return null; // No staff available
-
+            System.out.println("=== SIMPLE OVERDUE CHECK ===");
+            System.out.println("Note: This method only reads appointment statuses from database");
+            System.out.println("No date calculations or database updates performed");
+            System.out.println("Overdue appointments are identified by status='overdue' in database");
+            System.out.println("===========================");
+            
+            // This is intentionally simple - just log that we're checking
+            // The actual overdue detection is handled by the database status field
+            // which should be updated by a separate background process or admin action
+            
         } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+            System.out.println("Error in simple overdue check: " + e.getMessage());
+            // Don't throw - this is non-critical
         }
+    }
+
+    /**
+     * Check and update appointments that are overdue - DISABLED FOR PERFORMANCE
+     * An appointment is overdue if its date and time have passed but status is still "approved" or "reschedule"
+     * THIS METHOD HAS BEEN DISABLED because it causes infinite loading due to:
+     * 1. Loading ALL appointments from database (not just current user)
+     * 2. Performing individual database UPDATE operations in a loop
+     * 3. Complex date/time calculations for every appointment
+     * 4. Being called on every page load
+     * 
+     * RECOMMENDATION: Move this to a scheduled background task or admin function
+     */
+    private void checkAndUpdateOverdueAppointments() {
+        System.out.println("checkAndUpdateOverdueAppointments() - DISABLED FOR PERFORMANCE");
+        System.out.println("This method was causing infinite loading issues.");
+        System.out.println("For production use, implement this as a scheduled background task.");
+        return; // Method disabled
+        
+        /*
+        // ORIGINAL CODE - COMMENTED OUT DUE TO PERFORMANCE ISSUES
+        try {
+            // Get all appointments with "approved" or "reschedule" status
+            List<Appointment> allAppointments = appointmentFacade.findAll();
+            
+            if (allAppointments == null || allAppointments.isEmpty()) {
+                System.out.println("No appointments to check for overdue status");
+                return;
+            }
+            
+            Date currentDateTime = new Date();
+            System.out.println("Checking for overdue appointments. Current time: " + currentDateTime);
+            
+            int overdueCount = 0;
+            
+            for (Appointment appointment : allAppointments) {
+                // Skip null appointments or appointments that are not approved/reschedule status
+                if (appointment == null || 
+                    (!"approved".equals(appointment.getStatus()) && !"reschedule".equals(appointment.getStatus()))) {
+                    continue;
+                }
+                
+                // Check if appointment date and time have passed
+                if (appointment.getAppointmentDate() != null && appointment.getAppointmentTime() != null) {
+                    // Combine appointment date and time for comparison
+                    java.util.Calendar appointmentCalendar = java.util.Calendar.getInstance();
+                    appointmentCalendar.setTime(appointment.getAppointmentDate());
+                    
+                    java.util.Calendar timeCalendar = java.util.Calendar.getInstance();
+                    timeCalendar.setTime(appointment.getAppointmentTime());
+                    
+                    // Set the time components on the appointment date
+                    appointmentCalendar.set(java.util.Calendar.HOUR_OF_DAY, timeCalendar.get(java.util.Calendar.HOUR_OF_DAY));
+                    appointmentCalendar.set(java.util.Calendar.MINUTE, timeCalendar.get(java.util.Calendar.MINUTE));
+                    appointmentCalendar.set(java.util.Calendar.SECOND, 0);
+                    appointmentCalendar.set(java.util.Calendar.MILLISECOND, 0);
+                    
+                    Date appointmentDateTime = appointmentCalendar.getTime();
+                    
+                    // Check if appointment datetime has passed
+                    if (appointmentDateTime.before(currentDateTime)) {
+                        System.out.println("Found overdue appointment: ID=" + appointment.getId() + 
+                                         ", Status=" + appointment.getStatus() +
+                                         ", Date=" + appointment.getAppointmentDate() + 
+                                         ", Time=" + appointment.getAppointmentTime() + 
+                                         ", Combined DateTime=" + appointmentDateTime);
+                        
+                        // Update status to overdue
+                        appointment.setStatus("overdue");
+                        appointmentFacade.edit(appointment);
+                        overdueCount++;
+                        
+                        System.out.println("Updated appointment ID " + appointment.getId() + " to overdue status");
+                    }
+                }
+            }
+            
+            if (overdueCount > 0) {
+                System.out.println("Updated " + overdueCount + " appointments to overdue status");
+            } else {
+                System.out.println("No overdue appointments found");
+            }
+            
+        } catch (Exception e) {
+            System.out.println("Error checking for overdue appointments: " + e.getMessage());
+            e.printStackTrace();
+        }
+        */
     }
 
     /**
