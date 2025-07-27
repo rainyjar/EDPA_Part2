@@ -3,6 +3,7 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+<<<<<<< HEAD
             <file>file:/C:/Users/chris/OneDrive%20-%20Asia%20Pacific%20University/~Enterprise%20Programming/ASM/Part2_Asm/Part2_Asm-war/web/manager/register_cs.jsp</file>
             <file>file:/C:/Users/chris/OneDrive%20-%20Asia%20Pacific%20University/~Enterprise%20Programming/ASM/Part2_Asm/Part2_Asm-war/src/java/CounterStaffServlet.java</file>
             <file>file:/C:/Users/chris/OneDrive%20-%20Asia%20Pacific%20University/~Enterprise%20Programming/ASM/Part2_Asm/Part2_Asm-war/src/java/Login.java</file>
@@ -13,6 +14,18 @@
             <file>file:/C:/Users/chris/OneDrive%20-%20Asia%20Pacific%20University/~Enterprise%20Programming/ASM/Part2_Asm/Part2_Asm-war/src/java/Profile.java</file>
             <file>file:/C:/Users/chris/OneDrive%20-%20Asia%20Pacific%20University/~Enterprise%20Programming/ASM/Part2_Asm/Part2_Asm-war/web/manager/register_manager.jsp</file>
             <file>file:/C:/Users/chris/OneDrive%20-%20Asia%20Pacific%20University/~Enterprise%20Programming/ASM/Part2_Asm/Part2_Asm-war/web/login.jsp</file>
+=======
+            <file>file:/C:/Users/leeja/OneDrive/Desktop/EPDA_Part2/EDPA_Part2/Part2_Asm-war/src/java/CounterStaffServlet.java</file>
+            <file>file:/C:/Users/leeja/OneDrive/Desktop/EPDA_Part2/EDPA_Part2/Part2_Asm-war/web/css/custom.css</file>
+            <file>file:/C:/Users/leeja/OneDrive/Desktop/EPDA_Part2/EDPA_Part2/Part2_Asm-war/src/java/Login.java</file>
+            <file>file:/C:/Users/leeja/OneDrive/Desktop/EPDA_Part2/EDPA_Part2/Part2_Asm-war/src/java/CustomerHomepageServlet.java</file>
+            <file>file:/C:/Users/leeja/OneDrive/Desktop/EPDA_Part2/EDPA_Part2/Part2_Asm-war/src/java/AppointmentServlet.java</file>
+            <file>file:/C:/Users/leeja/OneDrive/Desktop/EPDA_Part2/EDPA_Part2/Part2_Asm-war/web/customer/cust_homepage.jsp</file>
+            <file>file:/C:/Users/leeja/OneDrive/Desktop/EPDA_Part2/EDPA_Part2/Part2_Asm-war/web/customer/appointment_history.jsp</file>
+            <file>file:/C:/Users/leeja/OneDrive/Desktop/EPDA_Part2/EDPA_Part2/Part2_Asm-war/web/counter_staff/counter_homepage.jsp</file>
+            <file>file:/C:/Users/leeja/OneDrive/Desktop/EPDA_Part2/EDPA_Part2/Part2_Asm-war/web/css/staff-dashboard.css</file>
+            <file>file:/C:/Users/leeja/OneDrive/Desktop/EPDA_Part2/EDPA_Part2/Part2_Asm-war/web/customer/appointment_reschedule.jsp</file>
+>>>>>>> c7e8041ffc1bf6e7989474c514a4415ca4960e7c
         </group>
     </open-files>
 </project-private>

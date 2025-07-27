@@ -1,5 +1,9 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.List" %>
+<%@ page import="java.text.SimpleDateFormat" %>
+<%@ page import="java.util.Date" %>
+<%@ page import="java.util.Calendar" %>
+<%@ page import="model.Appointment" %>
 <%@ page import="model.Doctor" %>
 <%@ page import="model.Treatment" %>
 <%@ page import="model.Customer" %>
@@ -18,54 +22,17 @@
     // Retrieve the list of doctors and treatments from the request attributes
     List<Doctor> doctorList = (List<Doctor>) request.getAttribute("doctorList");
     List<Treatment> treatmentList = (List<Treatment>) request.getAttribute("treatmentList");
+    
+    // Retrieve appointment reminder data with comprehensive validation
+    List<Appointment> upcomingAppointments = (List<Appointment>) request.getAttribute("upcomingAppointments");
+    List<Appointment> urgentReminders = (List<Appointment>) request.getAttribute("urgentReminders");
+    List<Appointment> overdueAppointments = (List<Appointment>) request.getAttribute("overdueAppointments");
 %>
 <!DOCTYPE html>
 <html lang="en">
     <head>
         <title>APU Medical Center</title>
         <%@ include file="/includes/head.jsp" %>
-        <style>
-            .custom-treat-image {
-                aspect-ratio: 16/9;
-                object-fit: cover;         
-            }
-            .treatments-thumb {
-                max-height: 450px;         
-                min-height: 400px;         
-                overflow: hidden;           /* Prevents overflow */
-                border: 1px solid #ddd;
-                border-radius: 10px;
-                background-color: #fff;
-                box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            }
-
-            .treatments-info p{
-                max-height: 60px;           /* Limit text height */
-                overflow: hidden;
-                text-overflow: ellipsis;
-                line-height: 1.3em;
-                display: -webkit-box;
-                -webkit-line-clamp: 3;      /* Show 3 lines max */
-                -webkit-box-orient: vertical;
-            }
-
-            .two-line-text h3, .two-line-text p{
-                display: -webkit-box; /* Required for -webkit-line-clamp */
-                -webkit-box-orient: vertical; /* Required for -webkit-line-clamp */
-                -webkit-line-clamp: 2; /* Limits the text to 2 lines */
-                overflow: hidden; /* Hides any overflowing content */
-                text-overflow: ellipsis; /* Adds an ellipsis (...) to truncated text */
-                white-space: normal; /* Allows text to wrap within the two lines */
-            }
-
-            @media (max-width: 768px) {
-                .treatments-thumb {
-                    max-height: none;
-                    min-height: auto;
-                }
-            }
-
-        </style>
     </head>
 
 
@@ -118,6 +85,320 @@
                 </div>
             </div>
         </section>
+
+        <!-- APPOINTMENT REMINDERS -->
+        <%
+            boolean hasAppointments = (upcomingAppointments != null && !upcomingAppointments.isEmpty()) || 
+                                    (overdueAppointments != null && !overdueAppointments.isEmpty());
+            
+            // Debug logging for JSP
+            System.out.println("=== JSP DEBUGGING ===");
+            System.out.println("upcomingAppointments: " + (upcomingAppointments != null ? upcomingAppointments.size() : "null"));
+            System.out.println("overdueAppointments: " + (overdueAppointments != null ? overdueAppointments.size() : "null"));
+            System.out.println("hasAppointments: " + hasAppointments);
+            System.out.println("====================");
+            
+            if (hasAppointments) {
+        %>
+        <section class="reminder-section">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="section-title wow fadeInUp" data-wow-delay="0.1s">
+                            <h2 style="color: #333;">
+                                <i class="fa fa-bell" style="color: #667eea;"></i> Appointment Reminders
+                            </h2>
+                            <p style="color: #666; margin-top: 15px;">
+                                Don't miss your upcoming appointments
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <%
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, MMMM dd, yyyy");
+                        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+                        Date today = new Date();
+                        Calendar cal = Calendar.getInstance();
+                        cal.setTime(today);
+                        cal.set(Calendar.HOUR_OF_DAY, 0);
+                        cal.set(Calendar.MINUTE, 0);
+                        cal.set(Calendar.SECOND, 0);
+                        cal.set(Calendar.MILLISECOND, 0);
+                        Date todayStart = cal.getTime();
+                        
+                        cal.add(Calendar.DAY_OF_MONTH, 2);
+                        Date urgentDate = cal.getTime();
+                        
+                        // Separate appointments into different categories
+                        java.util.List<Appointment> overdueAppointmentsList = new java.util.ArrayList<Appointment>();
+                        java.util.List<Appointment> rescheduleAppointments = new java.util.ArrayList<Appointment>();
+                        java.util.List<Appointment> regularAppointments = new java.util.ArrayList<Appointment>();
+                        
+                        // Process overdue appointments (highest priority - separate from reschedule)
+                        if (overdueAppointments != null) {
+                            overdueAppointmentsList.addAll(overdueAppointments);
+                        }
+                        
+                        // Process upcoming appointments and categorize them
+                        if (upcomingAppointments != null) {
+                            for (Appointment appointment : upcomingAppointments) {
+                                // Skip overdue appointments (already processed above)
+                                if (appointment.getAppointmentDate().before(todayStart)) {
+                                    continue;
+                                }
+                                
+                                String status = appointment.getStatus().trim().toLowerCase();
+                                if ("reschedule".equals(status)) {
+                                    rescheduleAppointments.add(appointment);
+                                } else if ("approved".equals(status) || "confirmed".equals(status)) {
+                                    regularAppointments.add(appointment);
+                                }
+                            }
+                        }
+                    %>
+                    
+                    <!-- Left Column: Overdue and Reschedule Appointments -->
+                    <div class="col-md-6">
+                        <%
+                            double leftDelay = 0.2;
+                            
+                            // First display overdue appointments (highest priority)
+                            for (Appointment appointment : overdueAppointmentsList) {
+                        %>
+                        <div class="reminder-card reminder-overdue wow fadeInUp" data-wow-delay="<%= leftDelay%>s">
+                            <div class="reminder-icon">
+                                <i class="fa fa-exclamation-circle" style="color: #dc3545; animation: pulse 1.5s infinite;"></i>
+                                <span style="font-size: 0.9em; color: #dc3545; font-weight: bold; margin-left: 10px;">
+                                    OVERDUE APPOINTMENT
+                                </span>
+                            </div>
+                            <div style="font-size: 0.85em; color: #666; margin-bottom: 10px;">
+                                <i class="fa fa-id-card-o" style="margin-right: 5px;"></i>
+                                <strong>Appointment ID:</strong> #<%= appointment.getId()%>
+                            </div>
+                            <div class="reminder-date" style="color: #dc3545;">
+                                <%= dateFormat.format(appointment.getAppointmentDate())%>
+                                <% if (appointment.getAppointmentTime() != null) { %>
+                                at <%= timeFormat.format(appointment.getAppointmentTime())%>
+                                <% } %>
+                                <span style="background: #dc3545; color: white; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; margin-left: 10px;">
+                                    OVERDUE
+                                </span>
+                            </div>
+                            <div class="reminder-details">
+                                <div class="reminder-treatment">
+                                    <i class="fa fa-stethoscope"></i>
+                                    <%= appointment.getTreatment() != null ? appointment.getTreatment().getName() : "Treatment N/A"%>
+                                </div>
+                                <div class="reminder-doctor">
+                                    <i class="fa fa-user-md"></i>
+                                    Dr. <%= appointment.getDoctor() != null ? appointment.getDoctor().getName() : "To be assigned"%>
+                                </div>
+                                <div style="background: rgba(220, 53, 69, 0.1); padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 0.9em;">
+                                    <i class="fa fa-warning" style="color: #dc3545;"></i>
+                                    <strong style="color: #dc3545;">This appointment is overdue!</strong> Please reschedule immediately or contact us.
+                                </div>
+                                <% if (appointment.getStaffMessage() != null && !appointment.getStaffMessage().trim().isEmpty()) { %>
+                                <div style="background: rgba(102, 126, 234, 0.1); padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.9em;">
+                                    <i class="fa fa-info-circle" style="color: #667eea;"></i>
+                                    <strong>Staff Note:</strong> <%= appointment.getStaffMessage()%>
+                                </div>
+                                <% } %>
+                            </div>
+                            <div class="reminder-actions">
+                                <a href="<%= request.getContextPath()%>/AppointmentServlet?action=history&status=overdue" class="reminder-btn btn-view">
+                                    <i class="fa fa-eye"></i> View All Overdue
+                                </a>
+                                <a href="<%= request.getContextPath()%>/AppointmentServlet?action=reschedule&id=<%= appointment.getId()%>" class="reminder-btn" style="background: #dc3545; color: white;">
+                                    <i class="fa fa-calendar"></i> Reschedule Now
+                                </a>
+                            </div>
+                        </div>
+                        <%
+                                leftDelay += 0.15;
+                            }
+                            
+                            // Then display reschedule appointments
+                            for (Appointment appointment : rescheduleAppointments) {
+                        %>
+                        <div class="reminder-card reminder-reschedule wow fadeInUp" data-wow-delay="<%= leftDelay%>s">
+                            <div class="reminder-icon">
+                                <i class="fa fa-refresh" style="color: #ffc107; animation: spin 2s linear infinite;"></i>
+                                <span style="font-size: 0.9em; color: #ffc107; font-weight: bold; margin-left: 10px;">
+                                    RESCHEDULE REQUIRED
+                                </span>
+                            </div>
+                            <div style="font-size: 0.85em; color: #666; margin-bottom: 10px;">
+                                <i class="fa fa-id-card-o" style="margin-right: 5px;"></i>
+                                <strong>Appointment ID:</strong> #<%= appointment.getId()%>
+                            </div>
+                            <div class="reminder-date" style="color: #ffc107;">
+                                <%= dateFormat.format(appointment.getAppointmentDate())%>
+                                <% if (appointment.getAppointmentTime() != null) { %>
+                                at <%= timeFormat.format(appointment.getAppointmentTime())%>
+                                <% } %>
+                                <span style="background: #ffc107; color: #333; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; margin-left: 10px;">
+                                    NEEDS RESCHEDULE
+                                </span>
+                            </div>
+                            <div class="reminder-details">
+                                <div class="reminder-treatment">
+                                    <i class="fa fa-stethoscope"></i>
+                                    <%= appointment.getTreatment() != null ? appointment.getTreatment().getName() : "Treatment N/A"%>
+                                </div>
+                                <div class="reminder-doctor">
+                                    <i class="fa fa-user-md"></i>
+                                    Dr. <%= appointment.getDoctor() != null ? appointment.getDoctor().getName() : "To be assigned"%>
+                                </div>
+                                <div style="background: rgba(255, 193, 7, 0.1); padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 0.9em;">
+                                    <i class="fa fa-info-circle" style="color: #ffc107;"></i>
+                                    <strong style="color: #ffc107;">Reschedule Requested:</strong> Please select a new date and time for your appointment.
+                                </div>
+                                <% if (appointment.getStaffMessage() != null && !appointment.getStaffMessage().trim().isEmpty()) { %>
+                                <div style="background: rgba(102, 126, 234, 0.1); padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.9em;">
+                                    <i class="fa fa-info-circle" style="color: #667eea;"></i>
+                                    <strong>Staff Note:</strong> <%= appointment.getStaffMessage()%>
+                                </div>
+                                <% } %>
+                            </div>
+                            <div class="reminder-actions">
+                                <a href="<%= request.getContextPath()%>/AppointmentServlet?action=history&status=reschedule" class="reminder-btn btn-view">
+                                    <i class="fa fa-eye"></i> View All Reschedule
+                                </a>
+                                <a href="<%= request.getContextPath()%>/AppointmentServlet?action=reschedule&id=<%= appointment.getId()%>" class="reminder-btn btn-reschedule">
+                                    <i class="fa fa-calendar"></i> Reschedule
+                                </a>
+                            </div>
+                        </div>
+                        <%
+                                leftDelay += 0.15;
+                            }
+                        %>
+                    </div>
+                    
+                    <!-- Right Column: Approved Appointments -->
+                    <div class="col-md-6">
+                        <%
+                            double rightDelay = 0.3;
+                            
+                            for (Appointment appointment : regularAppointments) {
+                        %>
+                        <div class="reminder-card reminder-upcoming wow fadeInUp" data-wow-delay="<%= rightDelay%>s">
+                            <div class="reminder-icon">
+                                <i class="fa fa-calendar-check-o"></i>
+                                <span style="font-size: 0.9em; color: #28a745; font-weight: bold; margin-left: 10px;">
+                                    UPCOMING APPOINTMENT
+                                </span>
+                            </div>
+                            <div style="font-size: 0.85em; color: #666; margin-bottom: 10px;">
+                                <i class="fa fa-id-card-o" style="margin-right: 5px;"></i>
+                                <strong>Appointment ID:</strong> #<%= appointment.getId()%>
+                            </div>
+                            <div class="reminder-date" style="color: #667eea;">
+                                <%= dateFormat.format(appointment.getAppointmentDate())%>
+                                <% if (appointment.getAppointmentTime() != null) { %>
+                                at <%= timeFormat.format(appointment.getAppointmentTime())%>
+                                <% } %>
+                            </div>
+                            <div class="reminder-details">
+                                <div class="reminder-treatment">
+                                    <i class="fa fa-stethoscope"></i>
+                                    <%= appointment.getTreatment() != null ? appointment.getTreatment().getName() : "Treatment N/A"%>
+                                </div>
+                                <div class="reminder-doctor">
+                                    <i class="fa fa-user-md"></i>
+                                    Dr. <%= appointment.getDoctor() != null ? appointment.getDoctor().getName() : "To be assigned"%>
+                                </div>
+                                <% if (appointment.getStaffMessage() != null && !appointment.getStaffMessage().trim().isEmpty()) { %>
+                                <div style="background: rgba(102, 126, 234, 0.1); padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.9em;">
+                                    <i class="fa fa-info-circle" style="color: #667eea;"></i>
+                                    <strong>Staff Note:</strong> <%= appointment.getStaffMessage()%>
+                                </div>
+                                <% } %>
+                            </div>
+                            <div class="reminder-actions">
+                                <a href="<%= request.getContextPath()%>/AppointmentServlet?action=history&status=approved" class="reminder-btn btn-view">
+                                    <i class="fa fa-eye"></i> View All Approved
+                                </a>
+                                <a href="<%= request.getContextPath()%>/AppointmentServlet?action=reschedule&id=<%= appointment.getId()%>" class="reminder-btn btn-reschedule">
+                                    <i class="fa fa-calendar"></i> Reschedule
+                                </a>
+                            </div>
+                        </div>
+                        <%
+                                rightDelay += 0.15;
+                            }
+                        %>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions for Appointments -->
+                <div class="row" style="margin-top: 30px;">
+                    <div class="col-md-12 text-center">
+                        <div style="margin-bottom: 15px;">
+                            <h4 style="color: #333; margin-bottom: 20px;">
+                                <i class="fa fa-filter" style="color: #667eea;"></i> Quick Filters
+                            </h4>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <a href="<%= request.getContextPath()%>/AppointmentServlet?action=history&status=overdue" class="section-btn btn" style="background: #dc3545; color: white; margin: 5px;">
+                                <i class="fa fa-exclamation-circle"></i> View Overdue
+                            </a>
+                            <a href="<%= request.getContextPath()%>/AppointmentServlet?action=history&status=reschedule" class="section-btn btn" style="background: #ffc107; color: #333; margin: 5px;">
+                                <i class="fa fa-refresh"></i> View Reschedule Required
+                            </a>
+                            <a href="<%= request.getContextPath()%>/AppointmentServlet?action=history&status=approved" class="section-btn btn" style="background: #28a745; color: white; margin: 5px;">
+                                <i class="fa fa-check-circle"></i> View Approved
+                            </a>
+                            <a href="<%= request.getContextPath()%>/AppointmentServlet?action=history&status=completed" class="section-btn btn" style="background: #6c757d; color: white; margin: 5px;">
+                                <i class="fa fa-check"></i> View Completed
+                            </a>
+                            <a href="<%= request.getContextPath()%>/AppointmentServlet?action=history&status=pending" class="section-btn btn" style="background: #17a2b8; color: white; margin: 5px;">
+                                <i class="fa fa-clock-o"></i> View Pending
+                            </a>
+                        </div>
+                        <div>
+                            <a href="<%= request.getContextPath()%>/AppointmentServlet?action=history&status=all" class="section-btn btn btn-default" style="margin: 0 10px;">
+                                <i class="fa fa-history"></i> View All Appointments
+                            </a>
+                            <a href="<%= request.getContextPath()%>/AppointmentServlet?action=book" class="section-btn btn btn-success" style="margin: 0 10px;">
+                                <i class="fa fa-plus"></i> Book New Appointment
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <%
+            } else {
+        %>
+        <!-- No Appointments Message (Optional - can be hidden) -->
+        <section class="reminder-section" style="padding: 40px 0;">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="no-appointments wow fadeInUp" data-wow-delay="0.1s">
+                            <i class="fa fa-calendar-o"></i>
+                            <h3>No Upcoming Appointments</h3>
+                            <p>You don't have any approved appointments in the next week.</p>
+                            <div style="margin-top: 30px;">
+                                <a href="<%= request.getContextPath()%>/AppointmentServlet?action=book" class="section-btn btn btn-default" style="margin: 10px;">
+                                    <i class="fa fa-plus"></i> Book Your First Appointment
+                                </a>
+                                <a href="<%= request.getContextPath()%>/AppointmentServlet?action=history&status=all" class="section-btn btn btn-primary" style="margin: 10px;">
+                                    <i class="fa fa-history"></i> View All Past Appointments
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <%
+            }
+        %>
 
         <!-- ABOUT -->
         <section id="about">
@@ -406,6 +687,18 @@
 
         <%@ include file="/includes/footer.jsp" %>
         <%@ include file="/includes/scripts.jsp" %>
+
+        <!-- Appointment Reminder JavaScript -->
+        <script>
+            $(document).ready(function() {
+                // Smooth scroll to reminders when clicking reminder notifications
+                $('.reminder-notification').click(function() {
+                    $('html, body').animate({
+                        scrollTop: $('.reminder-section').offset().top - 80
+                    }, 800);
+                });
+            });
+        </script>
 
     </body>
 

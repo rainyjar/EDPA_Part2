@@ -33,7 +33,7 @@
     // Validate that appointment belongs to logged in customer and is reschedule-able
     if (existingAppointment.getCustomer() == null || 
         existingAppointment.getCustomer().getId() != loggedInCustomer.getId() || 
-        (!("pending".equals(existingAppointment.getStatus()) || "approved".equals(existingAppointment.getStatus())))) {
+        (!("pending".equals(existingAppointment.getStatus()) || "approved".equals(existingAppointment.getStatus()) || "overdue".equals(existingAppointment.getStatus()) || "reschedule".equals(existingAppointment.getStatus())))) {
         response.sendRedirect(request.getContextPath() + "/AppointmentServlet?action=history&error=cannot_reschedule");
         return;
     }
@@ -49,7 +49,7 @@
 
 <body id="top" data-spy="scroll" data-target=".navbar-collapse" data-offset="50">
 
-    <%@ include file="/includes/preloader.jsp" %>
+    <%--<%@ include file="/includes/preloader.jsp" %>--%>
     <%@ include file="/includes/header.jsp" %>
     <%@ include file="/includes/navbar.jsp" %>
 
@@ -273,6 +273,8 @@
                         <strong>Important:</strong> Rescheduling will update your appointment details. 
                         <% if ("approved".equals(existingAppointment.getStatus())) { %>
                         Since your appointment was previously approved, it will be set back to "pending" status for new approval.
+                        <% } else if ("overdue".equals(existingAppointment.getStatus())) { %>
+                        Since your appointment was overdue, it will be set to "pending" status for approval with the new date and time.
                         <% } else { %>
                         Your appointment will remain in "pending" status for approval.
                         <% } %>
@@ -406,18 +408,6 @@
             font-size: 11px;
             font-weight: bold;
             text-transform: uppercase;
-        }
-        
-        .status-pending {
-            background-color: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-        }
-        
-        .status-approved {
-            background-color: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
         }
         
         .current-appointment-info {

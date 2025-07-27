@@ -1,8 +1,9 @@
-
 import java.io.IOException;
 import java.sql.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 import javax.ejb.EJB;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
@@ -13,6 +14,14 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
 import model.CounterStaff;
 import model.CounterStaffFacade;
+import model.Customer;
+import model.CustomerFacade;
+import model.Appointment;
+import model.AppointmentFacade;
+import model.Payment;
+import model.PaymentFacade;
+import model.Feedback;
+import model.FeedbackFacade;
 
 @WebServlet(urlPatterns = {"/CounterStaffServlet"})
 @MultipartConfig
@@ -21,6 +30,14 @@ public class CounterStaffServlet extends HttpServlet {
 
     @EJB
     private CounterStaffFacade counterStaffFacade;
+    @EJB
+    private CustomerFacade customerFacade;
+    @EJB
+    private AppointmentFacade appointmentFacade;
+    @EJB
+    private PaymentFacade paymentFacade;
+    @EJB
+    private FeedbackFacade feedbackFacade;
 
     //    register new counter staff (not yet validate)
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -309,6 +326,124 @@ public class CounterStaffServlet extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
             response.sendRedirect(request.getContextPath() + "/ManagerServlet?action=viewAll&error=system_error");
+        }
+    }
+    
+    private void loadDashboardData(HttpServletRequest request) {
+        try {
+            // Get all customers
+            List<Customer> allCustomers = customerFacade.findAll();
+            int totalCustomers = allCustomers != null ? allCustomers.size() : 0;
+            
+            // Get all appointments
+            List<Appointment> allAppointments = appointmentFacade.findAll();
+            int totalAppointments = allAppointments != null ? allAppointments.size() : 0;
+            
+            // Count appointments by status
+            int pendingAppointmentCount = 0;
+            int overdueAppointments = 0;
+            int completedAppointments = 0;
+            int approvedAppointments = 0;
+            List<Appointment> recentAppointments = new ArrayList<>();
+            List<Appointment> todayAppointments = new ArrayList<>();
+            
+            if (allAppointments != null) {
+                for (Appointment apt : allAppointments) {
+                    if (apt.getStatus() != null) {
+                        String status = apt.getStatus().toLowerCase();
+                        switch (status) {
+                            case "pending":
+                                pendingAppointmentCount++;
+                                break;
+                            case "overdue":
+                                overdueAppointments++;
+                                break;
+                            case "completed":
+                                completedAppointments++;
+                                break;
+                            case "approved":
+                                approvedAppointments++;
+                                break;
+                        }
+                    }
+                }
+                // Get recent appointments (limit to 10)
+                recentAppointments = allAppointments.size() > 10 
+                    ? allAppointments.subList(0, 10) 
+                    : allAppointments;
+                    
+                // For simplicity, using recent appointments as today's appointments
+                todayAppointments = recentAppointments;
+            }
+            
+            // Get all payments
+            List<Payment> allPayments = paymentFacade.findAll();
+            int pendingPaymentCount = 0;
+            double totalRevenue = 0.0;
+            List<Payment> pendingPayments = new ArrayList<>();
+            
+            if (allPayments != null) {
+                for (Payment payment : allPayments) {
+                    if (payment.getStatus() != null) {
+                        if ("pending".equalsIgnoreCase(payment.getStatus())) {
+                            pendingPaymentCount++;
+                            pendingPayments.add(payment);
+                        } else if ("completed".equalsIgnoreCase(payment.getStatus()) || 
+                                   "paid".equalsIgnoreCase(payment.getStatus())) {
+                            totalRevenue += payment.getAmount();
+                        }
+                    }
+                }
+            }
+            
+            // Get all feedbacks
+            List<Feedback> allFeedbacks = feedbackFacade.findAll();
+            List<Feedback> recentFeedbacks = new ArrayList<>();
+            if (allFeedbacks != null) {
+                recentFeedbacks = allFeedbacks.size() > 5 
+                    ? allFeedbacks.subList(0, 5) 
+                    : allFeedbacks;
+            }
+            
+            // Get recent customers (limit to 10)
+            List<Customer> recentCustomers = allCustomers != null && allCustomers.size() > 10 
+                ? allCustomers.subList(0, 10) 
+                : allCustomers;
+            
+            // Set all attributes for the JSP
+            request.setAttribute("totalCustomers", totalCustomers);
+            request.setAttribute("totalAppointments", totalAppointments);
+            request.setAttribute("pendingAppointmentCount", pendingAppointmentCount);
+            request.setAttribute("overdueAppointments", overdueAppointments);
+            request.setAttribute("completedAppointments", completedAppointments);
+            request.setAttribute("approvedAppointments", approvedAppointments);
+            request.setAttribute("pendingPaymentCount", pendingPaymentCount);
+            request.setAttribute("totalRevenue", totalRevenue);
+            
+            // Set list attributes
+            request.setAttribute("recentCustomers", recentCustomers);
+            request.setAttribute("recentAppointments", recentAppointments);
+            request.setAttribute("todayAppointments", todayAppointments);
+            request.setAttribute("pendingPayments", pendingPayments);
+            request.setAttribute("recentFeedbacks", recentFeedbacks);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Set default values in case of error
+            request.setAttribute("totalCustomers", 0);
+            request.setAttribute("totalAppointments", 0);
+            request.setAttribute("pendingAppointmentCount", 0);
+            request.setAttribute("overdueAppointments", 0);
+            request.setAttribute("completedAppointments", 0);
+            request.setAttribute("approvedAppointments", 0);
+            request.setAttribute("pendingPaymentCount", 0);
+            request.setAttribute("totalRevenue", 0.0);
+            
+            request.setAttribute("recentCustomers", new ArrayList<Customer>());
+            request.setAttribute("recentAppointments", new ArrayList<Appointment>());
+            request.setAttribute("todayAppointments", new ArrayList<Appointment>());
+            request.setAttribute("pendingPayments", new ArrayList<Payment>());
+            request.setAttribute("recentFeedbacks", new ArrayList<Feedback>());
         }
     }
 

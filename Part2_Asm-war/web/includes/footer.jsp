@@ -10,7 +10,7 @@
                     <div class="contact-info">
                         <p><i class="fa fa-phone"></i> 010-070-0170</p>
                         <p><i class="fa fa-envelope-o"></i> <a href="mailto:info@amc.com">info@amc.com</a></p>
-                        <p><i class="fa fa-map-marker"></i> APU Medical Center, Kuala Lumpur, Malaysia</p>
+                        <p><i class="fa fa-map-marker"></i> Technology Park Malaysia, Bukit Jalil, 57000 Kuala Lumpur, Malaysia</p>
                     </div>
                 </div>
             </div>

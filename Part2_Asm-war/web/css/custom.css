@@ -1233,37 +1233,74 @@ header span i {
     color: #333;
 }
 
-.status-badge {
+/* ====== STATUS BADGE SYSTEM ====== */
+/* Super specific selectors to override any conflicts */
+body .status-badge,
+.history-container .status-badge,
+span.status-badge {
     padding: 5px 15px;
     border-radius: 20px;
-    color: white;
+    color: white !important;
     font-size: 12px;
     font-weight: bold;
     text-transform: uppercase;
+    display: inline-block;
 }
 
-.status-pending {
-    background: #ffc107;
+/* Status badge colors with maximum specificity */
+body .status-badge.status-pending,
+.history-container .status-badge.status-pending,
+span.status-badge.status-pending {
+    background: #ffc107 !important;
 }
 
-.status-approved {
-    background: #1757b8;
+body .status-badge.status-reschedule,
+.history-container .status-badge.status-reschedule,
+span.status-badge.status-reschedule {
+    background: #ff6b35 !important;
 }
 
-.status-completed {
-    background: #28a745;
+body .status-badge.status-approved,
+.history-container .status-badge.status-approved,
+span.status-badge.status-approved {
+    background: #6f42c1 !important;
 }
 
-.status-cancelled {
-    background: #dc3545;
+body .status-badge.status-confirmed,
+.history-container .status-badge.status-confirmed,
+span.status-badge.status-confirmed {
+    background: #6f42c1 !important;
 }
 
-.payment-pending {
-    background: #ffc107;
+body .status-badge.status-overdue,
+.history-container .status-badge.status-overdue,
+span.status-badge.status-overdue {
+    background: #fd7e14 !important;
 }
 
-.payment-paid {
-    background: #28a745;
+body .status-badge.status-completed,
+.history-container .status-badge.status-completed,
+span.status-badge.status-completed {
+    background: #28a745 !important;
+}
+
+body .status-badge.status-cancelled,
+.history-container .status-badge.status-cancelled,
+span.status-badge.status-cancelled {
+    background: #dc3545 !important;
+}
+
+/* Payment status badges */
+body .status-badge.payment-pending,
+.history-container .status-badge.payment-pending,
+span.status-badge.payment-pending {
+    background: #ffc107 !important;
+}
+
+body .status-badge.payment-paid,
+.history-container .status-badge.payment-paid,
+span.status-badge.payment-paid {
+    background: #28a745 !important;
 }
 
 .action-buttons {
@@ -1937,5 +1974,251 @@ footer a:hover {
 
     .star {
         font-size: 2em;
+    }
+}
+
+/*-------------------------------------
+   APPOINTMENT REMINDER SYSTEM
+-----------------------------------------*/
+
+/* Treatment Display Styles */
+.custom-treat-image {
+    aspect-ratio: 16/9;
+    object-fit: cover;         
+}
+
+.treatments-thumb {
+    max-height: 450px;         
+    min-height: 400px;         
+    overflow: hidden;           /* Prevents overflow */
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background-color: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.treatments-info p {
+    max-height: 60px;           /* Limit text height */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3em;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;      /* Show 3 lines max */
+    -webkit-box-orient: vertical;
+}
+
+.two-line-text h3, 
+.two-line-text p {
+    display: -webkit-box; /* Required for -webkit-line-clamp */
+    -webkit-box-orient: vertical; /* Required for -webkit-line-clamp */
+    -webkit-line-clamp: 2; /* Limits the text to 2 lines */
+    overflow: hidden; /* Hides any overflowing content */
+    text-overflow: ellipsis; /* Adds an ellipsis (...) to truncated text */
+    white-space: normal; /* Allows text to wrap within the two lines */
+}
+
+/* Appointment Reminder Section */
+.reminder-section {
+    background: #ffffff;
+    padding: 60px 0;
+    color: #333;
+    border-top: 1px solid #f0f0f0;
+}
+
+.reminder-card {
+    background: #ffffff;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    color: #333;
+    border: 1px solid #e9ecef;
+    position: relative;
+}
+
+.reminder-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 35px rgba(0,0,0,0.15);
+}
+
+.reminder-urgent {
+    border-left: 5px solid #ff6b35;
+    background: rgba(255, 107, 53, 0.02);
+    border: 1px solid rgba(255, 107, 53, 0.2);
+}
+
+.reminder-urgent:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #ff6b35, #f7931e);
+    border-radius: 15px 15px 0 0;
+}
+
+.reminder-upcoming {
+    border-left: 5px solid #28a745;
+    background: rgba(40, 167, 69, 0.03);
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.reminder-upcoming:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #28a745, #20c997);
+    border-radius: 15px 15px 0 0;
+}
+
+.reminder-overdue {
+    border-left: 5px solid #dc3545;
+    background: rgba(220, 53, 69, 0.03);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.reminder-overdue:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #dc3545, #c82333);
+    border-radius: 15px 15px 0 0;
+}
+
+.reminder-reschedule {
+    border-left: 5px solid #ffc107;
+    background: rgba(255, 193, 7, 0.03);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.reminder-reschedule:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #ffc107, #ffb300);
+    border-radius: 15px 15px 0 0;
+}
+
+.reminder-icon {
+    font-size: 2.5em;
+    margin-bottom: 15px;
+    color: #667eea;
+}
+
+.reminder-urgent .reminder-icon {
+    color: #ff6b35;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.reminder-date {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #667eea;
+    margin-bottom: 10px;
+}
+
+.reminder-urgent .reminder-date {
+    color: #ff6b35;
+}
+
+.reminder-overdue .reminder-date {
+    color: #dc3545;
+}
+
+.reminder-reschedule .reminder-date {
+    color: #ffc107;
+}
+
+.reminder-details {
+    margin-bottom: 15px;
+}
+
+.reminder-treatment {
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.reminder-doctor {
+    color: #666;
+    font-size: 0.95em;
+}
+
+.reminder-actions {
+    text-align: right;
+}
+
+.reminder-btn {
+    padding: 8px 20px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    display: inline-block;
+    margin-left: 10px;
+}
+
+.btn-reschedule {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-reschedule:hover {
+    background: #138496;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-view {
+    background: #6f42c1;
+    color: white;
+}
+
+.btn-view:hover {
+    background: #5a32a3;
+    color: white;
+    text-decoration: none;
+}
+
+/* Override existing .no-appointments for homepage reminder section */
+.reminder-section .no-appointments {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.reminder-section .no-appointments i {
+    font-size: 3em;
+    margin-bottom: 20px;
+    color: #ccc;
+}
+
+/* Responsive styles for treatment thumbnails */
+@media (max-width: 768px) {
+    .treatments-thumb {
+        max-height: none;
+        min-height: auto;
     }
 }

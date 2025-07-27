@@ -121,8 +121,8 @@ public class Login extends HttpServlet {
                     s.setAttribute("doctor", ((Doctor) user).getName());
                     response.sendRedirect(role + "/dashboard.jsp");
                 } else if (user instanceof CounterStaff) {
-                    s.setAttribute("staff", ((CounterStaff) user).getName());
-                    response.sendRedirect(role + "/dashboard.jsp");
+                    s.setAttribute("staff", (CounterStaff) user);
+                    response.sendRedirect("CounterStaffServlet?action=dashboard");
                 } else if (user instanceof Customer) {
                     s.setAttribute("customer", (Customer) user);
                     response.sendRedirect("CustomerHomepageServlet");

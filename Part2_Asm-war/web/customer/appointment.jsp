@@ -29,7 +29,7 @@
 
 <body id="top" data-spy="scroll" data-target=".navbar-collapse" data-offset="50">
 
-    <%@ include file="/includes/preloader.jsp" %>
+    <%--<%@ include file="/includes/preloader.jsp" %>--%>
     <%@ include file="/includes/header.jsp" %>
     <%@ include file="/includes/navbar.jsp" %>
 
