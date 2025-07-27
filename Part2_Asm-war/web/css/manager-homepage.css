@@ -1,0 +1,374 @@
+/* Manager Dashboard Master Styles */
+/* ========== DASHBOARD STATS ========== */
+.dashboard-stats {
+    background: linear-gradient(135deg, #2c2577 0%, #f41212 100%);    
+    color: white;
+    padding: 40px 0;
+    margin-bottom: 30px;
+    scroll-margin-top: 60px;
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-stats::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.stat-card {
+    background: rgba(255,255,255,0.15);
+    border-radius: 15px;
+    padding: 25px;
+    text-align: center;
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+    transition: transform 0.3s ease;
+    height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255,255,255,0.2);
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    transform: scale(0);
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover::before {
+    transform: scale(1);
+}
+
+.stat-number {
+    font-size: 2.5em;
+    font-weight: 700;
+    margin-bottom: 10px;
+    display: block;
+    line-height: 1;
+    position: relative;
+    z-index: 1;
+}
+
+.stat-label {
+    font-size: 1.1em;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    line-height: 1.2;
+    position: relative;
+    z-index: 1;
+}
+
+/* ========== QUICK ACTIONS ========== */
+.quick-actions {
+    background: #f8f9fa;
+    padding: 40px 0;
+}
+
+.action-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    color: #333;
+}
+
+.action-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* === Curtain swipe animation === */
+.action-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(103, 126, 234, 0.1), transparent);
+    transition: left 0.5s;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.action-card:hover::after {
+    left: 100%;
+}
+
+/* Icon styling */
+.action-icon {
+    font-size: 3em;
+    margin-bottom: 15px;
+    color: #2c2577; /* Blue */
+    transition: color 0.3s ease, transform 0.3s ease;
+    z-index: 2;
+}
+
+.action-card:hover .action-icon {
+    color: #f41212; /* Red on hover */
+    transform: scale(1.1);
+}
+
+/* Text content */
+.action-title {
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+    z-index: 2;
+}
+
+.action-desc {
+    color: #666;
+    font-size: 0.9em;
+    z-index: 2;
+}
+
+/* ========== RECENT SECTION ========== */
+.recent-section {
+    background: white;
+    padding: 40px 0;
+}
+
+.section-header {
+    border-bottom: 3px solid #667eea;
+    padding-bottom: 15px;
+    margin-bottom: 30px;
+    position: relative;
+}
+
+.section-header::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    width: 50px;
+    height: 3px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    transition: width 0.3s ease;
+}
+
+.section-header:hover::after {
+    width: 100px;
+}
+
+/* ========== STAFF & APPOINTMENT CARDS ========== */
+.staff-card, .appointment-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    border-left: 4px solid #667eea;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.staff-card:hover, .appointment-card:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.staff-card::before, .appointment-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    background: #667eea;
+    transition: width 0.3s ease;
+}
+
+.staff-card:hover::before, .appointment-card:hover::before {
+    width: 8px;
+}
+
+/* ========== RATINGS ========== */
+.rating-stars {
+    color: #ffc107;
+    margin-left: 10px;
+    transition: all 0.3s ease;
+}
+
+.staff-card:hover .rating-stars,
+.appointment-card:hover .rating-stars {
+    transform: scale(1.1);
+}
+
+/* ========== APPOINTMENT STATUS BADGES ========== */
+.appointment-status {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.appointment-status::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+}
+
+.appointment-card:hover .appointment-status::before {
+    left: 100%;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-confirmed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-completed {
+    background: #cce7ff;
+    color: #004085;
+}
+
+/* ========== GLOBAL SCROLLING ========== */
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    scroll-padding-top: 80px;
+}
+
+/* ========== RESPONSIVE DESIGN ========== */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2em;
+    }
+    .hero-subtitle {
+        font-size: 1.1em;
+    }
+    .stat-card {
+        margin-bottom: 15px;
+    }
+    .stat-number {
+        font-size: 2em;
+    }
+    .action-card {
+        height: auto;
+        min-height: 180px;
+        padding: 20px;
+    }
+    .action-icon {
+        font-size: 2.5em;
+    }
+    .staff-card, .appointment-card {
+        margin-bottom: 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .dashboard-stats, .quick-actions, .recent-section {
+        padding: 30px 0;
+    }
+    .action-card {
+        height: auto;
+        min-height: 150px;
+        padding: 15px;
+    }
+    .stat-number {
+        font-size: 1.8em;
+    }
+    .action-icon {
+        font-size: 2em;
+    }
+}
+
+/* ========== LOADING ANIMATION ========== */
+.loading {
+    opacity: 0;
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ========== LINKS & PRINT STYLES ========== */
+a.action-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+a.action-link:hover {
+    text-decoration: none;
+    color: inherit;
+}
+
+@media print {
+    .dashboard-stats,
+    .quick-actions {
+        background: white !important;
+        color: black !important;
+    }
+
+    .stat-card {
+        border: 1px solid #ddd;
+        background: white !important;
+    }
+
+    .action-card {
+        border: 1px solid #ddd;
+        box-shadow: none;
+    }
+}

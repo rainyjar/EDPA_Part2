@@ -6,6 +6,7 @@
 package model;
 
 import java.sql.Date;
+import java.util.ArrayList;
 import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -30,13 +31,13 @@ public class AppointmentFacade extends AbstractFacade<Appointment> {
     public AppointmentFacade() {
         super(Appointment.class);
     }
-    
+
     public List<Appointment> findByCustomer(Customer customer) {
         return em.createQuery("SELECT a FROM Appointment a WHERE a.customer = :customer", Appointment.class)
-                 .setParameter("customer", customer)
-                 .getResultList();
+                .setParameter("customer", customer)
+                .getResultList();
     }
-    
+
     /**
      * Find appointments for a specific doctor on a specific date
      */
@@ -46,5 +47,16 @@ public class AppointmentFacade extends AbstractFacade<Appointment> {
         query.setParameter("date", Date.valueOf(date));
         return query.getResultList();
     }
-    
+
+    // find recent appointments 
+    public List<Appointment> findRecentAppointments(int limit) {
+        try {
+            Query query = em.createQuery("SELECT a FROM Appointment a ORDER BY a.appointmentDate DESC");
+            query.setMaxResults(limit);
+            return query.getResultList();
+        } catch (Exception e) {
+            System.err.println("Error finding recent appointments: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
 }

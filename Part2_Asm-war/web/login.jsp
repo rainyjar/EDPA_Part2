@@ -8,7 +8,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Login - Medical Center</title>
+        <title>Login - APU Medical Center</title>
         <link rel="stylesheet" href="css/log_reg_style.css" />
     </head>
     <body>

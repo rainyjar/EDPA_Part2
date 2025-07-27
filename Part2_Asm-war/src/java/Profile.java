@@ -297,7 +297,7 @@ public class Profile extends HttpServlet {
                 // Save to database and update session
                 saveUserAndUpdateSession(request, userInfo);
 
-                  Thread.sleep(1500);
+                Thread.sleep(3000);
                 response.sendRedirect(request.getContextPath() + "/profile.jsp?success=picture_updated");
             } else {
                 response.sendRedirect(request.getContextPath() + "/profile.jsp?error=no_file");
@@ -311,7 +311,7 @@ public class Profile extends HttpServlet {
     // Helper methods
     private boolean isEmailTaken(String email, UserInfo userInfo) {
         // Check in all user types except current user
-        Customer customer = customerFacade.findByEmail(email);
+        Customer customer = customerFacade.searchEmail(email);
         if (customer != null && !(userInfo.userType.equals("customer") && customer.getId() == ((Customer) userInfo.user).getId())) {
             return true;
         }

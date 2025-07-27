@@ -1,51 +1,137 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>Register Counter Staff</title>
-        <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css" />
+        <title>Register Counter Staff - APU Medical Center</title>
+        <%@ include file="/includes/head.jsp" %>
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/css/staff-registration.css" />
     </head>
-    <body>
-        <div class="box">
-            <h2>Register Counter Staff</h2>
+    <body class="staff-theme">
+        <%@ include file="/includes/header.jsp" %>
+        <%@ include file="/includes/navbar.jsp" %>
+        <div class="registration-container">
+            <a href="${pageContext.request.contextPath}/ManagerServlet?action=viewAll" class="back-btn" style="margin-top: 30px">
+                <i class="fa fa-arrow-left"></i> Back to Staff Management
+            </a>
 
-            <!-- Error Message -->
-            <% if (request.getAttribute("error") != null) {%>
-            <div class="msg"><%= request.getAttribute("error")%></div>
-            <% }%>
+            <div class="registration-card">
+                <div class="card-header staff">
+                    <h2>
+                        <i class="fa fa-id-badge role-icon"></i>
+                        <span>New Counter Staff Registration</span>
+                    </h2>
+                </div>
 
-            <form method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/CounterStaffServlet">
-                <label>Name:</label>
-                <input type="text" name="name" value="${cstaff != null ? cstaff.name : ''}" required /><br>
+                <div class="form-container">
+                    <!-- Success Message -->
+                    <% if (request.getAttribute("success") != null) {%>
+                    <div class="alert alert-success">
+                        <i class="fa fa-check-circle"></i>
+                        <%= request.getAttribute("success")%>
+                    </div>
+                    <% }%>
 
-                <label>Email:</label>
-                <input type="email" name="email" value="${cstaff != null ? cstaff.email : ''}" required /><br>
+                    <!-- Error Message -->
+                    <% if (request.getAttribute("error") != null) {%>
+                    <div class="alert alert-error">
+                        <i class="fa fa-exclamation-triangle"></i>
+                        <%= request.getAttribute("error")%>
+                    </div>
+                    <% }%>
 
-                <label>Password:</label>
-                <input type="password" name="password" value="${cstaff != null ? cstaff.password : ''}" required /><br>
+                    <form id="staffForm" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/CounterStaffServlet" novalidate>
 
-                <label>Phone:</label>
-                <input type="text" name="phone" value="${cstaff != null ? cstaff.phone : ''}" required /><br>
+                        <!-- Personal Information Section -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="name">Full Name <span class="required">*</span></label>
+                                <input type="text" id="name" name="name" class="form-control staff" 
+                                       value="${cstaff != null ? cstaff.name : ''}" 
+                                       placeholder="Enter full name" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
 
-                <label>Gender:</label>
-                <select name="gender" required>
-                    <option value="" disabled ${cstaff == null ? "selected" : ""}>Choose Gender</option>
-                    <option value="F" ${cstaff != null && cstaff.gender == 'F' ? "selected" : ""}>Female</option>
-                    <option value="M" ${cstaff != null && cstaff.gender == 'M' ? "selected" : ""}>Male</option>
-                </select><br>
+                            <div class="form-group">
+                                <label for="email">Email Address <span class="required">*</span></label>
+                                <input type="email" id="email" name="email" class="form-control staff" 
+                                       value="${cstaff != null ? cstaff.email : ''}" 
+                                       placeholder="staff@example.com" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
 
-                <label>Date of Birth:</label>
-                <input type="date" name="dob" value="${cstaff != null ? cstaff.dob : ''}" required /><br>
+                        <div class="form-group">
+                            <label for="password">Password <span class="required">*</span></label>
+                            <input type="password" id="password" name="password" class="form-control staff" 
+                                   value="${cstaff != null ? cstaff.password : ''}" 
+                                   placeholder="Minimum 6 characters" required>
+                            <div class="invalid-feedback"></div>
+                        </div>
 
-                <!--// profile pic-->
-                <label>Profile Picture: </label>
-                <input type="file" name="profilePic" accept="image/*" required>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="phone">Phone Number <span class="required">*</span></label>
+                                <input type="tel" id="phone" name="phone" class="form-control staff" 
+                                       value="${cstaff != null ? cstaff.phone : ''}" 
+                                       placeholder="e.g., +60123456789" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
 
-                <input class="login_btn" type="submit" value="Register" />
-            </form>
+                            <div class="form-group">
+                                <label for="gender">Gender <span class="required">*</span></label>
+                                <select id="gender" name="gender" class="form-control staff" required>
+                                    <option value="" disabled ${cstaff == null ? "selected" : ""}>Select Gender</option>
+                                    <option value="F" ${cstaff != null && cstaff.gender == 'F' ? "selected" : ""}>Female</option>
+                                    <option value="M" ${cstaff != null && cstaff.gender == 'M' ? "selected" : ""}>Male</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
 
-        </form>
-    </div>
-</body>
+                        <div class="form-group">
+                            <label for="dob">Date of Birth <span class="required">*</span></label>
+                            <input type="date" id="dob" name="dob" class="form-control staff" 
+                                   value="${cstaff != null ? cstaff.dob : ''}" required style="line-height: normal">
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <!-- Profile Picture Section -->
+                        <div class="form-group">
+                            <label for="profilePic">Profile Picture <span class="required">*</span></label>
+
+                            <div class="file-upload">
+                                <div class="file-upload-wrapper">
+                                    <input type="file" class="form-control" id="profilePic" name="profilePic" accept="image/*" required>
+                                    <label for="profilePic" class="file-upload-btn" id="fileLabel">
+                                        <i class="fa fa-cloud-upload"></i>
+                                        <span>Choose Profile Picture</span>
+                                    </label>
+                                </div>
+                                <div class="invalid-feedback" style="display: block;"></div> <!-- Make sure it's visible -->
+                            </div>
+                        </div>
+
+                        <button type="submit" class="submit-btn staff" id="submitBtn">
+                            <span class="btn-text">
+                                <i class="fa fa-user-plus"></i>
+                                Register Counter Staff
+                            </span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <%@ include file="/includes/footer.jsp" %>
+        <%@ include file="/includes/scripts.jsp" %>
+
+        <script src="${pageContext.request.contextPath}/js/jquery.min.js"></script>
+        <script src="<%= request.getContextPath()%>/js/validate-register.js"></script>
+        <script>
+            $(document).ready(function () {
+                // The validation is already initialized in validate-register.js
+                // No need to call initializeValidation() as it doesn't exist
+                console.log('Counter staff form validation loaded');
+            });
+        </script>
+    </body>
 </html>
