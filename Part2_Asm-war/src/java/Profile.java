@@ -317,6 +317,7 @@ public class Profile extends HttpServlet {
         
         // Check if email exists in any user type
         Customer customer = customerFacade.searchEmail(email);
+
         if (customer != null) {
             return true; // Email taken by a customer
         }

@@ -1,9 +1,11 @@
+
 import java.io.IOException;
 import java.sql.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
 import javax.ejb.EJB;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
@@ -328,17 +330,17 @@ public class CounterStaffServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/ManagerServlet?action=viewAll&error=system_error");
         }
     }
-    
+
     private void loadDashboardData(HttpServletRequest request) {
         try {
             // Get all customers
             List<Customer> allCustomers = customerFacade.findAll();
             int totalCustomers = allCustomers != null ? allCustomers.size() : 0;
-            
+
             // Get all appointments
             List<Appointment> allAppointments = appointmentFacade.findAll();
             int totalAppointments = allAppointments != null ? allAppointments.size() : 0;
-            
+
             // Count appointments by status
             int pendingAppointmentCount = 0;
             int overdueAppointments = 0;
@@ -346,7 +348,7 @@ public class CounterStaffServlet extends HttpServlet {
             int approvedAppointments = 0;
             List<Appointment> recentAppointments = new ArrayList<>();
             List<Appointment> todayAppointments = new ArrayList<>();
-            
+
             if (allAppointments != null) {
                 for (Appointment apt : allAppointments) {
                     if (apt.getStatus() != null) {
@@ -368,48 +370,48 @@ public class CounterStaffServlet extends HttpServlet {
                     }
                 }
                 // Get recent appointments (limit to 10)
-                recentAppointments = allAppointments.size() > 10 
-                    ? allAppointments.subList(0, 10) 
-                    : allAppointments;
-                    
+                recentAppointments = allAppointments.size() > 10
+                        ? allAppointments.subList(0, 10)
+                        : allAppointments;
+
                 // For simplicity, using recent appointments as today's appointments
                 todayAppointments = recentAppointments;
             }
-            
+
             // Get all payments
             List<Payment> allPayments = paymentFacade.findAll();
             int pendingPaymentCount = 0;
             double totalRevenue = 0.0;
             List<Payment> pendingPayments = new ArrayList<>();
-            
+
             if (allPayments != null) {
                 for (Payment payment : allPayments) {
                     if (payment.getStatus() != null) {
                         if ("pending".equalsIgnoreCase(payment.getStatus())) {
                             pendingPaymentCount++;
                             pendingPayments.add(payment);
-                        } else if ("completed".equalsIgnoreCase(payment.getStatus()) || 
-                                   "paid".equalsIgnoreCase(payment.getStatus())) {
+                        } else if ("completed".equalsIgnoreCase(payment.getStatus())
+                                || "paid".equalsIgnoreCase(payment.getStatus())) {
                             totalRevenue += payment.getAmount();
                         }
                     }
                 }
             }
-            
+
             // Get all feedbacks
             List<Feedback> allFeedbacks = feedbackFacade.findAll();
             List<Feedback> recentFeedbacks = new ArrayList<>();
             if (allFeedbacks != null) {
-                recentFeedbacks = allFeedbacks.size() > 5 
-                    ? allFeedbacks.subList(0, 5) 
-                    : allFeedbacks;
+                recentFeedbacks = allFeedbacks.size() > 5
+                        ? allFeedbacks.subList(0, 5)
+                        : allFeedbacks;
             }
-            
+
             // Get recent customers (limit to 10)
-            List<Customer> recentCustomers = allCustomers != null && allCustomers.size() > 10 
-                ? allCustomers.subList(0, 10) 
-                : allCustomers;
-            
+            List<Customer> recentCustomers = allCustomers != null && allCustomers.size() > 10
+                    ? allCustomers.subList(0, 10)
+                    : allCustomers;
+
             // Set all attributes for the JSP
             request.setAttribute("totalCustomers", totalCustomers);
             request.setAttribute("totalAppointments", totalAppointments);
@@ -419,14 +421,14 @@ public class CounterStaffServlet extends HttpServlet {
             request.setAttribute("approvedAppointments", approvedAppointments);
             request.setAttribute("pendingPaymentCount", pendingPaymentCount);
             request.setAttribute("totalRevenue", totalRevenue);
-            
+
             // Set list attributes
             request.setAttribute("recentCustomers", recentCustomers);
             request.setAttribute("recentAppointments", recentAppointments);
             request.setAttribute("todayAppointments", todayAppointments);
             request.setAttribute("pendingPayments", pendingPayments);
             request.setAttribute("recentFeedbacks", recentFeedbacks);
-            
+
         } catch (Exception e) {
             e.printStackTrace();
             // Set default values in case of error
@@ -438,7 +440,7 @@ public class CounterStaffServlet extends HttpServlet {
             request.setAttribute("approvedAppointments", 0);
             request.setAttribute("pendingPaymentCount", 0);
             request.setAttribute("totalRevenue", 0.0);
-            
+
             request.setAttribute("recentCustomers", new ArrayList<Customer>());
             request.setAttribute("recentAppointments", new ArrayList<Appointment>());
             request.setAttribute("todayAppointments", new ArrayList<Appointment>());
