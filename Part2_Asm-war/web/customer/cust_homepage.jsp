@@ -22,7 +22,7 @@
     // Retrieve the list of doctors and treatments from the request attributes
     List<Doctor> doctorList = (List<Doctor>) request.getAttribute("doctorList");
     List<Treatment> treatmentList = (List<Treatment>) request.getAttribute("treatmentList");
-    
+
     // Retrieve appointment reminder data with comprehensive validation
     List<Appointment> upcomingAppointments = (List<Appointment>) request.getAttribute("upcomingAppointments");
     List<Appointment> urgentReminders = (List<Appointment>) request.getAttribute("urgentReminders");
@@ -87,17 +87,16 @@
         </section>
 
         <!-- APPOINTMENT REMINDERS -->
-        <%
-            boolean hasAppointments = (upcomingAppointments != null && !upcomingAppointments.isEmpty()) || 
-                                    (overdueAppointments != null && !overdueAppointments.isEmpty());
-            
+        <%            boolean hasAppointments = (upcomingAppointments != null && !upcomingAppointments.isEmpty())
+                    || (overdueAppointments != null && !overdueAppointments.isEmpty());
+
             // Debug logging for JSP
             System.out.println("=== JSP DEBUGGING ===");
             System.out.println("upcomingAppointments: " + (upcomingAppointments != null ? upcomingAppointments.size() : "null"));
             System.out.println("overdueAppointments: " + (overdueAppointments != null ? overdueAppointments.size() : "null"));
             System.out.println("hasAppointments: " + hasAppointments);
             System.out.println("====================");
-            
+
             if (hasAppointments) {
         %>
         <section class="reminder-section">
@@ -114,7 +113,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="row">
                     <%
                         SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, MMMM dd, yyyy");
@@ -127,20 +126,20 @@
                         cal.set(Calendar.SECOND, 0);
                         cal.set(Calendar.MILLISECOND, 0);
                         Date todayStart = cal.getTime();
-                        
+
                         cal.add(Calendar.DAY_OF_MONTH, 2);
                         Date urgentDate = cal.getTime();
-                        
+
                         // Separate appointments into different categories
                         java.util.List<Appointment> overdueAppointmentsList = new java.util.ArrayList<Appointment>();
                         java.util.List<Appointment> rescheduleAppointments = new java.util.ArrayList<Appointment>();
                         java.util.List<Appointment> regularAppointments = new java.util.ArrayList<Appointment>();
-                        
+
                         // Process overdue appointments (highest priority - separate from reschedule)
                         if (overdueAppointments != null) {
                             overdueAppointmentsList.addAll(overdueAppointments);
                         }
-                        
+
                         // Process upcoming appointments and categorize them
                         if (upcomingAppointments != null) {
                             for (Appointment appointment : upcomingAppointments) {
@@ -148,7 +147,7 @@
                                 if (appointment.getAppointmentDate().before(todayStart)) {
                                     continue;
                                 }
-                                
+
                                 String status = appointment.getStatus().trim().toLowerCase();
                                 if ("reschedule".equals(status)) {
                                     rescheduleAppointments.add(appointment);
@@ -158,12 +157,12 @@
                             }
                         }
                     %>
-                    
+
                     <!-- Left Column: Overdue and Reschedule Appointments -->
                     <div class="col-md-6">
                         <%
                             double leftDelay = 0.2;
-                            
+
                             // First display overdue appointments (highest priority)
                             for (Appointment appointment : overdueAppointmentsList) {
                         %>
@@ -180,9 +179,9 @@
                             </div>
                             <div class="reminder-date" style="color: #dc3545;">
                                 <%= dateFormat.format(appointment.getAppointmentDate())%>
-                                <% if (appointment.getAppointmentTime() != null) { %>
+                                <% if (appointment.getAppointmentTime() != null) {%>
                                 at <%= timeFormat.format(appointment.getAppointmentTime())%>
-                                <% } %>
+                                <% }%>
                                 <span style="background: #dc3545; color: white; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; margin-left: 10px;">
                                     OVERDUE
                                 </span>
@@ -200,12 +199,12 @@
                                     <i class="fa fa-warning" style="color: #dc3545;"></i>
                                     <strong style="color: #dc3545;">This appointment is overdue!</strong> Please reschedule immediately or contact us.
                                 </div>
-                                <% if (appointment.getStaffMessage() != null && !appointment.getStaffMessage().trim().isEmpty()) { %>
+                                <% if (appointment.getStaffMessage() != null && !appointment.getStaffMessage().trim().isEmpty()) {%>
                                 <div style="background: rgba(102, 126, 234, 0.1); padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.9em;">
                                     <i class="fa fa-info-circle" style="color: #667eea;"></i>
                                     <strong>Staff Note:</strong> <%= appointment.getStaffMessage()%>
                                 </div>
-                                <% } %>
+                                <% }%>
                             </div>
                             <div class="reminder-actions">
                                 <a href="<%= request.getContextPath()%>/AppointmentServlet?action=history&status=overdue" class="reminder-btn btn-view">
@@ -219,7 +218,7 @@
                         <%
                                 leftDelay += 0.15;
                             }
-                            
+
                             // Then display reschedule appointments
                             for (Appointment appointment : rescheduleAppointments) {
                         %>
@@ -236,9 +235,9 @@
                             </div>
                             <div class="reminder-date" style="color: #ffc107;">
                                 <%= dateFormat.format(appointment.getAppointmentDate())%>
-                                <% if (appointment.getAppointmentTime() != null) { %>
+                                <% if (appointment.getAppointmentTime() != null) {%>
                                 at <%= timeFormat.format(appointment.getAppointmentTime())%>
-                                <% } %>
+                                <% }%>
                                 <span style="background: #ffc107; color: #333; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; margin-left: 10px;">
                                     NEEDS RESCHEDULE
                                 </span>
@@ -256,12 +255,12 @@
                                     <i class="fa fa-info-circle" style="color: #ffc107;"></i>
                                     <strong style="color: #ffc107;">Reschedule Requested:</strong> Please select a new date and time for your appointment.
                                 </div>
-                                <% if (appointment.getStaffMessage() != null && !appointment.getStaffMessage().trim().isEmpty()) { %>
+                                <% if (appointment.getStaffMessage() != null && !appointment.getStaffMessage().trim().isEmpty()) {%>
                                 <div style="background: rgba(102, 126, 234, 0.1); padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.9em;">
                                     <i class="fa fa-info-circle" style="color: #667eea;"></i>
                                     <strong>Staff Note:</strong> <%= appointment.getStaffMessage()%>
                                 </div>
-                                <% } %>
+                                <% }%>
                             </div>
                             <div class="reminder-actions">
                                 <a href="<%= request.getContextPath()%>/AppointmentServlet?action=history&status=reschedule" class="reminder-btn btn-view">
@@ -277,12 +276,12 @@
                             }
                         %>
                     </div>
-                    
+
                     <!-- Right Column: Approved Appointments -->
                     <div class="col-md-6">
                         <%
                             double rightDelay = 0.3;
-                            
+
                             for (Appointment appointment : regularAppointments) {
                         %>
                         <div class="reminder-card reminder-upcoming wow fadeInUp" data-wow-delay="<%= rightDelay%>s">
@@ -298,9 +297,9 @@
                             </div>
                             <div class="reminder-date" style="color: #667eea;">
                                 <%= dateFormat.format(appointment.getAppointmentDate())%>
-                                <% if (appointment.getAppointmentTime() != null) { %>
+                                <% if (appointment.getAppointmentTime() != null) {%>
                                 at <%= timeFormat.format(appointment.getAppointmentTime())%>
-                                <% } %>
+                                <% }%>
                             </div>
                             <div class="reminder-details">
                                 <div class="reminder-treatment">
@@ -311,12 +310,12 @@
                                     <i class="fa fa-user-md"></i>
                                     Dr. <%= appointment.getDoctor() != null ? appointment.getDoctor().getName() : "To be assigned"%>
                                 </div>
-                                <% if (appointment.getStaffMessage() != null && !appointment.getStaffMessage().trim().isEmpty()) { %>
+                                <% if (appointment.getStaffMessage() != null && !appointment.getStaffMessage().trim().isEmpty()) {%>
                                 <div style="background: rgba(102, 126, 234, 0.1); padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.9em;">
                                     <i class="fa fa-info-circle" style="color: #667eea;"></i>
                                     <strong>Staff Note:</strong> <%= appointment.getStaffMessage()%>
                                 </div>
-                                <% } %>
+                                <% }%>
                             </div>
                             <div class="reminder-actions">
                                 <a href="<%= request.getContextPath()%>/AppointmentServlet?action=history&status=approved" class="reminder-btn btn-view">
@@ -333,7 +332,7 @@
                         %>
                     </div>
                 </div>
-                
+
                 <!-- Quick Actions for Appointments -->
                 <div class="row" style="margin-top: 30px;">
                     <div class="col-md-12 text-center">
@@ -372,7 +371,7 @@
             </div>
         </section>
         <%
-            } else {
+        } else {
         %>
         <!-- No Appointments Message (Optional - can be hidden) -->
         <section class="reminder-section" style="padding: 40px 0;">
@@ -384,9 +383,6 @@
                             <h3>No Upcoming Appointments</h3>
                             <p>You don't have any approved appointments in the next week.</p>
                             <div style="margin-top: 30px;">
-                                <a href="<%= request.getContextPath()%>/AppointmentServlet?action=book" class="section-btn btn btn-default" style="margin: 10px;">
-                                    <i class="fa fa-plus"></i> Book Your First Appointment
-                                </a>
                                 <a href="<%= request.getContextPath()%>/AppointmentServlet?action=history&status=all" class="section-btn btn btn-primary" style="margin: 10px;">
                                     <i class="fa fa-history"></i> View All Past Appointments
                                 </a>
@@ -522,13 +518,14 @@
                                         <p><i class="fa fa-envelope-o"></i> <a href="mailto:<%= email%>"><%= email%></a></p>
                                             <% } else { %>
                                         <p><i class="fa fa-envelope-o"></i> Email not available</p>
-                                        <% } %>
-                                        <% if (doc.getRating() != null && doc.getRating().doubleValue() > 0) {%>
+                                        <% }%>
+
                                         <p class="doctor-rating">
                                             <i class="fa fa-star"></i> 
-                                            Rating: <%= String.format("%.1f", doc.getRating())%>/10.0
+                                            Rating: <%= (doc.getRating() != null && doc.getRating().doubleValue() > 0)
+                                                    ? String.format("%.1f/10.0", doc.getRating())
+                                                    : "<span style='color: #757575;'>No ratings yet</span>"%>
                                         </p>
-                                        <% } %>
                                     </div>
                                     <ul class="social-icon">
                                         <li><a class="fa fa-facebook-square" href="#"></a></li>
@@ -690,9 +687,9 @@
 
         <!-- Appointment Reminder JavaScript -->
         <script>
-            $(document).ready(function() {
+            $(document).ready(function () {
                 // Smooth scroll to reminders when clicking reminder notifications
-                $('.reminder-notification').click(function() {
+                $('.reminder-notification').click(function () {
                     $('html, body').animate({
                         scrollTop: $('.reminder-section').offset().top - 80
                     }, 800);

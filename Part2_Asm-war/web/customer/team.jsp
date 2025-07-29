@@ -1,3 +1,7 @@
+<%@page import="java.util.Date"%>
+<%@page import="java.text.SimpleDateFormat"%>
+<%@page import="java.sql.Time"%>
+<%@page import="model.Schedule"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.List" %>
 <%@ page import="model.Doctor" %>
@@ -23,11 +27,55 @@
     List<Doctor> doctorList = (List<Doctor>) request.getAttribute("doctorList");
 %>
 
+<%!
+    // Helper method to convert 24-hour time to 12-hour format
+    public String formatTime(Time time) {
+        if (time == null) {
+            return "";
+        }
+        try {
+            SimpleDateFormat inputFormat = new SimpleDateFormat("HH:mm:ss");
+            SimpleDateFormat outputFormat = new SimpleDateFormat("h:mm a");
+            Date date = inputFormat.parse(time.toString());
+            return outputFormat.format(date).toLowerCase();
+        } catch (Exception e) {
+            return time.toString(); // fallback
+        }
+    }
+
+    // Helper method to get working hours display
+    public String getWorkingHoursDisplay(List<Schedule> schedules) {
+        if (schedules == null || schedules.isEmpty()) {
+            return "Schedule not available";
+        }
+
+        StringBuilder workingHours = new StringBuilder();
+        for (int i = 0; i < schedules.size(); i++) {
+            Schedule schedule = schedules.get(i);
+            if (i > 0) {
+                workingHours.append(", ");
+            }
+            workingHours.append(schedule.getDayOfWeek()).append(": ")
+                    .append(formatTime(schedule.getStartTime()))
+                    .append(" - ")
+                    .append(formatTime(schedule.getEndTime()));
+        }
+        return workingHours.toString();
+    }
+%>
 <!DOCTYPE html>
 <html lang="en">
     <head>
         <title>Our Medical Team - APU Medical Center</title>
         <%@ include file="/includes/head.jsp" %>
+        <style>
+            @media (min-width: 992px) {
+                .col-md-4 {
+                    width: 33.33333333%;
+                    margin-bottom: 40px;
+                }
+            }
+        </style>
     </head>
 
     <body id="top" data-spy="scroll" data-target=".navbar-collapse" data-offset="50">
@@ -43,14 +91,16 @@
                     <div class="col-md-12 col-sm-12">
                         <div class="section-title wow fadeInUp text-center" data-wow-delay="0.1s">
                             <h2>Meet Our Medical Team</h2>
-                            <% if (doctorList != null && !doctorList.isEmpty()) {%>
+                            <% if (doctorList
+                                        != null && !doctorList.isEmpty()) {%>
                             <p>Our team of <%= doctorList.size()%> experienced medical professionals</p>
                             <% } %>
                         </div>
                     </div>
 
                     <%
-                        if (doctorList != null && !doctorList.isEmpty()) {
+                        if (doctorList
+                                != null && !doctorList.isEmpty()) {
                             double delay = 0.4;
                             int doctorCount = doctorList.size();
 
@@ -94,6 +144,8 @@
                             // Handle email validation
                             String email = doc.getEmail();
                             boolean hasValidEmail = (email != null && !email.trim().isEmpty() && email.contains("@"));
+
+
                         %>
                         <div class="<%= colClass%>">
                             <div class="team-thumb wow fadeInUp" data-wow-delay="<%= delay%>s">
@@ -104,18 +156,28 @@
                                     <div class="team-contact-info">
                                         <p><i class="fa fa-phone"></i> <%= phone%></p>
                                         <% if (hasValidEmail) {%>
-                                        <p><i class="fa fa-envelope-o"></i> 
-                                            <a href="mailto:<%= email%>"><%= email%></a>
-                                        </p>
-                                        <% } else { %>
+                                        <p><i class="fa fa-envelope-o"></i> <a href="mailto:<%= email%>"><%= email%></a></p>
+                                            <% } else { %>
                                         <p><i class="fa fa-envelope-o"></i> Email not available</p>
-                                        <% } %>
-                                        <% if (doc.getRating() != null && doc.getRating().doubleValue() > 0) {%>
+                                        <% }%>
                                         <p class="doctor-rating">
                                             <i class="fa fa-star"></i> 
-                                            Rating: <%= String.format("%.1f", doc.getRating())%>/10.0
+                                            Rating: <%= (doc.getRating() != null && doc.getRating().doubleValue() > 0)
+                                                    ? String.format("%.1f/10.0", doc.getRating())
+                                                    : "<span style='color: #757575;'>No ratings yet</span>"%>
                                         </p>
-                                        <% } %>
+                                        <p><i class="fa fa-clock-o"></i>Working Hours:
+                                            <% if (doc.getSchedules() != null && !doc.getSchedules().isEmpty()) {%>
+                                            <br>
+                                            <% for (Schedule schedule : doc.getSchedules()) {%>
+                                            <%= schedule.getDayOfWeek()%>: 
+                                            <%= formatTime(schedule.getStartTime())%> - 
+                                            <%= formatTime(schedule.getEndTime())%><br>
+                                            <% } %>
+                                            <% } else { %>
+                                            <span style="color: #757575;">Schedule not available</span>
+                                            <% }%>
+                                        </p>
                                     </div>
                                     <ul class="social-icon">
                                         <li><a class="fa fa-facebook-square" href="#"></a></li>

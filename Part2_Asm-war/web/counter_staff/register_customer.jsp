@@ -2,23 +2,23 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>Register Counter Staff - APU Medical Center</title>
+        <title>Register Customer - APU Medical Center</title>
         <%@ include file="/includes/head.jsp" %>
         <link rel="stylesheet" href="${pageContext.request.contextPath}/css/user-reg-edit.css" />
     </head>
-    <body class="staff-theme">
+    <body class="customer-theme">
         <%@ include file="/includes/header.jsp" %>
         <%@ include file="/includes/navbar.jsp" %>
         <div class="registration-container">
-            <a href="${pageContext.request.contextPath}/ManagerServlet?action=viewAll" class="back-btn" style="margin-top: 30px">
-                <i class="fa fa-arrow-left"></i> Back to Staff Management
+            <a href="${pageContext.request.contextPath}/CustomerServlet?action=viewAll" class="back-btn" style="margin-top: 30px" >
+                <i class="fa fa-arrow-left"></i> Back to Customer Management
             </a>
 
             <div class="registration-card">
-                <div class="card-header staff">
+                <div class="card-header customer">
                     <h2>
-                        <i class="fa fa-id-badge role-icon"></i>
-                        <span>New Counter Staff Registration</span>
+                        <i class="fa fa-cog role-icon"></i>
+                        <span>New Customer Registration</span>
                     </h2>
                 </div>
 
@@ -39,31 +39,31 @@
                     </div>
                     <% }%>
 
-                    <form id="staffForm" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/CounterStaffServlet" novalidate>
+                    <form id="customerForm" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/CustomerServlet" novalidate>
 
                         <!-- Personal Information Section -->
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="name">Full Name <span class="required">*</span></label>
-                                <input type="text" id="name" name="name" class="form-control staff" 
-                                       value="${cstaff != null ? cstaff.name : ''}" 
+                                <input type="text" id="name" name="name" class="form-control customer" 
+                                       value="${customer != null ? customer.name : ''}" 
                                        placeholder="Enter full name" required>
                                 <div class="invalid-feedback"></div>
                             </div>
 
                             <div class="form-group">
                                 <label for="email">Email Address <span class="required">*</span></label>
-                                <input type="email" id="email" name="email" class="form-control staff" 
-                                       value="${cstaff != null ? cstaff.email : ''}" 
-                                       placeholder="staff@example.com" required>
+                                <input type="email" id="email" name="email" class="form-control customer" 
+                                       value="${customer != null ? customer.email : ''}" 
+                                       placeholder="customer@example.com" required>
                                 <div class="invalid-feedback"></div>
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label for="password">Password <span class="required">*</span></label>
-                            <input type="password" id="password" name="password" class="form-control staff" 
-                                   value="${cstaff != null ? cstaff.password : ''}" 
+                            <input type="password" id="password" name="password" class="form-control customer" 
+                                   value="${customer != null ? customer.password : ''}" 
                                    placeholder="Minimum 6 characters" required>
                             <div class="invalid-feedback"></div>
                         </div>
@@ -71,18 +71,18 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="phone">Phone Number <span class="required">*</span></label>
-                                <input type="tel" id="phone" name="phone" class="form-control staff" 
-                                       value="${cstaff != null ? cstaff.phone : ''}" 
+                                <input type="tel" id="phone" name="phone" class="form-control customer" 
+                                       value="${customer != null ? customer.phone : ''}" 
                                        placeholder="e.g., +60123456789" required>
                                 <div class="invalid-feedback"></div>
                             </div>
 
                             <div class="form-group">
                                 <label for="gender">Gender <span class="required">*</span></label>
-                                <select id="gender" name="gender" class="form-control staff" required>
-                                    <option value="" disabled ${cstaff == null ? "selected" : ""}>Select Gender</option>
-                                    <option value="F" ${cstaff != null && cstaff.gender == 'F' ? "selected" : ""}>Female</option>
-                                    <option value="M" ${cstaff != null && cstaff.gender == 'M' ? "selected" : ""}>Male</option>
+                                <select id="gender" name="gender" class="form-control customer" required>
+                                    <option value="" disabled ${customer == null ? "selected" : ""}>Select Gender</option>
+                                    <option value="F" ${customer != null && customer.gender == 'F' ? "selected" : ""}>Female</option>
+                                    <option value="M" ${customer != null && customer.gender == 'M' ? "selected" : ""}>Male</option>
                                 </select>
                                 <div class="invalid-feedback"></div>
                             </div>
@@ -90,8 +90,8 @@
 
                         <div class="form-group">
                             <label for="dob">Date of Birth <span class="required">*</span></label>
-                            <input type="date" id="dob" name="dob" class="form-control staff" 
-                                   value="${cstaff != null ? cstaff.dob : ''}" required style="line-height: normal">
+                            <input type="date" id="dob" name="dob" class="form-control customer" 
+                                   value="${customer != null ? customer.dob : ''}" required style="line-height: normal">
                             <div class="invalid-feedback"></div>
                         </div>
 
@@ -111,10 +111,10 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="submit-btn staff" id="submitBtn">
+                        <button type="submit" class="submit-btn customer" id="submitBtn">
                             <span class="btn-text">
                                 <i class="fa fa-user-plus"></i>
-                                Register Counter Staff
+                                Register Customer
                             </span>
                         </button>
                     </form>
@@ -130,7 +130,7 @@
             $(document).ready(function () {
                 // The validation is already initialized in validate-register.js
                 // No need to call initializeValidation() as it doesn't exist
-                console.log('Counter staff form validation loaded');
+                console.log('Customer form validation loaded');
             });
         </script>
     </body>

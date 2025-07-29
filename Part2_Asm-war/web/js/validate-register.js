@@ -49,6 +49,17 @@ $(document).ready(function () {
             showLoadingState('#submitBtn', 'Registering...');
         }
     });
+    
+     // Customer Form validation
+    $('#customerForm').submit(function (e) {
+        let isValid = validateForm('customer');
+        if (!isValid) {
+            e.preventDefault();
+            scrollToFirstError();
+        } else {
+            showLoadingState('#submitBtn', 'Registering...');
+        }
+    });
 
     // Common validation function for all forms
     function validateForm(type) {
@@ -145,6 +156,10 @@ $(document).ready(function () {
                         minAge = 21;
                         ageMessage = 'Manager must be at least 21 years old';
                         break;
+                     case 'customer':
+                        minAge = 1;
+                        ageMessage = 'Customer must be at least 1 years old';
+                        break;    
                     default:
                         minAge = 18;
                         ageMessage = 'Must be at least 18 years old';

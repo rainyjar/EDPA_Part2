@@ -5,7 +5,7 @@
     <head>
         <title>Register Manager - APU Medical Center</title>
         <%@ include file="/includes/head.jsp" %>
-        <link rel="stylesheet" href="${pageContext.request.contextPath}/css/staff-registration.css" />
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/css/user-reg-edit.css" />
     </head>
     <body class="manager-theme">
         <%@ include file="/includes/header.jsp" %>

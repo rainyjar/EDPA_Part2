@@ -469,7 +469,7 @@
                             <p>Try selecting a different status or view all appointments.</p>
                             <% } else {%>
                             <p>You haven't booked any appointments yet.</p>
-                            <a href="<%= request.getContextPath()%>/AppointmentServlet?action=book" class="btn btn-primary">Book Your First Appointment</a>
+                            <a href="<%= request.getContextPath()%>/AppointmentServlet?action=book" class="btn btn-primary">Book an Appointment</a>
                             <% } %>
                         </div>
                         <%
@@ -479,8 +479,8 @@
                         <div class="no-appointments">
                             <i class="fa fa-calendar-times-o" style="font-size: 64px; color: #ccc; margin-bottom: 20px;"></i>
                             <h3>No appointment history</h3>
-                            <p>You haven't booked any appointments yet.</p>
-                            <a href="<%= request.getContextPath()%>/AppointmentServlet?action=book" class="btn btn-primary">Book Your First Appointment</a>
+                            <p>You don't have any appointments with this status yet.</p>
+                            <a href="<%= request.getContextPath()%>/AppointmentServlet?action=book" class="btn btn-primary">Book an Appointment</a>
                         </div>
                         <% }%>
                     </div>

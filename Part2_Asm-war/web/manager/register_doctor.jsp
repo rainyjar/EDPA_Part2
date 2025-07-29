@@ -4,7 +4,7 @@
     <head>
         <title>Register New Doctor - APU Medical Center</title>
         <%@ include file="/includes/head.jsp" %>
-        <link rel="stylesheet" href="${pageContext.request.contextPath}/css/registration.css" />
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/css/user-reg-edit.css" />
     </head>
     <body class="doctor-theme">
         <%@ include file="/includes/header.jsp" %>
