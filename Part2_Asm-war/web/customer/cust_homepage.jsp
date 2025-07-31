@@ -490,10 +490,10 @@
                                 }
 
                                 // Handle profile picture validation
-                                String profilePic = doc.getProfilePic();
-                                if (profilePic == null || profilePic.trim().isEmpty()) {
-                                    profilePic = "default-doctor.png";
-                                }
+                                String docProfilePic = doc.getProfilePic();
+                                String profilePic = (docProfilePic != null && !docProfilePic.isEmpty())
+                                        ? (request.getContextPath() + "/ImageServlet?folder=profile_pictures&file=" + docProfilePic)
+                                        : (request.getContextPath() + "/images/placeholder/user.png");
 
                                 // Handle phone validation
                                 String phone = doc.getPhone();
@@ -507,8 +507,7 @@
                         %>
                         <div class="<%= colClass%>">
                             <div class="team-thumb wow fadeInUp" data-wow-delay="<%= delay%>s">
-
-                                <img src="<%= request.getContextPath()%>/images/profile_pictures/<%= profilePic%>" class="img-responsive" alt="<%= doctorName%> Profile Picture">
+                                <img src="<%= profilePic%>" class="img-responsive profile-pic" alt="<%= doctorName%> Profile Picture">
                                 <div class="team-info">
                                     <h3><%= doctorName%></h3>
                                     <p class="doctor-specialization"><%= specialization%></p>
@@ -625,18 +624,18 @@
                                 }
 
                                 // Handle image path
-                                String imagePath = treatment.getTreatmentPic();
-                                if (imagePath == null || imagePath.trim().isEmpty()) {
-                                    imagePath = "default-treatment.jpg";
-                                }
+                                String getTreatmentImage = treatment.getTreatmentPic();
+                                String treatmentPic = (getTreatmentImage != null && !getTreatmentImage.isEmpty())
+                                        ? (request.getContextPath() + "/ImageServlet?folder=treatment&file=" + getTreatmentImage)
+                                        : (request.getContextPath() + "/images/placeholder/default-treatment.jpg");
                         %>
                         <div class="<%= colClass%>">
                             <!-- TREATMENT THUMB -->
                             <a href="<%= request.getContextPath()%>/TreatmentServlet?action=viewDetail&id=<%= treatment.getId()%>">
 
                                 <div class="treatments-thumb wow fadeInUp" data-wow-delay="<%= delay%>s" data-treatment-id="<%= treatment.getId()%>">
-                                    <div class="treatment-image clickable-treatment">
-                                        <img src="<%= request.getContextPath()%>/images/treatment/<%= imagePath%>" class="img-responsive custom-treat-image" alt="<%= displayName%>">
+                                    <div class="treatment-image clickable-treatment">  
+                                        <img src="<%= treatmentPic%>" class="img-responsive custom-treat-image" alt="<%= treatmentPic%>">
                                     </div>
                                     <div class="treatments-info two-line-text">
                                         <h3>

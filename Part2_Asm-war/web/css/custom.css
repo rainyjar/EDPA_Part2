@@ -803,7 +803,7 @@ header span i {
 }
 
 .treatments-detail-thumb .treatments-image img {
-    border-radius: 10px;
+    margin-top: 20px;
 }
 
 .treatments-detail-thumb h3 {

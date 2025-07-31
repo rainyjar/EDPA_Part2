@@ -10,11 +10,7 @@
 <%
     // Check if user is logged in
     Customer loggedInCustomer = (Customer) session.getAttribute("customer");
-    System.out.println("Team . jsp" + loggedInCustomer);
-
-    HttpSession session1 = request.getSession(false);
-    Customer loggedInCustomer1 = (session1 != null) ? (Customer) session1.getAttribute("customer") : null;
-    System.out.println("Team . jsp,loggedInCustomer1 " + loggedInCustomer1);
+    System.out.println("Team.jsp" + loggedInCustomer);
 
     if (loggedInCustomer == null) {
         response.sendRedirect(request.getContextPath() + "/login.jsp");
@@ -149,7 +145,7 @@
                         %>
                         <div class="<%= colClass%>">
                             <div class="team-thumb wow fadeInUp" data-wow-delay="<%= delay%>s">
-                                <img src="<%= request.getContextPath()%>/images/profile_pictures/<%= profilePic%>" class="img-responsive custom-image" alt="<%= doctorName%> Profile Picture">
+                                <img src="<%= request.getContextPath()%>/ImageServlet?folder=profile_pictures&file=<%= profilePic%>" class="img-responsive custom-image-" alt="<%= doctorName%> Profile Picture">
                                 <div class="team-info">
                                     <h3><%= doctorName%></h3>
                                     <p class="doctor-specialization"><%= specialization%></p>

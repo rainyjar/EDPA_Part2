@@ -67,4 +67,10 @@ public class PaymentFacade extends AbstractFacade<Payment> {
         }
     }
 
+    public double getTotalRevenue() {
+        Double result = em.createQuery("SELECT SUM(p.amount) FROM Payment p WHERE p.status = 'paid'", Double.class)
+                .getSingleResult();
+        return result != null ? result : 0.0;
+    }
+
 }

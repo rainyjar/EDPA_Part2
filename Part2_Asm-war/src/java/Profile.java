@@ -1,4 +1,3 @@
-
 import java.io.IOException;
 import java.util.Date;
 import javax.ejb.EJB;
@@ -284,7 +283,7 @@ public class Profile extends HttpServlet {
             if (filePart != null && filePart.getSize() > 0) {
                 String fileName = null;
                 try {
-                    fileName = UploadImage.uploadProfilePicture(filePart, request.getServletContext());
+                    fileName = UploadImage.uploadImage(filePart, "profile_pictures");
                 } catch (Exception e) {
                     e.printStackTrace();
                     response.sendRedirect(request.getContextPath() + "/profile.jsp?error=upload_failed");

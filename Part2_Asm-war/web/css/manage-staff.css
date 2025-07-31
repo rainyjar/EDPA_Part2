@@ -134,8 +134,9 @@
     color: #721c24;
 }
 
-.add-staff-btn {
-    background: linear-gradient(135deg, #2c2577 0%, #f41212 100%);    
+/* Doctor Button */
+.add-doc-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
     padding: 12px 25px;
@@ -147,10 +148,65 @@
     transition: all 0.3s ease;
 }
 
-.add-staff-btn:hover {
-    background: linear-gradient(135deg, #f41212 100%, #2c2577 0%);    
+.add-doc-btn:hover {
+    background: #667eea ;
+    transform: translateY(-2px);
+}
+
+/* Counter Staff Button */
+.add-cs-btn {
+    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
     color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-weight: 600;
     text-decoration: none;
+    display: inline-block;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.add-cs-btn:hover {
+    background: #F57C00;
+    transform: translateY(-2px);
+}
+
+/* Manager Button */
+.add-man-btn {
+    background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.add-man-btn:hover {
+    background: #9C27B0;
+    transform: translateY(-2px);
+}
+
+/* Customer Button */
+.add-cust-btn {
+    background: linear-gradient(135deg, #2c2577 0%, #f41212 100%);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.add-cust-btn:hover {
+    background: #f41212;
     transform: translateY(-2px);
 }
 
