@@ -22,7 +22,8 @@
     // Check if we need to load dashboard data
     if (request.getAttribute("totalCustomers") == null) {
         // Redirect to servlet to load dashboard data
-        response.sendRedirect(request.getContextPath() + "/CounterStaffServlet?action=dashboard");
+        response.sendRedirect(request.getContextPath
+        () + "/CounterStaffServlet?action=dashboard");
         return;
     }
 
@@ -41,7 +42,7 @@
     Integer overdueAppointments = (Integer) request.getAttribute("overdueAppointments");
     Integer completedAppointments = (Integer) request.getAttribute("completedAppointments");
     Integer pendingPaymentCount = (Integer) request.getAttribute("pendingPaymentCount");
-    Double totalPayment = (Double) request.getAttribute("totalPayment");
+    Double todayPayment = (Double) request.getAttribute("todayPayment");
 
     // Default values if null
     if (totalCustomers == null) totalCustomers = 0;
@@ -51,7 +52,7 @@
     if (overdueAppointments == null) overdueAppointments = 0;
     if (completedAppointments == null) completedAppointments = 0;
     if (pendingPaymentCount == null) pendingPaymentCount = 0;
-    if (totalPayment == null) totalPayment = 0.0;
+    if (todayPayment == null) todayPayment = 0.0;
 
     DecimalFormat currencyFormat = new DecimalFormat("#,##0.00");
 %>
@@ -59,7 +60,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>Counter Staff Dashboard - APU Medical Center</title>
+        <title>Counter Staff Homepage - APU Medical Center</title>
         <%@ include file="/includes/head.jsp" %>
         <link rel="stylesheet" href="<%= contextPath %>/css/staff.css">
         
@@ -139,7 +140,7 @@
                     <div class="col-md-2 col-sm-6">
                         <div class="stat-card-wrapper">
                             <div class="stat-card counter-staff wow fadeInUp" data-wow-delay="0.7s">
-                                <span class="stat-number stat-payment">RM<%= currencyFormat.format(totalPayment)%></span>
+                                <span class="stat-number stat-payment">RM<%= currencyFormat.format(todayPayment)%></span>
                                 <span class="stat-label">Payment Collected</span>
                             </div>
                         </div>
@@ -161,7 +162,7 @@
                 <div class="row">
                     <!-- Customer Management -->
                     <div class="col-md-3 col-sm-6">
-                        <a href="<%= request.getContextPath()%>/CounterStaffServlet?action=manageCustomers" style="text-decoration: none;">
+                        <a href="<%= request.getContextPath()%>/CustomerServlet?action=viewAll" style="text-decoration: none;">
                             <div class="action-card wow fadeInUp" data-wow-delay="0.2s">
                                 <div class="action-icon counter-staff">
                                     <i class="fa fa-users"></i>
@@ -174,7 +175,7 @@
                     
                     <!-- Appointment Booking -->
                     <div class="col-md-3 col-sm-6">
-                        <a href="<%= request.getContextPath()%>/counter_staff/book_appointment.jsp" style="text-decoration: none;">
+                        <a href="<%= request.getContextPath()%>/AppointmentServlet?action=book" style="text-decoration: none;">
                             <div class="action-card wow fadeInUp" data-wow-delay="0.3s">
                                 <div class="action-icon counter-staff">
                                     <i class="fa fa-calendar-plus-o"></i>
@@ -187,7 +188,7 @@
                     
                     <!-- Appointment Management -->
                     <div class="col-md-3 col-sm-6">
-                        <a href="<%= request.getContextPath()%>/counter_staff/manage_appointments.jsp" style="text-decoration: none;">
+                        <a href="<%= request.getContextPath()%>/AppointmentServlet?action=manage" style="text-decoration: none;">
                             <div class="action-card wow fadeInUp" data-wow-delay="0.4s">
                                 <div class="action-icon counter-staff">
                                     <i class="fa fa-calendar-check-o"></i>
@@ -200,7 +201,7 @@
                     
                     <!-- Payment Collection -->
                     <div class="col-md-3 col-sm-6">
-                        <a href="<%= request.getContextPath()%>/counter_staff/collect_payments.jsp" style="text-decoration: none;">
+                        <a href="<%= request.getContextPath()%>/counter_staff/staff_payment.jsp" style="text-decoration: none;">
                             <div class="action-card wow fadeInUp" data-wow-delay="0.5s">
                                 <div class="action-icon counter-staff">
                                     <i class="fa fa-credit-card"></i>

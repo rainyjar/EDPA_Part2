@@ -3,6 +3,7 @@
 <%@ page import="model.Doctor" %>
 <%@ page import="model.Treatment" %>
 <%@ page import="model.Customer" %>
+
 <%
     // Check if user is logged in
     Customer loggedInCustomer = (Customer) session.getAttribute("customer");
@@ -29,7 +30,7 @@
 
 <body id="top" data-spy="scroll" data-target=".navbar-collapse" data-offset="50">
 
-    <%--<%@ include file="/includes/preloader.jsp" %>--%>
+    <%@ include file="/includes/preloader.jsp" %>
     <%@ include file="/includes/header.jsp" %>
     <%@ include file="/includes/navbar.jsp" %>
 

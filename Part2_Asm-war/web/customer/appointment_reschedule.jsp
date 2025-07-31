@@ -217,7 +217,8 @@
                                 <div class="form-group">
                                     <label for="customer_message">Describe your medical concerns or specific requests:</label>
                                     <textarea id="customer_message" name="customer_message" class="form-control" 
-                                             rows="4" placeholder="Please describe your symptoms, concerns, or any specific requests for the consultation..."><%= existingAppointment.getCustMessage() != null ? existingAppointment.getCustMessage() : "" %></textarea>
+                                             rows="4" placeholder="Please describe your symptoms, concerns, or any specific requests for the consultation...">
+                                             <%= existingAppointment.getCustMessage() != null ? existingAppointment.getCustMessage().trim() : "" %></textarea>
                                     <small class="form-text text-muted">This information will help the doctor prepare for your consultation.</small>
                                 </div>
                                 
@@ -226,9 +227,6 @@
                                     <button type="button" id="submit-reschedule" class="btn btn-submit btn-lg">
                                         <i class="fa fa-check"></i> Reschedule Appointment
                                     </button>
-                                    <a href="<%= request.getContextPath() %>/AppointmentServlet?action=history" class="btn btn-secondary btn-lg" style="margin-left: 10px;">
-                                        <i class="fa fa-times"></i> Cancel
-                                    </a>
                                 </div>
                             </div>
                         </form>

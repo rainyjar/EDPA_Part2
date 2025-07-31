@@ -962,3 +962,335 @@ a.action-link:hover {
         padding: 15px;
     }
 }
+
+/* ========== APPOINTMENT BOOKING STYLES ========== */
+
+/* Step Navigation - Counter Staff Appointment Booking */
+.appointment-container .step-indicator .step.clickable {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.appointment-container .step-indicator .step.clickable:hover {
+    background-color: #e8f4fd;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.appointment-container .step-indicator .step.completed {
+    background-color: #5cb85c;
+    color: white;
+}
+
+.appointment-container .step-indicator .step.completed:hover {
+    background-color: #449d44;
+}
+
+.appointment-container .step-indicator .step.active {
+    background-color: #337ab7;
+    color: white;
+}
+
+.appointment-container .step-indicator .step.active:hover {
+    background-color: #286090;
+}
+
+.appointment-container .step-indicator .step {
+    border-radius: 5px;
+    padding: 10px 15px;
+    margin: 5px;
+    border: 2px solid #ddd;
+    background-color: #f8f9fa;
+    color: #666;
+}
+
+/* Customer Search Input */
+.appointment-container .customer-search-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.appointment-container .customer-search-container .form-control {
+    border-radius: 0;
+    border: 2px solid #ddd;
+    font-size: 16px !important;
+    padding: 12px 15px !important;
+    height: auto !important;
+    line-height: 1.5;
+    transition: all 0.3s ease;
+}
+
+.appointment-container .customer-search-container .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.appointment-container .customer-search-container .input-group-text {
+    background-color: #667eea;
+    color: white;
+    border: 2px solid #667eea;
+    border-radius: 0;
+    padding: 12px 15px;
+    font-size: 16px;
+}
+
+.appointment-container .customer-search-container .btn-outline-secondary {
+    border: 2px solid #ddd;
+    border-left: none;
+    border-radius: 0;
+    padding: 12px 15px;
+    font-size: 16px;
+}
+
+.appointment-container .customer-search-container .btn-outline-secondary:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+/* Customer Not Found Alert */
+.appointment-container .customer-not-found-alert {
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+    border: 1px solid #abdde5;
+    color: #0c5460;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.appointment-container .customer-not-found-alert .btn-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    border-color: #17a2b8;
+    border-radius: 25px;
+    padding: 8px 20px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.appointment-container .customer-not-found-alert .btn-info:hover {
+    background: linear-gradient(135deg, #1f99a8 0%, #0f6674 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+}
+
+/* Time slot button styles */
+.appointment-container .time-slot-btn {
+    margin: 2px;
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    background-color: #fff;
+    color: #333;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.appointment-container .time-slot-btn:hover {
+    background-color: #e8f4fd;
+    border-color: #337ab7;
+}
+
+.appointment-container .time-slot-btn.selected {
+    background-color: #337ab7;
+    color: white;
+    border-color: #337ab7;
+}
+
+.appointment-container .time-slot-btn.disabled {
+    background-color: #f5f5f5;
+    color: #999;
+    border-color: #ddd;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.appointment-container .time-slot-btn.disabled:hover {
+    background-color: #f5f5f5;
+    border-color: #ddd;
+}
+
+.appointment-container .time-slots-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.appointment-container .doctor-card {
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    background-color: #fff;
+    transition: all 0.3s ease;
+}
+
+.appointment-container .doctor-card.selected {
+    border-color: #337ab7;
+    background-color: #f8f9fa;
+}
+
+.appointment-container .doctor-info h5 {
+    margin-bottom: 5px;
+    color: #337ab7;
+}
+
+.appointment-container .doctor-info .specialization {
+    color: #666;
+    font-style: italic;
+    margin-bottom: 10px;
+}
+
+/* Customer search results styling */
+.appointment-container #customer_results {
+    position: relative;
+    z-index: 1000;
+    width: 100%;
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 0.375rem;
+    background-color: white;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    margin-top: 5px;
+}
+
+.appointment-container #customer_results .list-group-item {
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.appointment-container #customer_results .list-group-item:hover {
+    background-color: #f8f9fa;
+    color: #495057;
+}
+
+.appointment-container #customer_results .list-group-item:first-child {
+    border-top: none;
+    border-radius: 0.375rem 0.375rem 0 0;
+}
+
+.appointment-container #customer_results .list-group-item:last-child {
+    border-bottom: none;
+    border-radius: 0 0 0.375rem 0.375rem;
+}
+
+.appointment-container #customer_results .list-group-item.text-center {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.appointment-container #customer_results .list-group-item.text-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+
+.appointment-container .customer-search-container {
+    position: relative;
+}
+
+/* Hide sections by default */
+.appointment-container .form-section.hidden {
+    display: none;
+}
+
+.appointment-container .section-title {
+    color: #337ab7;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 10px;
+}
+
+.appointment-container .btn-submit {
+    background-color: #5cb85c;
+    border-color: #5cb85c;
+    color: white;
+    padding: 12px 30px;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    border-radius: 25px;
+}
+
+.appointment-container .btn-submit:hover {
+    background-color: #449d44;
+    border-color: #449d44;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    color: white;
+}
+
+/* Responsive adjustments for appointment booking */
+@media (max-width: 768px) {
+    .appointment-container .customer-search-container {
+        max-width: 100%;
+    }
+    
+    .appointment-container .customer-search-container .form-control,
+    .appointment-container .customer-search-container .input-group-text,
+    .appointment-container .customer-search-container .btn-outline-secondary {
+        padding: 12px 15px;
+        font-size: 1rem;
+    }
+    
+    .appointment-container .step-indicator .step {
+        padding: 8px 12px;
+        margin: 3px;
+        font-size: 0.9rem;
+    }
+    
+    .appointment-container .doctor-card {
+        padding: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .appointment-container .time-slot-btn {
+        padding: 8px 12px;
+        margin: 3px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .appointment-container .customer-search-container .form-control,
+    .appointment-container .customer-search-container .input-group-text,
+    .appointment-container .customer-search-container .btn-outline-secondary {
+        border-radius: 8px;
+        margin-bottom: 5px;
+    }
+    
+    .appointment-container .customer-search-container .input-group-text {
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .appointment-container .customer-search-container .form-control {
+        border-radius: 0;
+    }
+    
+    .appointment-container .customer-search-container .btn-outline-secondary {
+        border-radius: 0 0 8px 8px;
+        width: 100%;
+    }
+    
+    .appointment-container .step-indicator {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .appointment-container .step-indicator .step {
+        flex: 1;
+        min-width: 120px;
+        text-align: center;
+        font-size: 0.8rem;
+        padding: 6px 8px;
+    }
+}

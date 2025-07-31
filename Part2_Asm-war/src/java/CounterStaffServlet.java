@@ -1,4 +1,3 @@
-
 import java.io.IOException;
 import java.sql.Date;
 import java.sql.Time;
@@ -1328,13 +1327,28 @@ public class CounterStaffServlet extends HttpServlet {
         try {
             List<Appointment> appointments = appointmentFacade.findAll();
             List<Doctor> doctors = doctorFacade.findAll();
+            List<Treatment> treatments = treatmentFacade.findAll();
+            List<CounterStaff> counterStaffList = counterStaffFacade.findAll();
 
-            request.setAttribute("appointments", appointments);
-            request.setAttribute("doctors", doctors);
+            // Trim treatment names to only show the part before "-"
+            for (Treatment treatment : treatments) {
+                String name = treatment.getName();
+                if (name.contains("-")) {
+                    treatment.setName(name.split("-")[0].trim());
+                }
+            }
+
+            // Use correct attribute names that JSP expects
+            request.setAttribute("appointmentList", appointments);
+            request.setAttribute("doctorList", doctors);
+            request.setAttribute("treatmentList", treatments);
+            request.setAttribute("staffList", counterStaffList);
         } catch (Exception e) {
             e.printStackTrace();
-            request.setAttribute("appointments", new ArrayList<Appointment>());
-            request.setAttribute("doctors", new ArrayList<Doctor>());
+            request.setAttribute("appointmentList", new ArrayList<Appointment>());
+            request.setAttribute("doctorList", new ArrayList<Doctor>());
+            request.setAttribute("treatmentList", new ArrayList<Treatment>());
+            request.setAttribute("staffList", new ArrayList<CounterStaff>());
         }
     }
 

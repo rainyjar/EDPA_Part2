@@ -29,13 +29,24 @@ import javax.persistence.*;
 public class Doctor implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+    
     private String name, email, phone, password, gender, specialization, profilePic;
+    
     @Temporal(TemporalType.DATE)
     @Column(name = "dob")
     private Date dob;
+    
+    @Lob
+    @Column(length = 32700)
+    private String address;
+
+    @Column(unique = true, length = 14)
+    private String ic;
+    
     @Column(precision = 4, scale = 2)
     private Double rating;
 
@@ -51,6 +62,9 @@ public class Doctor implements Serializable {
     @OneToMany(mappedBy = "doctor")
     private List<Schedule> schedules;
 
+    @OneToMany(mappedBy = "doctor")
+    private List<LeaveRequest> scheduleUnavailabilities;
+
     public Doctor() {
     }
 
@@ -60,16 +74,23 @@ public class Doctor implements Serializable {
         this.password = password;
     }
 
-    public Doctor(String name, String email, String password, String phone, String gender, String specialization, String profilePic, Date dob, Double rating) {
+    public Doctor(String name, String email, String phone, String password, String gender, String specialization, String profilePic, Date dob, String address, String ic, Double rating, Set<Treatment> treatments, List<Appointment> appointments, List<Feedback> receivedFeedbacks, List<Schedule> schedules, List<LeaveRequest> scheduleUnavailabilities) {
         this.name = name;
         this.email = email;
-        this.password = password;
         this.phone = phone;
+        this.password = password;
         this.gender = gender;
         this.specialization = specialization;
         this.profilePic = profilePic;
         this.dob = dob;
+        this.address = address;
+        this.ic = ic;
         this.rating = rating;
+        this.treatments = treatments;
+        this.appointments = appointments;
+        this.receivedFeedbacks = receivedFeedbacks;
+        this.schedules = schedules;
+        this.scheduleUnavailabilities = scheduleUnavailabilities;
     }
 
     public int getId() {
@@ -144,6 +165,24 @@ public class Doctor implements Serializable {
         this.dob = dob;
     }
 
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getIc() {
+        return ic;
+    }
+
+    public void setIc(String ic) {
+        this.ic = ic;
+    }
+    
+    
+
     public Double getRating() {
         return rating;
     }
@@ -183,7 +222,15 @@ public class Doctor implements Serializable {
     public void setSchedules(List<Schedule> schedules) {
         this.schedules = schedules;
     }
-    
+
+    public List<LeaveRequest> getScheduleUnavailabilities() {
+        return scheduleUnavailabilities;
+    }
+
+    public void setScheduleUnavailabilities(List<LeaveRequest> scheduleUnavailabilities) {
+        this.scheduleUnavailabilities = scheduleUnavailabilities;
+    }
+
     @Override
     public int hashCode() {
         int hash = 0;

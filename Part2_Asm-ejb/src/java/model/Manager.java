@@ -12,6 +12,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Temporal;
@@ -29,19 +30,28 @@ import javax.persistence.TemporalType;
 public class Manager implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+    
     private String name, email, phone, password, gender, profilePic;
     
     @Temporal(TemporalType.DATE)
     @Column(name = "dob")
     private Date dob;
+    
+    @Lob
+    @Column(length = 32700)
+    private String address;
+
+    @Column(unique = true, length = 14)
+    private String ic;
 
     public Manager() {
     }
 
-//    register & login use only
+//    login use only
     public Manager(String name, String email, String password) {
         this.name = name;
         this.email = email;
@@ -49,14 +59,16 @@ public class Manager implements Serializable {
     }
 
 //    register & edit use
-    public Manager(String name, String email, String password, String phone, String gender, Date dob, String profilePic) {
+    public Manager(String name, String email, String phone, String password, String gender, String profilePic, Date dob, String address, String ic) {
         this.name = name;
         this.email = email;
-        this.password = password;
         this.phone = phone;
+        this.password = password;
         this.gender = gender;
-        this.dob = dob;
         this.profilePic = profilePic;
+        this.dob = dob;
+        this.address = address;
+        this.ic = ic;
     }
 
     public int getId() {
@@ -114,6 +126,24 @@ public class Manager implements Serializable {
     public void setDob(Date dob) {
         this.dob = dob;
     }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getIc() {
+        return ic;
+    }
+
+    public void setIc(String ic) {
+        this.ic = ic;
+    }
+    
+    
 
     public String getProfilePic() {
         return profilePic;

@@ -405,7 +405,7 @@
                                     <div class="info-row">
                                         <div class="info-label">Payment Status:</div>
                                         <div class="info-value">
-                                            <span class="status-badge payment-pending">NO PAYMENT RECORD</span>
+                                            <span class="status-badge payment-pending">PENDING</span>
                                         </div>
                                     </div>
                                     <div class="info-row">

@@ -1,0 +1,236 @@
+/* 
+ * Appointment Booking Specific Styles
+ * High priority CSS to override other styles
+ */
+
+/* Force customer search input styling */
+.appointment-container .customer-search-container {
+    max-width: 100% !important;
+    width: 100% !important;
+    display: flex !important;
+}
+
+.appointment-container .customer-search-container .form-control {
+    flex: 1 !important;
+    min-width: 300px !important;
+    font-size: 16px !important;
+    padding: 12px 15px !important;
+    height: auto !important;
+    line-height: 1.5 !important;
+    border: 2px solid #ddd !important;
+    border-radius: 0 !important;
+    border-left: none !important;
+}
+
+.appointment-container .customer-search-container .input-group-text {
+    background-color: #667eea !important;
+    color: white !important;
+    border: 2px solid #667eea !important;
+    border-radius: 0 !important;
+    padding: 12px 15px !important;
+    font-size: 16px !important;
+}
+
+.appointment-container .customer-search-container .btn-outline-secondary {
+    border: 2px solid #ddd !important;
+    border-left: none !important;
+    border-radius: 0 !important;
+    padding: 12px 15px !important;
+    font-size: 16px !important;
+}
+
+.appointment-container .customer-search-container .btn-outline-secondary:hover {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: white !important;
+}
+
+/* Customer search results */
+.appointment-container #customer_results {
+    position: relative !important;
+    z-index: 1000 !important;
+    width: 100% !important;
+    max-height: 250px !important;
+    overflow-y: auto !important;
+    border: 1px solid #ddd !important;
+    border-radius: 0.375rem !important;
+    background-color: white !important;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    margin-top: 5px !important;
+}
+
+.appointment-container #customer_results .list-group-item {
+    border-left: none !important;
+    border-right: none !important;
+    border-radius: 0 !important;
+    padding: 0.75rem 1rem !important;
+    cursor: pointer !important;
+    transition: background-color 0.2s ease !important;
+    border-bottom: 1px solid #e9ecef !important;
+}
+
+.appointment-container #customer_results .list-group-item:hover {
+    background-color: #f8f9fa !important;
+    color: #495057 !important;
+}
+
+.appointment-container #customer_results .list-group-item:first-child {
+    border-top: none !important;
+    border-radius: 0.375rem 0.375rem 0 0 !important;
+}
+
+.appointment-container #customer_results .list-group-item:last-child {
+    border-bottom: none !important;
+    border-radius: 0 0 0.375rem 0.375rem !important;
+}
+
+.appointment-container #customer_results .list-group-item.text-center {
+    background-color: #f8f9fa !important;
+    color: #6c757d !important;
+    font-style: italic !important;
+}
+
+.appointment-container #customer_results .list-group-item.text-danger {
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+    border-color: #f5c6cb !important;
+}
+
+/* Force input group to be full width */
+.appointment-container .input-group {
+    width: 100% !important;
+    display: flex !important;
+}
+
+.appointment-container .input-group-prepend,
+.appointment-container .input-group-append {
+    display: flex !important;
+}
+
+/* Override Bootstrap input group styles */
+.appointment-container .form-group .input-group .form-control {
+    position: relative !important;
+    flex: 1 1 auto !important;
+    width: 1% !important;
+    min-width: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+/* Time slot button styles matching appointment.jsp */
+.appointment-container .time-slot-btn {
+    margin: 2px !important;
+    padding: 5px 10px !important;
+    border: 1px solid #ddd !important;
+    background-color: #fff !important;
+    color: #333 !important;
+    border-radius: 3px !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    font-size: 12px !important;
+    min-width: 70px !important;
+    text-align: center !important;
+}
+
+.appointment-container .time-slot-btn:hover {
+    background-color: #e8f4fd !important;
+    border-color: #337ab7 !important;
+}
+
+.appointment-container .time-slot-btn.selected,
+.appointment-container .time-slot-btn.btn-primary {
+    background-color: #337ab7 !important;
+    color: white !important;
+    border-color: #337ab7 !important;
+}
+
+.appointment-container .time-slot-btn.disabled,
+.appointment-container .time-slot-btn.btn-secondary {
+    background-color: #f5f5f5 !important;
+    color: #999 !important;
+    border-color: #ddd !important;
+    cursor: not-allowed !important;
+    opacity: 0.6 !important;
+}
+
+.appointment-container .time-slot-btn.disabled:hover,
+.appointment-container .time-slot-btn.btn-secondary:hover {
+    background-color: #f5f5f5 !important;
+    border-color: #ddd !important;
+}
+
+.appointment-container .time-slots-grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 5px !important;
+    margin-top: 10px !important;
+}
+
+.appointment-container .doctor-card {
+    border: 2px solid #ddd !important;
+    border-radius: 8px !important;
+    padding: 15px !important;
+    margin-bottom: 15px !important;
+    background-color: #fff !important;
+    transition: all 0.3s ease !important;
+}
+
+.appointment-container .doctor-card.selected {
+    border-color: #337ab7 !important;
+    background-color: #f8f9fa !important;
+}
+
+.appointment-container .doctor-info h5 {
+    margin-bottom: 5px !important;
+    color: #337ab7 !important;
+}
+
+.appointment-container .doctor-info .specialization {
+    color: #666 !important;
+    font-style: italic !important;
+    margin-bottom: 10px !important;
+    font-size: 14px !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .appointment-container .customer-search-container .form-control {
+        min-width: 200px !important;
+    }
+    
+    .appointment-container .time-slot-btn {
+        min-width: 60px !important;
+        font-size: 11px !important;
+        padding: 4px 8px !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .appointment-container .customer-search-container {
+        flex-direction: column !important;
+    }
+    
+    .appointment-container .customer-search-container .input-group-text,
+    .appointment-container .customer-search-container .form-control,
+    .appointment-container .customer-search-container .btn-outline-secondary {
+        border-radius: 8px !important;
+        margin-bottom: 5px !important;
+        width: 100% !important;
+    }
+    
+    .appointment-container .customer-search-container .input-group-text {
+        border-radius: 8px 8px 0 0 !important;
+        margin-bottom: 0 !important;
+    }
+    
+    .appointment-container .customer-search-container .form-control {
+        border-radius: 0 !important;
+        margin-bottom: 0 !important;
+        border-left: 2px solid #ddd !important;
+    }
+    
+    .appointment-container .customer-search-container .btn-outline-secondary {
+        border-radius: 0 0 8px 8px !important;
+        width: 100% !important;
+        border-left: 2px solid #ddd !important;
+    }
+}

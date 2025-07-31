@@ -31,10 +31,19 @@ public class Customer implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+
     private String name, email, phone, password, gender, profilePic;
+
     @Temporal(TemporalType.DATE)
     @Column(name = "dob")
     private Date dob;
+
+    @Lob
+    @Column(length = 32700)
+    private String address;
+
+    @Column(unique = true, length = 14)
+    private String ic;
 
     @OneToMany(mappedBy = "customer")
     private List<Appointment> appointments;
@@ -46,7 +55,7 @@ public class Customer implements Serializable {
     public Customer() {
     }
 
-//    for register and login use
+//    for login use
     public Customer(String name, String email, String password) {
         this.name = name;
         this.email = email;
@@ -54,7 +63,7 @@ public class Customer implements Serializable {
     }
 
 //  register and edit use
-    public Customer(String name, String email, String phone, String password, String gender, String profilePic, Date dob) {
+    public Customer(String name, String email, String phone, String password, String gender, String profilePic, Date dob, String address, String ic, List<Appointment> appointments, List<Feedback> feedbacksGiven) {
         this.name = name;
         this.email = email;
         this.phone = phone;
@@ -62,6 +71,10 @@ public class Customer implements Serializable {
         this.gender = gender;
         this.profilePic = profilePic;
         this.dob = dob;
+        this.address = address;
+        this.ic = ic;
+        this.appointments = appointments;
+        this.feedbacksGiven = feedbacksGiven;
     }
 
     public int getId() {
@@ -127,6 +140,24 @@ public class Customer implements Serializable {
     public void setDob(Date dob) {
         this.dob = dob;
     }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getIc() {
+        return ic;
+    }
+
+    public void setIc(String ic) {
+        this.ic = ic;
+    }
+    
+    
 
     public List<Appointment> getAppointments() {
         return appointments;

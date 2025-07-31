@@ -72,7 +72,7 @@
                             <ol class="breadcrumb" style="background: transparent; margin: 0;">
                                 <li class="breadcrumb-item">
                                     <!--return back to CS homepage-->
-                                    <a href="<%= request.getContextPath()%>/CounterStaffHomepageServlet" style="color: rgba(255,255,255,0.8);">Dashboard</a> 
+                                    <a href="<%= request.getContextPath()%>/CounterStaffServlet?action=dashboard" style="color: rgba(255,255,255,0.8);">Dashboard</a> 
                                 </li>
                                 <li class="breadcrumb-item active" style="color: white;">Manage Customer</li>
                             </ol>
@@ -92,9 +92,15 @@
                     <i class="fa fa-check-circle"></i>
                     <% if ("staff_added".equals(successMsg)) { %>
                     Customer added successfully!
+                    <% } else if ("customer_registered".equals(successMsg)) { %>
+                    Customer registered successfully!
                     <% } else if ("staff_updated".equals(successMsg)) { %>
                     Customer updated successfully!
+                    <% } else if ("customer_updated".equals(successMsg)) { %>
+                    Customer updated successfully!
                     <% } else if ("staff_deleted".equals(successMsg)) { %>
+                    Customer deleted successfully!
+                    <% } else if ("customer_deleted".equals(successMsg)) { %>
                     Customer deleted successfully!
                     <% } else { %>
                     Operation completed successfully!
@@ -112,18 +118,39 @@
                     Cannot delete customer. Please contact manager for more details.
                     <% } else if ("invalid_data".equals(errorMsg)) { %>
                     Please check all required fields and try again.
+                    <% } else if ("customer_not_found".equals(errorMsg)) { %>
+                    Customer not found. It may have been deleted by another user.
+                    <% } else if ("invalid_id".equals(errorMsg)) { %>
+                    Invalid customer ID provided.
+                    <% } else if ("missing_id".equals(errorMsg)) { %>
+                    Customer ID is required for this operation.
+                    <% } else if ("system_error".equals(errorMsg)) { %>
+                    A system error occurred. Please try again later.
+                    <% } else if ("database_error".equals(errorMsg)) { %>
+                    Database connection error. Please contact support.
                     <% } else { %>
                     An error occurred. Please try again.
                     <% } %>
                 </div>
                 <% }%>
 
+                <!-- Info Message for No Results -->
+                <% 
+                String infoMessage = (String) request.getAttribute("infoMessage");
+                if (infoMessage != null) { %>
+                <div class="alert alert-info alert-dismissible wow fadeInUp">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    <i class="fa fa-info-circle"></i>
+                    <%= infoMessage %>
+                </div>
+                <% }%>
+
                 <!-- SEARCH AND FILTER SECTION -->
                 <div class="search-filter-section wow fadeInUp" data-wow-delay="0.2s">
-                    <h3><i class="fa fa-search"></i> Search & Filter Staff</h3>
+                    <h3><i class="fa fa-search"></i> Search & Filter Customers</h3>
 
-                    <!--perform searching function in CounterStaffServlet--> 
-                    <form method="GET" action="<%= request.getContextPath()%>/CounterStaffServlet" class="search-form">
+                    <!--perform searching function in CustomerServlet--> 
+                    <form method="GET" action="<%= request.getContextPath()%>/CustomerServlet" class="search-form">
                         <input type="hidden" name="action" value="search">
 
                         <div class="form-row">
@@ -132,18 +159,6 @@
                                 <input type="text" class="form-control" id="search" name="search" 
                                        value="<%= searchQuery%>" placeholder="Enter name or email...">
                             </div>
-
-                            <!--add your own filtering logic here-->
-
-                            <!--                            <div class="form-group">
-                                                            <label for="role">Filter by Role</label>
-                                                            <select class="form-control" id="role" name="role">
-                                                                <option value="all" <%= "all".equals(roleFilter) ? "selected" : ""%>>All Roles</option>
-                                                                <option value="doctor" <%= "doctor".equals(roleFilter) ? "selected" : ""%>>Doctors</option>
-                                                                <option value="counter_staff" <%= "counter_staff".equals(roleFilter) ? "selected" : ""%>>Counter Staff</option>
-                                                                <option value="manager" <%= "manager".equals(roleFilter) ? "selected" : ""%>>Managers</option>
-                                                            </select>
-                                                        </div>-->
 
                             <div class="form-group">
                                 <label for="gender">Filter by Gender</label>
@@ -158,7 +173,7 @@
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fa fa-search"></i> Search
                                 </button>
-                                <a href="<%= request.getContextPath()%>/ManagerServlet?action=viewAll" class="btn btn-secondary">
+                                <a href="<%= request.getContextPath()%>/CustomerServlet?action=viewAll" class="btn btn-secondary">
                                     <i class="fa fa-refresh"></i> Reset
                                 </a>
                             </div>
@@ -172,8 +187,8 @@
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h3><i class="fa fa-list"></i> Customer Directory</h3>
                         <div>
-                            <a href="<%= request.getContextPath()%>/counter_staff/register_customer.jsp" class="add-staff-btn">
-                                <i class="fa fa-user-md"></i> Add Customer
+                            <a href="<%= request.getContextPath()%>/CustomerServlet?action=add" class="add-staff-btn">
+                                <i class="fa fa-user-plus"></i> Add Customer
                             </a>
                         </div>
                     </div>
@@ -186,8 +201,8 @@
                         </button>
                     </div>
 
-                    <!-- DOCTORS TAB -->
-                    <div id="doctors-tab" class="tab-content">
+                    <!-- CUSTOMERS TAB -->
+                    <div id="customer-tab" class="tab-content"  style="display: block;">
                         <div class="staff-table">
                             <% if (customerList != null && !customerList.isEmpty()) { %>
                             <table class="table table-hover">
@@ -272,13 +287,13 @@
                 event.target.classList.add('active');
             }
 
-            // CRUD Functions for Doctors
+            // CRUD Functions for Customers
             function viewCustomer(id) {
                 window.open('<%= request.getContextPath()%>/CustomerServlet?action=view&id=' + id, '_blank');
             }
 
             function editCustomer(id) {
-                window.location.href = '<%= request.getContextPath()%>/counter_staff/edit_customer.jsp?id=' + id;
+                window.location.href = '<%= request.getContextPath()%>/CustomerServlet?action=edit&id=' + id;
             }
 
             function deleteCustomer(id, name) {
@@ -301,7 +316,6 @@
             document.querySelector('.search-form').addEventListener('submit', function (e) {
                 const searchInput = document.getElementById('search');
                 if (searchInput.value.trim() === '' &&
-                        document.getElementById('role').value === 'all' &&
                         document.getElementById('gender').value === 'all') {
                     e.preventDefault();
                     alert('Please enter search criteria or use filters.');

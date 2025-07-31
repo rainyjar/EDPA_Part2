@@ -37,6 +37,13 @@ public class CounterStaff implements Serializable {
     @Temporal(TemporalType.DATE)
     @Column(name = "dob")
     private Date dob;
+    
+    @Lob
+    @Column(length = 32700)
+    private String address;
+
+    @Column(unique = true, length = 14)
+    private String ic;
 
     @Column(precision = 4, scale = 2)
     private Double rating;
@@ -56,7 +63,7 @@ public class CounterStaff implements Serializable {
         this.password = password;
     }
 
-    public CounterStaff(String name, String email, String phone, String password, String gender, String profilePic, Date dob, Double rating) {
+    public CounterStaff(String name, String email, String phone, String password, String gender, String profilePic, Date dob, String address, String ic, Double rating, List<Appointment> appointments, List<Feedback> receivedFeedbacks) {
         this.name = name;
         this.email = email;
         this.phone = phone;
@@ -64,7 +71,11 @@ public class CounterStaff implements Serializable {
         this.gender = gender;
         this.profilePic = profilePic;
         this.dob = dob;
+        this.address = address;
+        this.ic = ic;
         this.rating = rating;
+        this.appointments = appointments;
+        this.receivedFeedbacks = receivedFeedbacks;
     }
 
     public int getId() {
@@ -130,6 +141,24 @@ public class CounterStaff implements Serializable {
     public void setDob(Date dob) {
         this.dob = dob;
     }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getIc() {
+        return ic;
+    }
+
+    public void setIc(String ic) {
+        this.ic = ic;
+    }
+    
+    
 
     public Double getRating() {
         return rating;
