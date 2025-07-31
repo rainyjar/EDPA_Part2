@@ -297,7 +297,7 @@ public class Profile extends HttpServlet {
                 // Save to database and update session
                 saveUserAndUpdateSession(request, userInfo);
 
-                  Thread.sleep(3000);
+                Thread.sleep(3000);
                 response.sendRedirect(request.getContextPath() + "/profile.jsp?success=picture_updated");
             } else {
                 response.sendRedirect(request.getContextPath() + "/profile.jsp?error=no_file");
@@ -316,7 +316,8 @@ public class Profile extends HttpServlet {
         }
         
         // Check if email exists in any user type
-        Customer customer = customerFacade.findByEmail(email);
+        Customer customer = customerFacade.searchEmail(email);
+
         if (customer != null) {
             return true; // Email taken by a customer
         }

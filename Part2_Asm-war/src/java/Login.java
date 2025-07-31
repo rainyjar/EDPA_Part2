@@ -116,7 +116,7 @@ public class Login extends HttpServlet {
                 // Set the name based on role
                 if (user instanceof Manager) {
                     s.setAttribute("manager", ((Manager) user));
-                    response.sendRedirect(role + "/dashboard.jsp");
+                    response.sendRedirect("ManagerHomepageServlet");
                 } else if (user instanceof Doctor) {
                     s.setAttribute("doctor", ((Doctor) user).getName());
                     response.sendRedirect(role + "/dashboard.jsp");

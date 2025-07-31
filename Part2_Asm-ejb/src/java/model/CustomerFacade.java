@@ -40,18 +40,4 @@ public class CustomerFacade extends AbstractFacade<Customer> {
         return null;
     }
 
-    /**
-     * Find customer by email address
-     *
-     * @param email
-     * @return Customer or null if not found
-     */
-    public Customer findByEmail(String email) {
-        return searchEmail(email);
-    }
-
-    public void edit(Customer customer) {
-        em.merge(customer);  // em is your EntityManager
-    }
-
 }

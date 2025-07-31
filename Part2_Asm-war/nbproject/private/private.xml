@@ -3,9 +3,22 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+<<<<<<< HEAD
             <file>file:/C:/Users/leeja/OneDrive/Desktop/EPDA_Part2/EDPA_Part2/Part2_Asm-war/web/counter_staff/counter_homepage.jsp</file>
             <file>file:/C:/Users/leeja/OneDrive/Desktop/EPDA_Part2/EDPA_Part2/Part2_Asm-war/web/css/staff-dashboard.css</file>
             <file>file:/C:/Users/leeja/OneDrive/Desktop/EPDA_Part2/EDPA_Part2/Part2_Asm-war/web/css/custom.css</file>
+=======
+            <file>file:/C:/Users/chris/OneDrive%20-%20Asia%20Pacific%20University/~Enterprise%20Programming/ASM/Part2_Asm/Part2_Asm-war/web/manager/register_cs.jsp</file>
+            <file>file:/C:/Users/chris/OneDrive%20-%20Asia%20Pacific%20University/~Enterprise%20Programming/ASM/Part2_Asm/Part2_Asm-war/src/java/CounterStaffServlet.java</file>
+            <file>file:/C:/Users/chris/OneDrive%20-%20Asia%20Pacific%20University/~Enterprise%20Programming/ASM/Part2_Asm/Part2_Asm-war/src/java/Login.java</file>
+            <file>file:/C:/Users/chris/OneDrive%20-%20Asia%20Pacific%20University/~Enterprise%20Programming/ASM/Part2_Asm/Part2_Asm-war/web/register.jsp</file>
+            <file>file:/C:/Users/chris/OneDrive%20-%20Asia%20Pacific%20University/~Enterprise%20Programming/ASM/Part2_Asm/Part2_Asm-war/src/java/ManagerHomepageServlet.java</file>
+            <file>file:/C:/Users/chris/OneDrive%20-%20Asia%20Pacific%20University/~Enterprise%20Programming/ASM/Part2_Asm/Part2_Asm-war/src/java/DoctorServlet.java</file>
+            <file>file:/C:/Users/chris/OneDrive%20-%20Asia%20Pacific%20University/~Enterprise%20Programming/ASM/Part2_Asm/Part2_Asm-war/web/manager/register_doctor.jsp</file>
+            <file>file:/C:/Users/chris/OneDrive%20-%20Asia%20Pacific%20University/~Enterprise%20Programming/ASM/Part2_Asm/Part2_Asm-war/src/java/Profile.java</file>
+            <file>file:/C:/Users/chris/OneDrive%20-%20Asia%20Pacific%20University/~Enterprise%20Programming/ASM/Part2_Asm/Part2_Asm-war/web/manager/register_manager.jsp</file>
+            <file>file:/C:/Users/chris/OneDrive%20-%20Asia%20Pacific%20University/~Enterprise%20Programming/ASM/Part2_Asm/Part2_Asm-war/web/login.jsp</file>
+>>>>>>> 2aa5167b4b4e74988f621a61fbc41555a781a39b
         </group>
     </open-files>
 </project-private>
