@@ -17,20 +17,20 @@
     String profilePicName = "";
     int userId = 0;
     Date userDob = null;
-    
+
     // Doctor-specific fields
     String doctorSpecialization = "";
     Double doctorRating = null;
-    
+
     // Staff-specific fields  
     Double staffRating = null;
-    
+
     // Check session for different user types
     Customer customer = (Customer) session.getAttribute("customer");
     Doctor doctor = (Doctor) session.getAttribute("doctor");
     CounterStaff staff = (CounterStaff) session.getAttribute("staff");
     Manager manager = (Manager) session.getAttribute("manager");
-    
+
     if (customer != null) {
         currentUser = customer;
         userType = "customer";
@@ -83,10 +83,11 @@
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     String dobString = userDob != null ? dateFormat.format(userDob) : "";
 
-    // Profile picture URL
-    String profilePicUrl = (profilePicName != null && !profilePicName.isEmpty())
-            ? request.getContextPath() + "/images/profile_pictures/" + java.net.URLEncoder.encode(profilePicName, "UTF-8") + "?t=" + System.currentTimeMillis()
-            : request.getContextPath() + "/images/profile_pictures/default-doc.png";
+   //  working liao
+   // String profilePic = profilePicName != null && !profilePicName.isEmpty() ? profilePicName : "default-doc.png";
+    String profilePic = (profilePicName != null && !profilePicName.isEmpty())
+    ? (request.getContextPath() + "/ImageServlet?folder=profile_pictures&file=" + profilePicName)
+    : (request.getContextPath() + "/images/placeholder/user.png");
 
     // Get success/error messages
     String successMsg = request.getParameter("success");
@@ -112,8 +113,8 @@
                         <div class="profile-container wow fadeInUp animated">
                             <!-- Profile Header -->
                             <div class="profile-header">
-                                <div class="profile-pic-container">
-                                    <img src="<%= profilePicUrl%>" class="profile-pic" id="profilePicDisplay" alt="Profile Picture">
+                                <div class="profile-pic-container"> 
+                                    <img src="<%= profilePic %>" class="profile-pic" alt="Profile Picture">
                                     <button type="button" class="pic-upload-btn" onclick="document.getElementById('profilePicInput').click();">
                                         <i class="fa fa-camera"></i>
                                     </button>
@@ -189,7 +190,7 @@
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="form-group">
-                                                <label class="form-label"><%= userType.substring(0,1).toUpperCase() + userType.substring(1)%> ID</label>
+                                                <label class="form-label"><%= userType.substring(0, 1).toUpperCase() + userType.substring(1)%> ID</label>
                                                 <input type="text" class="form-control" value="<%= userId%>" disabled>
                                             </div>
                                         </div>
@@ -244,7 +245,7 @@
                                     </div>
 
                                     <!-- Role-Specific Fields (Read-Only) -->
-                                    <% if ("doctor".equals(userType)) { %>
+                                    <% if ("doctor".equals(userType)) {%>
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="form-group">
@@ -258,26 +259,26 @@
                                                 <label class="form-label">Rating</label>
                                                 <div class="rating-display">
                                                     <% if (doctorRating != null && doctorRating > 0) { %>
-                                                        <div class="star-rating">
-                                                            <% 
+                                                    <div class="star-rating">
+                                                        <%
                                                             int fullStars = (int) Math.floor(doctorRating);
                                                             boolean hasHalfStar = (doctorRating - fullStars) >= 0.5;
-                                                            
+
                                                             for (int i = 1; i <= 5; i++) {
                                                                 if (i <= fullStars) { %>
-                                                                    <i class="fa fa-star star-filled"></i>
-                                                                <% } else if (i == fullStars + 1 && hasHalfStar) { %>
-                                                                    <i class="fa fa-star-half-o star-half"></i>
-                                                                <% } else { %>
-                                                                    <i class="fa fa-star-o star-empty"></i>
-                                                                <% }
-                                                            } %>
-                                                            <span class="rating-text">(<%= String.format("%.1f", doctorRating)%>/5.0)</span>
-                                                        </div>
+                                                        <i class="fa fa-star star-filled"></i>
+                                                        <% } else if (i == fullStars + 1 && hasHalfStar) { %>
+                                                        <i class="fa fa-star-half-o star-half"></i>
+                                                        <% } else { %>
+                                                        <i class="fa fa-star-o star-empty"></i>
+                                                        <% }
+                                                            }%>
+                                                        <span class="rating-text">(<%= String.format("%.1f", doctorRating)%>/5.0)</span>
+                                                    </div>
                                                     <% } else { %>
-                                                        <div class="no-rating">
-                                                            <i class="fa fa-star-o"></i> No ratings yet
-                                                        </div>
+                                                    <div class="no-rating">
+                                                        <i class="fa fa-star-o"></i> No ratings yet
+                                                    </div>
                                                     <% } %>
                                                 </div>
                                             </div>
@@ -290,32 +291,32 @@
                                                 <label class="form-label">Rating</label>
                                                 <div class="rating-display">
                                                     <% if (staffRating != null && staffRating > 0) { %>
-                                                        <div class="star-rating">
-                                                            <% 
+                                                    <div class="star-rating">
+                                                        <%
                                                             int fullStars = (int) Math.floor(staffRating);
                                                             boolean hasHalfStar = (staffRating - fullStars) >= 0.5;
-                                                            
+
                                                             for (int i = 1; i <= 5; i++) {
                                                                 if (i <= fullStars) { %>
-                                                                    <i class="fa fa-star star-filled"></i>
-                                                                <% } else if (i == fullStars + 1 && hasHalfStar) { %>
-                                                                    <i class="fa fa-star-half-o star-half"></i>
-                                                                <% } else { %>
-                                                                    <i class="fa fa-star-o star-empty"></i>
-                                                                <% }
-                                                            } %>
-                                                            <span class="rating-text">(<%= String.format("%.1f", staffRating)%>/5.0)</span>
-                                                        </div>
+                                                        <i class="fa fa-star star-filled"></i>
+                                                        <% } else if (i == fullStars + 1 && hasHalfStar) { %>
+                                                        <i class="fa fa-star-half-o star-half"></i>
+                                                        <% } else { %>
+                                                        <i class="fa fa-star-o star-empty"></i>
+                                                        <% }
+                                                            }%>
+                                                        <span class="rating-text">(<%= String.format("%.1f", staffRating)%>/5.0)</span>
+                                                    </div>
                                                     <% } else { %>
-                                                        <div class="no-rating">
-                                                            <i class="fa fa-star-o"></i> No ratings yet
-                                                        </div>
+                                                    <div class="no-rating">
+                                                        <i class="fa fa-star-o"></i> No ratings yet
+                                                    </div>
                                                     <% } %>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <% } %>
+                                    <% }%>
 
                                     <div class="text-center" style="margin-top: 30px;">
                                         <button type="submit" class="btn btn-custom btn-primary-custom">
@@ -395,7 +396,7 @@
         <%@ include file="/includes/footer.jsp" %>
 
         <script>
-               // Debug function to check session status
+            // Debug function to check session status
             function checkSessionStatus() {
                 fetch('<%= request.getContextPath()%>/Profile', {
                     method: 'GET',
@@ -509,7 +510,7 @@
                 document.getElementById('changePasswordForm').reset();
                 document.getElementById('passwordStrength').className = 'password-strength';
                 document.getElementById('passwordMatch').innerHTML = '';
-                
+
                 // Clear any inline styles that might have been added
                 document.getElementById('passwordStrength').style.display = '';
                 document.getElementById('passwordMatch').style.color = '';
@@ -556,15 +557,15 @@
                     matchIndicator.innerHTML = '<span style="color: #dc3545;">✗ Passwords do not match</span>';
                 }
             }
-            
+
             // Just updating the logout confirmation to be universal
             function confirmLogout() {
                 if (confirm('Are you sure you want to logout?')) {
-                    window.location.href = '<%= request.getContextPath()%>/Login?action=logout';
+                    window.location.href = '<%= request.getContextPath()%>/Logout';
                 }
             }
-            
-             // Close modal when clicking outside
+
+            // Close modal when clicking outside
             window.onclick = function (event) {
                 const modal = document.getElementById('changePasswordModal');
                 if (event.target === modal) {

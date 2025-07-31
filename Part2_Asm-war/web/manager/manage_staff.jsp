@@ -70,12 +70,12 @@
                             <span style="color:white">Manage Staff</span>
                         </h1>
                         <p class="lead wow fadeInUp" data-wow-delay="0.2s" style="color: whitesmoke">
-                            Add, edit, search, and manage all doctors, counter staff, and managers
+                            View, search or delete doctors, counter staff, and managers
                         </p>
                         <nav aria-label="breadcrumb" class="wow fadeInUp" data-wow-delay="0.3s">
                             <ol class="breadcrumb" style="background: transparent; margin: 0;">
                                 <li class="breadcrumb-item">
-                                    <a href="<%= request.getContextPath()%>/ManagerDashboardServlet" style="color: rgba(255,255,255,0.8);">Dashboard</a>
+                                    <a href="<%= request.getContextPath()%>/ManagerHomepageServlet" style="color: rgba(255,255,255,0.8);">Dashboard</a>
                                 </li>
                                 <li class="breadcrumb-item active" style="color: white;">Manage Staff</li>
                             </ol>
@@ -93,12 +93,18 @@
                 <div class="alert alert-success alert-dismissible wow fadeInUp">
                     <button type="button" class="close" data-dismiss="alert">&times;</button>
                     <i class="fa fa-check-circle"></i>
-                    <% if ("staff_added".equals(successMsg)) { %>
-                    Staff member added successfully!
-                    <% } else if ("staff_updated".equals(successMsg)) { %>
-                    Staff member updated successfully!
-                    <% } else if ("staff_deleted".equals(successMsg)) { %>
-                    Staff member deleted successfully!
+                    <% if ("doctor_deleted".equals(successMsg)) { %>
+                    Doctor deleted successfully!
+                    <% } else if ("counter_deleted".equals(successMsg)) { %>
+                    Counter staff deleted successfully!
+                    <% } else if ("manager_deleted".equals(successMsg)) { %>
+                    Manager deleted successfully!
+                    <% } else if ("manager_updated".equals(successMsg)) { %>
+                    Manager updated successfully!
+                    <% } else if ("counter_updated".equals(successMsg)) { %>
+                    Counter staff updated successfully!
+                    <% } else if ("doctor_updated".equals(successMsg)) { %>
+                    Doctor updated successfully!
                     <% } else { %>
                     Operation completed successfully!
                     <% } %>
@@ -168,22 +174,7 @@
 
                 <!-- STAFF MANAGEMENT SECTION -->
                 <div class="staff-management-section wow fadeInUp" data-wow-delay="0.4s">
-                    <!-- Add New Staff Button -->
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h3><i class="fa fa-list"></i> Staff Directory</h3>
-                        <div>
-                            <a href="<%= request.getContextPath()%>/manager/register_doctor.jsp" class="add-staff-btn">
-                                <i class="fa fa-user-md"></i> Add Doctor
-                            </a>
-                            <a href="<%= request.getContextPath()%>/manager/register_cs.jsp" class="add-staff-btn">
-                                <i class="fa fa-id-badge"></i> Add Counter Staff
-                            </a>
-                            <a href="<%= request.getContextPath()%>/manager/register_manager.jsp" class="add-staff-btn">
-                                <i class="fa fa-cog"></i> Add Manager
-                            </a>
-                        </div>
-                    </div>
-
+                    <h3><i class="fa fa-list"></i> Staff Directory</h3>
                     <!-- Tab Navigation -->
                     <div class="tab-buttons">
                         <button class="tab-btn active" onclick="showTab('doctors')">
@@ -258,6 +249,14 @@
                                                 <button class="btn btn-sm btn-delete" onclick="deleteDoctor(<%= doctor.getId()%>, '<%= doctor.getName()%>')">
                                                     <i class="fa fa-trash"></i>
                                                 </button>
+                                                <!--                                                    
+                                                                                                    
+                                                                                                <a href="${pageContext.request.contextPath}/DoctorServlet?action=delete&id=<%= doctor.getId()%>"
+                                                                                                   onclick="return confirm('Are you sure you want to delete Dr. <%= doctor.getName()%>?')"
+                                                                                                   class="btn btn-sm btn-delete">
+                                                                                                    <i class="fa fa-trash"></i>
+                                                                                                </a>-->
+
                                             </div>
                                         </td>
                                     </tr>
@@ -359,7 +358,7 @@
                                         <th>Name</th>
                                         <th>Email</th>
                                         <th>Phone</th>
-                                        <th>Join Date</th>
+                                        <th>DOB</th>
                                         <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
@@ -386,11 +385,11 @@
                                             <div class="action-buttons">
                                                 <button class="btn btn-sm btn-view" onclick="viewManager(<%= mgr.getId()%>)">
                                                     <i class="fa fa-eye"></i>
-                                                </button>
-                                                <% if (mgr.getId() != loggedInManager.getId()) {%>
+                                                </button>   
                                                 <button class="btn btn-sm btn-edit" onclick="editManager(<%= mgr.getId()%>)">
                                                     <i class="fa fa-edit"></i>
                                                 </button>
+                                                <% if (mgr.getId() != loggedInManager.getId()) {%>
                                                 <button class="btn btn-sm btn-delete" onclick="deleteManager(<%= mgr.getId()%>, '<%= mgr.getName()%>')">
                                                     <i class="fa fa-trash"></i>
                                                 </button>
@@ -448,7 +447,7 @@
             }
 
             function editDoctor(id) {
-                window.location.href = '<%= request.getContextPath()%>/manager/edit_doctor.jsp?id=' + id;
+                window.location.href = '<%= request.getContextPath()%>/DoctorServlet?action=edit&id=' + id;
             }
 
             function deleteDoctor(id, name) {
@@ -463,7 +462,7 @@
             }
 
             function editStaff(id) {
-                window.location.href = '<%= request.getContextPath()%>/manager/edit_cs.jsp?id=' + id;
+                window.location.href = '<%= request.getContextPath()%>/CounterStaffServlet?action=edit&id=' + id;
             }
 
             function deleteStaff(id, name) {
@@ -478,7 +477,7 @@
             }
 
             function editManager(id) {
-                window.location.href = '<%= request.getContextPath()%>/manager/edit_manager.jsp?id=' + id;
+                window.location.href = '<%= request.getContextPath()%>/ManagerServlet?action=edit&id=' + id;
             }
 
             function deleteManager(id, name) {

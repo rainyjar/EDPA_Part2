@@ -1,7 +1,20 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.List" %>
 <%@ page import="model.Treatment" %>
+<%@page import="model.Customer"%>
+
 <%
+    // Check if user is logged in
+    Customer loggedInCustomer = (Customer) session.getAttribute("customer");
+    System.out.println("Team.jsp" + loggedInCustomer);
+
+    if (loggedInCustomer == null) {
+        response.sendRedirect(request.getContextPath() + "/login.jsp");
+        return;
+    } else {
+        System.out.println(loggedInCustomer.getName() + " logged in succesfully!");
+    }
+
     List<Treatment> treatmentList = (List<Treatment>) request.getAttribute("treatmentList");
 %>
 
@@ -116,10 +129,10 @@
                             }
 
                             // Handle image path
-                            String imagePath = treatment.getTreatmentPic();
-                            if (imagePath == null || imagePath.trim().isEmpty()) {
-                                imagePath = "default-treatment.jpg";
-                            }
+                            String treatmentImagePath = treatment.getTreatmentPic();
+                            String treatmentPic = (treatmentImagePath != null && !treatmentImagePath.isEmpty())
+                                    ? (request.getContextPath() + "/ImageServlet?folder=treatment&file=" + treatmentImagePath)
+                                    : (request.getContextPath() + "/images/placeholder/default-treatment.jpg");
                         %>
                         <div class="<%= colClass%>">
                             <!-- TREATMENT THUMB -->
@@ -127,12 +140,11 @@
 
                                 <div class="treatments-thumb wow fadeInUp" data-wow-delay="<%= delay%>s" data-treatment-id="<%= treatment.getId()%>">
                                     <div class="treatment-image clickable-treatment">
-                                        <img src="<%= request.getContextPath()%>/images/treatment/<%= imagePath%>" class="img-responsive custom-treat-image" alt="<%= displayName%>">
+                                        <img src="<%= treatmentPic%>" class="img-responsive custom-treat-image" alt="<%= treatmentPic%>">
                                     </div>
                                     <div class="treatments-info treatments-name two-line-text">
                                         <h3>
                                             <%= treatment.getName() != null ? treatment.getName() : "No name available"%>
-
                                         </h3>
                                         <p><%= treatment.getShortDescription() != null ? treatment.getShortDescription() : "No short description."%></p>
                                         <div class="treatment-meta">

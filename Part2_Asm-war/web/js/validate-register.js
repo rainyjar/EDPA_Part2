@@ -1,71 +1,67 @@
 $(document).ready(function () {
     // Common file upload handling
-    $('#profilePic').change(function () {
+    $('#profilePic').on('change', function () {
         const file = this.files[0];
         const label = $('#fileLabel');
+        const labelSpan = $('#fileLabel span');
+        const labelIcon = $('#fileLabel i');
+        const errorMsg = $('#profilePicError'); // target only this
+
+        // Reset state
+        label.removeClass('is-valid-label is-invalid-label');
+        labelIcon.removeClass('fa-check fa-times');
+        $('#profilePic').removeClass('is-valid is-invalid');
+        errorMsg.hide().text('');
 
         if (file) {
-            label.addClass('has-file');
-            label.find('span').text(file.name);
-            label.find('i').removeClass('fa-cloud-upload').addClass('fa-check');
-            $(this).removeClass('is-invalid').addClass('is-valid');
-            $(this).next().find('.invalid-feedback').hide();
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+            const maxSize = 5 * 1024 * 1024;
+
+            labelSpan.text(file.name);
+
+            if (!allowedTypes.includes(file.type) || file.type === 'image/gif') {
+                label.addClass('is-invalid-label');
+                labelIcon.addClass('fa-times');
+                $('#profilePic').addClass('is-invalid');
+                errorMsg.text('Only JPEG and PNG images are allowed (GIFs are not accepted)').show();
+            } else if (file.size > maxSize) {
+                label.addClass('is-invalid-label');
+                labelIcon.addClass('fa-times');
+                $('#profilePic').addClass('is-invalid');
+                errorMsg.text('Image size must be less than 5MB').show();
+            } else {
+                label.addClass('is-valid-label');
+                labelIcon.addClass('fa-check');
+                $('#profilePic').addClass('is-valid');
+                errorMsg.hide().text(''); // hide previous error if any
+
+            }
+
         } else {
-            label.removeClass('has-file');
-            label.find('span').text('Choose Profile Picture');
-            label.find('i').removeClass('fa-check').addClass('fa-cloud-upload');
+            labelSpan.text('Choose Profile Picture');
+            labelIcon.removeClass('fa-check fa-times');
+            $('#profilePic').removeClass('is-valid is-invalid');
+            label.removeClass('is-valid-label is-invalid-label');
+            errorMsg.hide().text('');
         }
     });
 
-    // Doctor Form validation
-    $('#doctorForm').submit(function (e) {
-        let isValid = validateForm('doctor');
+    // Form submission handlers
+    $('#doctorForm, #staffForm, #managerForm, #customerForm').submit(function (e) {
+        let formType = this.id.replace('Form', '');
+        let isValid = validateForm(formType);
         if (!isValid) {
             e.preventDefault();
             scrollToFirstError();
         } else {
-            showLoadingState('#submitBtn', 'Registering...');
+            showLoadingState('#submitBtn', 'Loading...');
         }
     });
 
-    // Counter Staff Form validation
-    $('#staffForm').submit(function (e) {
-        let isValid = validateForm('staff');
-        if (!isValid) {
-            e.preventDefault();
-            scrollToFirstError();
-        } else {
-            showLoadingState('#submitBtn', 'Registering...');
-        }
-    });
-
-    // Manager Form validation
-    $('#managerForm').submit(function (e) {
-        let isValid = validateForm('manager');
-        if (!isValid) {
-            e.preventDefault();
-            scrollToFirstError();
-        } else {
-            showLoadingState('#submitBtn', 'Registering...');
-        }
-    });
-    
-     // Customer Form validation
-    $('#customerForm').submit(function (e) {
-        let isValid = validateForm('customer');
-        if (!isValid) {
-            e.preventDefault();
-            scrollToFirstError();
-        } else {
-            showLoadingState('#submitBtn', 'Registering...');
-        }
-    });
-
-    // Common validation function for all forms
     function validateForm(type) {
         let isValid = true;
 
-        // Reset previous validation
+        // Reset validation styles
         $('.form-control').removeClass('is-invalid is-valid');
         $('.invalid-feedback').empty();
 
@@ -108,7 +104,7 @@ $(document).ready(function () {
 
         // Validate phone
         const phone = $('#phone').val().trim();
-        const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,15}$/;
+        const phoneRegex = /^[\+]?[0-9\s\-\(\)]{9,12}$/;
         if (!phone) {
             showError('#phone', 'Phone number is required');
             isValid = false;
@@ -127,7 +123,7 @@ $(document).ready(function () {
             showValid('#gender');
         }
 
-        // Validate date of birth with type-specific age requirements
+        // Validate date of birth
         const dob = $('#dob').val();
         if (!dob) {
             showError('#dob', 'Date of birth is required');
@@ -141,8 +137,7 @@ $(document).ready(function () {
                 showError('#dob', 'Date of birth cannot be in the future');
                 isValid = false;
             } else {
-                // Type-specific age validation
-                let minAge, ageMessage;
+                let minAge = 18, ageMessage = 'Must be at least 18 years old';
                 switch (type) {
                     case 'doctor':
                         minAge = 18;
@@ -156,13 +151,10 @@ $(document).ready(function () {
                         minAge = 21;
                         ageMessage = 'Manager must be at least 21 years old';
                         break;
-                     case 'customer':
+                    case 'customer':
                         minAge = 1;
-                        ageMessage = 'Customer must be at least 1 years old';
-                        break;    
-                    default:
-                        minAge = 18;
-                        ageMessage = 'Must be at least 18 years old';
+                        ageMessage = 'Customer must be at least 1 year old';
+                        break;
                 }
 
                 if (age < minAge) {
@@ -177,7 +169,32 @@ $(document).ready(function () {
             }
         }
 
-        // Validate specialization (only for doctors)
+        // Validate NRIC (Malaysia format: 12 digits, typically xxxxxx-xx-xxxx)
+        const nric = $('#nric').val().trim();
+        const nricRegex = /^\d{6}-\d{2}-\d{4}$/;
+        if (!nric) {
+            showError('#nric', 'NRIC is required');
+            isValid = false;
+        } else if (!nricRegex.test(nric)) {
+            showError('#nric', 'Please enter a valid NRIC (e.g. 990101-14-5678)');
+            isValid = false;
+        } else {
+            showValid('#nric');
+        }
+
+        // Validate address
+        const address = $('#address').val().trim();
+        if (!address) {
+            showError('#address', 'Address is required');
+            isValid = false;
+        } else if (address.length < 10) {
+            showError('#address', 'Address must be at least 10 characters long');
+            isValid = false;
+        } else {
+            showValid('#address');
+        }
+
+        // Validate specialization
         if (type === 'doctor') {
             const specialization = $('#specialization').val().trim();
             if (!specialization) {
@@ -193,38 +210,33 @@ $(document).ready(function () {
 
         // Validate profile picture
         const profilePic = $('#profilePic')[0].files[0];
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        const maxSize = 5 * 1024 * 1024;
+
         if (!profilePic) {
             showError('#profilePic', 'Profile picture is required');
-            console.log("Profile picture is required");
+            isValid = false;
+        } else if (!allowedTypes.includes(profilePic.type)) {
+            showError('#profilePic', 'Only JPEG, PNG, and GIF images are allowed');
+            isValid = false;
+        } else if (profilePic.size > maxSize) {
+            showError('#profilePic', 'Image size must be less than 5MB');
             isValid = false;
         } else {
-            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-            const maxSize = 5 * 1024 * 1024; // 5MB
-
-            if (!allowedTypes.includes(profilePic.type)) {
-                showError('#profilePic', 'Only JPEG, PNG, and GIF images are allowed');
-                console.log("Only JPEG, PNG, and GIF images are allowed");
-                isValid = false;
-            } else if (profilePic.size > maxSize) {
-                showError('#profilePic', 'Image size must be less than 5MB');
-                isValid = false;
-            } else {
-                showValid('#profilePic');
-                console.log('Profile picture validation passed');
-            }
+            showValid('#profilePic');
         }
 
         return isValid;
     }
 
-    // Helper function to show error
+    // Show error message
     function showError(selector, message) {
         const input = $(selector);
+        const label = $('#fileLabel');
 
         if (selector === '#profilePic') {
             input.removeClass('is-valid').addClass('is-invalid');
-            const label = $('#fileLabel');
-            label.addClass('is-invalid-label').removeClass('is-valid-label');
+            label.removeClass('is-valid-label').addClass('is-invalid-label');
             input.closest('.file-upload').find('.invalid-feedback').text(message).show();
         } else {
             input.addClass('is-invalid').removeClass('is-valid');
@@ -232,12 +244,13 @@ $(document).ready(function () {
         }
     }
 
+    // Show valid feedback
     function showValid(selector) {
         const input = $(selector);
+        const label = $('#fileLabel');
 
         if (selector === '#profilePic') {
             input.removeClass('is-invalid').addClass('is-valid');
-            const label = $('#fileLabel');
             label.removeClass('is-invalid-label').addClass('is-valid-label');
             input.closest('.file-upload').find('.invalid-feedback').text('').hide();
         } else {
@@ -246,21 +259,18 @@ $(document).ready(function () {
         }
     }
 
-    // Helper function to scroll to first error
+    // Scroll to first error
     function scrollToFirstError() {
         const firstError = $('.is-invalid').first();
         if (firstError.length) {
-            $('html, body').animate({
-                scrollTop: firstError.offset().top - 100
-            }, 500);
+            $('html, body').animate({scrollTop: firstError.offset().top - 100}, 500);
         }
     }
 
-    // Helper function to show loading state
+    // Show loading state
     function showLoadingState(buttonSelector, loadingText) {
         const submitBtn = $(buttonSelector);
         submitBtn.addClass('loading');
         submitBtn.find('.btn-text').text(loadingText);
     }
 });
-  

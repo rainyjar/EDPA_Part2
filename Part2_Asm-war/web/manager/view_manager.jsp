@@ -11,17 +11,22 @@
     }
 
     // Get the manager data (can come from either attribute name)
-    Manager viewManager = (Manager) request.getAttribute("viewStaff");
+    Manager viewManager = (Manager) request.getAttribute("manager");
     if (viewManager == null) {
         viewManager = (Manager) request.getAttribute("viewManager");
     }
-    
+
     if (viewManager == null) {
         response.sendRedirect(request.getContextPath() + "/ManagerServlet?action=viewAll&error=manager_not_found");
         return;
     }
 
     SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy");
+
+    String managerPic = viewManager.getProfilePic();
+    String profilePic = (managerPic != null && !managerPic.isEmpty())
+            ? (request.getContextPath() + "/ImageServlet?folder=profile_pictures&file=" + managerPic)
+            : (request.getContextPath() + "/images/placeholder/user.png");
 %>
 
 <!DOCTYPE html>
@@ -36,7 +41,7 @@
                 color: white;
                 padding: 60px 0 40px 0;
             }
-            
+
             .manager-details {
                 background: white;
                 border-radius: 12px;
@@ -44,14 +49,14 @@
                 overflow: hidden;
                 margin-bottom: 30px;
             }
-            
+
             .manager-header {
                 background: linear-gradient(135deg, #9C27B0, #7B1FA2);
                 color: white;
                 padding: 30px;
                 text-align: center;
             }
-            
+
             .manager-avatar {
                 width: 120px;
                 height: 120px;
@@ -61,50 +66,50 @@
                 overflow: hidden;
                 background: rgba(255,255,255,0.1);
             }
-            
+
             .manager-avatar img {
                 width: 100%;
                 height: 100%;
                 object-fit: cover;
             }
-            
+
             .manager-avatar i {
                 font-size: 60px;
                 line-height: 112px;
                 color: rgba(255,255,255,0.8);
             }
-            
+
             .manager-info {
                 padding: 30px;
             }
-            
+
             .info-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
                 gap: 20px;
                 margin-bottom: 30px;
             }
-            
+
             .info-item {
                 padding: 15px;
                 background: #f8f9fa;
                 border-radius: 8px;
                 border-left: 4px solid #9C27B0;
             }
-            
+
             .info-label {
                 font-weight: 600;
                 color: #666;
                 font-size: 14px;
                 margin-bottom: 5px;
             }
-            
+
             .info-value {
                 font-size: 16px;
                 color: #333;
                 font-weight: 500;
             }
-            
+
             .role-badge {
                 background: #9C27B0;
                 color: white;
@@ -113,7 +118,7 @@
                 font-size: 14px;
                 font-weight: 500;
             }
-            
+
             .current-user-badge {
                 background: #4CAF50;
                 color: white;
@@ -123,13 +128,13 @@
                 font-weight: 500;
                 margin-left: 10px;
             }
-            
+
             .action-buttons {
                 text-align: center;
                 padding: 20px;
                 border-top: 1px solid #eee;
             }
-            
+
             .btn-action {
                 margin: 0 10px;
                 padding: 12px 24px;
@@ -139,42 +144,42 @@
                 display: inline-block;
                 transition: all 0.3s ease;
             }
-            
+
             .btn-edit {
                 background: #2196F3;
                 color: white;
                 border: 2px solid #2196F3;
             }
-            
+
             .btn-edit:hover {
                 background: #1976D2;
                 border-color: #1976D2;
                 color: white;
             }
-            
+
             .btn-delete {
                 background: transparent;
                 color: #f44336;
                 border: 2px solid #f44336;
             }
-            
+
             .btn-delete:hover {
                 background: #f44336;
                 color: white;
             }
-            
+
             .btn-back {
                 background: #6c757d;
                 color: white;
                 border: 2px solid #6c757d;
             }
-            
+
             .btn-back:hover {
                 background: #5a6268;
                 border-color: #5a6268;
                 color: white;
             }
-            
+
             .btn-disabled {
                 background: #e0e0e0;
                 color: #9e9e9e;
@@ -217,11 +222,7 @@
                     <!-- Manager Header -->
                     <div class="manager-header">
                         <div class="manager-avatar">
-                            <% if (viewManager.getProfilePic() != null && !viewManager.getProfilePic().isEmpty()) { %>
-                            <img src="<%= request.getContextPath()%>/images/profile_pictures/<%= viewManager.getProfilePic()%>" alt="<%= viewManager.getName()%>">
-                            <% } else { %>
-                            <i class="fa fa-cog"></i>
-                            <% } %>
+                            <img src="<%= profilePic%>" class="profile-pic" alt="<%= profilePic%> Profile Picture">
                         </div>
                         <h2 style="color: white"><%= viewManager.getName()%></h2>
                         <div>
@@ -233,7 +234,7 @@
                             <div class="current-user-badge">
                                 Current User
                             </div>
-                            <% } %>
+                            <% }%>
                         </div>
                     </div>
 
@@ -258,6 +259,14 @@
                             </div>
 
                             <div class="info-item">
+                                <div class="info-label">NRIC</div>
+                                <div class="info-value">
+                                    <i class="fa fa-id-card"></i>
+                                    <%= viewManager.getIc() != null && !viewManager.getIc().isEmpty() ? viewManager.geIc() : "Not provided"%>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
                                 <div class="info-label">Phone Number</div>
                                 <div class="info-value">
                                     <i class="fa fa-phone"></i> 
@@ -278,6 +287,14 @@
                                 <div class="info-value">
                                     <i class="fa fa-calendar"></i>
                                     <%= viewManager.getDob() != null ? dateFormat.format(viewManager.getDob()) : "Not provided"%>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-label">Address</div>
+                                <div class="info-value">
+                                    <i class="fa fa-map-marker"></i>
+                                    <%= viewManager.getAddress() != null && !viewManager.getAddress().isEmpty() ? viewManager.getAddress() : "Not provided"%>
                                 </div>
                             </div>
 

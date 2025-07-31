@@ -1,8 +1,18 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@page import="model.Manager"%>
+
+<%
+    Manager loggedInManager = (Manager) session.getAttribute("manager");
+
+    if (loggedInManager == null) {
+        response.sendRedirect(request.getContextPath() + "/login.jsp");
+        return;
+    }
+%>
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>Register New Doctor - APU Medical Center</title>
+        <title>Register Doctor - APU Medical Center</title>
         <%@ include file="/includes/head.jsp" %>
         <link rel="stylesheet" href="${pageContext.request.contextPath}/css/user-reg-edit.css" />
     </head>
@@ -10,8 +20,8 @@
         <%@ include file="/includes/header.jsp" %>
         <%@ include file="/includes/navbar.jsp" %>
         <div class="registration-container">
-            <a href="${pageContext.request.contextPath}/ManagerServlet?action=viewAll" class="back-btn" style="margin-top: 30px">
-                <i class="fa fa-arrow-left"></i> Back to Staff Management
+            <a href="${pageContext.request.contextPath}/manager/register_staff.jsp" class="back-btn" style="margin-top: 30px; margin-bottom: 30px">
+                <i class="fa fa-arrow-left"></i> Back to Registering Staff
             </a>
 
             <div class="registration-card">
@@ -39,9 +49,8 @@
                     </div>
                     <% }%>
 
-                    <form id="doctorForm" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/DoctorServlet" novalidate>
-
-                        <!-- Personal Information Section -->
+                    <form id="doctorForm" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/DoctorServlet?action=register" novalidate>
+                        <!--Personal Information Section -->
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="name">Full Name <span class="required">*</span></label>
@@ -60,21 +69,28 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="password">Password <span class="required">*</span></label>
-                            <input type="password" id="password" name="password" class="form-control doctor" 
-                                   value="${doctor != null ? doctor.password : ''}" 
-                                   placeholder="Minimum 6 characters" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-
                         <div class="form-row">
+                            <div class="form-group">
+                                <label for="password">Password <span class="required">*</span></label>
+                                <input type="password" id="password" name="password" class="form-control doctor" 
+                                       value="${doctor != null ? doctor.password : ''}" 
+                                       placeholder="Minimum 6 characters" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
                             <div class="form-group">
                                 <label for="phone">Phone Number <span class="required">*</span></label>
                                 <input type="tel" id="phone" name="phone" class="form-control doctor" 
                                        value="${doctor != null ? doctor.phone : ''}" 
-                                       placeholder="e.g., +60123456789" required>
+                                       placeholder="e.g., 60123456789" required>
                                 <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="nric">NRIC <span class="required">*</span></label>
+                                <input type="text" id="nric" name="nric" class="form-control doctor" required>
+                                <div class="invalid-feedback" id="icError"></div>
                             </div>
 
                             <div class="form-group">
@@ -86,6 +102,12 @@
                                 </select>
                                 <div class="invalid-feedback"></div>
                             </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="address">Address <span class="required">*</span></label>
+                            <textarea id="address" name="address" class="form-control doctor" style="resize: none;" rows="3" required></textarea>
+                            <div class="invalid-feedback"></div>
                         </div>
 
                         <div class="form-row">
@@ -104,8 +126,8 @@
                                 <div class="invalid-feedback"></div>
                             </div>
                         </div>
-                        
-                         <!-- Profile Picture Section -->
+
+                        <!-- Profile Picture Section -->
                         <div class="form-group">
                             <label for="profilePic">Profile Picture <span class="required">*</span></label>
 
@@ -117,7 +139,7 @@
                                         <span>Choose Profile Picture</span>
                                     </label>
                                 </div>
-                                <div class="invalid-feedback" style="display: block;"></div> <!-- Make sure it's visible -->
+                                <div class="invalid-feedback" id="profilePicError" style="display: block;"></div>
                             </div>
                         </div>
 
@@ -128,6 +150,9 @@
                             </span>
                         </button>
                     </form>
+                    <a href="${pageContext.request.contextPath}/ManagerServlet?action=viewAll" class="back-btn" style="margin-top: 30px" >
+                        <i class="fa fa-arrow-left"></i> Back to Staff Management
+                    </a>
                 </div>
             </div>
         </div>
@@ -135,12 +160,6 @@
         <%@ include file="/includes/scripts.jsp" %>
 
         <script src="${pageContext.request.contextPath}/js/jquery.min.js"></script>
-       <script src="<%= request.getContextPath() %>/js/validate-register.js"></script>
-        <script>
-            $(document).ready(function() {
-                // Initialize the form validation
-                initializeValidation('doctor');
-            });
-        </script>
+        <script src="<%= request.getContextPath()%>/js/validate-register.js"></script>
     </body>
 </html>

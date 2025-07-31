@@ -16,13 +16,18 @@
     if (doctor == null) {
         doctor = (Doctor) request.getAttribute("doctor");
     }
-    
+
     if (doctor == null) {
         response.sendRedirect(request.getContextPath() + "/ManagerServlet?action=viewAll&error=doctor_not_found");
         return;
     }
 
     SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy");
+
+    String docPic = doctor.getProfilePic();
+    String profilePic = (docPic != null && !docPic.isEmpty())
+            ? (request.getContextPath() + "/ImageServlet?folder=profile_pictures&file=" + docPic)
+            : (request.getContextPath() + "/images/placeholder/user.png");
 %>
 
 <!DOCTYPE html>
@@ -37,7 +42,7 @@
                 color: white;
                 padding: 60px 0 40px 0;
             }
-            
+
             .doctor-details {
                 background: white;
                 border-radius: 12px;
@@ -45,14 +50,14 @@
                 overflow: hidden;
                 margin-bottom: 30px;
             }
-            
+
             .doctor-header {
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                 color: white;
                 padding: 30px;
                 text-align: center;
             }
-            
+
             .doctor-avatar {
                 width: 120px;
                 height: 120px;
@@ -62,50 +67,50 @@
                 overflow: hidden;
                 background: rgba(255,255,255,0.1);
             }
-            
+
             .doctor-avatar img {
                 width: 100%;
                 height: 100%;
                 object-fit: cover;
             }
-            
+
             .doctor-avatar i {
                 font-size: 60px;
                 line-height: 112px;
                 color: rgba(255,255,255,0.8);
             }
-            
+
             .doctor-info {
                 padding: 30px;
             }
-            
+
             .info-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
                 gap: 20px;
                 margin-bottom: 30px;
             }
-            
+
             .info-item {
                 padding: 15px;
                 background: #f8f9fa;
                 border-radius: 8px;
                 border-left: 4px solid #667eea;
             }
-            
+
             .info-label {
                 font-weight: 600;
                 color: #666;
                 font-size: 14px;
                 margin-bottom: 5px;
             }
-            
+
             .info-value {
                 font-size: 16px;
                 color: #333;
                 font-weight: 500;
             }
-            
+
             .specialization-badge {
                 background: #667eea;
                 color: white;
@@ -114,22 +119,22 @@
                 font-size: 14px;
                 font-weight: 500;
             }
-            
+
             .rating-display {
                 color: #ffa500;
                 font-weight: 600;
             }
-            
+
             .rating-display i {
                 margin-right: 5px;
             }
-            
+
             .action-buttons {
                 text-align: center;
                 padding: 20px;
                 border-top: 1px solid #eee;
             }
-            
+
             .btn-action {
                 margin: 0 10px;
                 padding: 12px 24px;
@@ -139,36 +144,36 @@
                 display: inline-block;
                 transition: all 0.3s ease;
             }
-            
+
             .btn-edit {
                 background: #2196F3;
                 color: white;
                 border: 2px solid #2196F3;
             }
-            
+
             .btn-edit:hover {
                 background: #1976D2;
                 border-color: #1976D2;
                 color: white;
             }
-            
+
             .btn-delete {
                 background: transparent;
                 color: #f44336;
                 border: 2px solid #f44336;
             }
-            
+
             .btn-delete:hover {
                 background: #f44336;
                 color: white;
             }
-            
+
             .btn-back {
                 background: #6c757d;
                 color: white;
                 border: 2px solid #6c757d;
             }
-            
+
             .btn-back:hover {
                 background: #5a6268;
                 border-color: #5a6268;
@@ -210,18 +215,14 @@
                     <!-- Doctor Header -->
                     <div class="doctor-header">
                         <div class="doctor-avatar">
-                            <% if (doctor.getProfilePic() != null && !doctor.getProfilePic().isEmpty()) { %>
-                            <img src="<%= request.getContextPath()%>/images/profile_pictures/<%= doctor.getProfilePic()%>" alt="Dr. <%= doctor.getName()%>">
-                            <% } else { %>
-                            <i class="fa fa-user-md"></i>
-                            <% } %>
+                            <img src="<%= profilePic%>" class="profile-pic" alt="<%= profilePic%> Profile Picture">
                         </div>
                         <h2 style="color: white">Dr. <%= doctor.getName()%></h2>
-                        <% if (doctor.getSpecialization() != null && !doctor.getSpecialization().isEmpty()) { %>
+                        <% if (doctor.getSpecialization() != null && !doctor.getSpecialization().isEmpty()) {%>
                         <div class="specialization-badge">
                             <%= doctor.getSpecialization()%> Specialist
                         </div>
-                        <% } %>
+                        <% }%>
                     </div>
 
                     <!-- Doctor Information -->
@@ -241,6 +242,14 @@
                                 <div class="info-label">Email Address</div>
                                 <div class="info-value">
                                     <i class="fa fa-envelope"></i> <%= doctor.getEmail()%>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-label">NRIC</div>
+                                <div class="info-value">
+                                    <i class="fa fa-id-card"></i>
+                                    <%= doctor.getIc() != null && !doctor.getIc().isEmpty() ? doctor.geIc() : "Not provided"%>
                                 </div>
                             </div>
 
@@ -269,6 +278,14 @@
                             </div>
 
                             <div class="info-item">
+                                <div class="info-label">Address</div>
+                                <div class="info-value">
+                                    <i class="fa fa-map-marker"></i>
+                                    <%= doctor.getAddress() != null && !doctor.getAddress().isEmpty() ? doctor.getAddress() : "Not provided"%>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
                                 <div class="info-label">Specialization</div>
                                 <div class="info-value">
                                     <i class="fa fa-stethoscope"></i>
@@ -279,14 +296,14 @@
                             <div class="info-item">
                                 <div class="info-label">Rating</div>
                                 <div class="info-value">
-                                    <% if (doctor.getRating() != null && doctor.getRating() > 0) { %>
+                                    <% if (doctor.getRating() != null && doctor.getRating() > 0) {%>
                                     <div class="rating-display">
                                         <i class="fa fa-star"></i>
                                         <%= String.format("%.1f", doctor.getRating())%> / 10.0
                                     </div>
                                     <% } else { %>
                                     <span class="text-muted">No rating yet</span>
-                                    <% } %>
+                                    <% }%>
                                 </div>
                             </div>
                         </div>

@@ -16,13 +16,18 @@
     if (counterStaff == null) {
         counterStaff = (CounterStaff) request.getAttribute("counterStaff");
     }
-    
+
     if (counterStaff == null) {
         response.sendRedirect(request.getContextPath() + "/ManagerServlet?action=viewAll&error=staff_not_found");
         return;
     }
 
     SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy");
+
+    String counterStaffPic = counterStaff.getProfilePic();
+    String profilePic = (counterStaffPic != null && !counterStaffPic.isEmpty())
+            ? (request.getContextPath() + "/ImageServlet?folder=profile_pictures&file=" + counterStaffPic)
+            : (request.getContextPath() + "/images/placeholder/user.png");
 %>
 
 <!DOCTYPE html>
@@ -37,7 +42,7 @@
                 color: white;
                 padding: 60px 0 40px 0;
             }
-            
+
             .staff-details {
                 background: white;
                 border-radius: 12px;
@@ -45,14 +50,14 @@
                 overflow: hidden;
                 margin-bottom: 30px;
             }
-            
+
             .staff-header {
                 background: linear-gradient(135deg, #FF9800, #F57C00);
                 color: white;
                 padding: 30px;
                 text-align: center;
             }
-            
+
             .staff-avatar {
                 width: 120px;
                 height: 120px;
@@ -62,50 +67,50 @@
                 overflow: hidden;
                 background: rgba(255,255,255,0.1);
             }
-            
+
             .staff-avatar img {
                 width: 100%;
                 height: 100%;
                 object-fit: cover;
             }
-            
+
             .staff-avatar i {
                 font-size: 60px;
                 line-height: 112px;
                 color: rgba(255,255,255,0.8);
             }
-            
+
             .staff-info {
                 padding: 30px;
             }
-            
+
             .info-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
                 gap: 20px;
                 margin-bottom: 30px;
             }
-            
+
             .info-item {
                 padding: 15px;
                 background: #f8f9fa;
                 border-radius: 8px;
                 border-left: 4px solid #FF9800;
             }
-            
+
             .info-label {
                 font-weight: 600;
                 color: #666;
                 font-size: 14px;
                 margin-bottom: 5px;
             }
-            
+
             .info-value {
                 font-size: 16px;
                 color: #333;
                 font-weight: 500;
             }
-            
+
             .role-badge {
                 background: #FF9800;
                 color: white;
@@ -114,22 +119,22 @@
                 font-size: 14px;
                 font-weight: 500;
             }
-            
+
             .rating-display {
                 color: #ffa500;
                 font-weight: 600;
             }
-            
+
             .rating-display i {
                 margin-right: 5px;
             }
-            
+
             .action-buttons {
                 text-align: center;
                 padding: 20px;
                 border-top: 1px solid #eee;
             }
-            
+
             .btn-action {
                 margin: 0 10px;
                 padding: 12px 24px;
@@ -139,36 +144,36 @@
                 display: inline-block;
                 transition: all 0.3s ease;
             }
-            
+
             .btn-edit {
                 background: #2196F3;
                 color: white;
                 border: 2px solid #2196F3;
             }
-            
+
             .btn-edit:hover {
                 background: #1976D2;
                 border-color: #1976D2;
                 color: white;
             }
-            
+
             .btn-delete {
                 background: transparent;
                 color: #f44336;
                 border: 2px solid #f44336;
             }
-            
+
             .btn-delete:hover {
                 background: #f44336;
                 color: white;
             }
-            
+
             .btn-back {
                 background: #6c757d;
                 color: white;
                 border: 2px solid #6c757d;
             }
-            
+
             .btn-back:hover {
                 background: #5a6268;
                 border-color: #5a6268;
@@ -210,11 +215,7 @@
                     <!-- Staff Header -->
                     <div class="staff-header">
                         <div class="staff-avatar">
-                            <% if (counterStaff.getProfilePic() != null && !counterStaff.getProfilePic().isEmpty()) { %>
-                            <img src="<%= request.getContextPath()%>/images/profile_pictures/<%= counterStaff.getProfilePic()%>" alt="<%= counterStaff.getName()%>">
-                            <% } else { %>
-                            <i class="fa fa-id-badge"></i>
-                            <% } %>
+                            <img src="<%= profilePic%>" class="profile-pic" alt="<%= profilePic%> Profile Picture">
                         </div>
                         <h2 style="color: white"><%= counterStaff.getName()%></h2>
                         <div class="role-badge">
@@ -243,6 +244,14 @@
                             </div>
 
                             <div class="info-item">
+                                <div class="info-label">NRIC</div>
+                                <div class="info-value">
+                                    <i class="fa fa-id-card"></i>
+                                    <%= counterStaff.getIc() != null && !counterStaff.getIc().isEmpty() ? counterStaff.geIc() : "Not provided"%>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
                                 <div class="info-label">Phone Number</div>
                                 <div class="info-value">
                                     <i class="fa fa-phone"></i> 
@@ -267,6 +276,14 @@
                             </div>
 
                             <div class="info-item">
+                                <div class="info-label">Address</div>
+                                <div class="info-value">
+                                    <i class="fa fa-map-marker"></i>
+                                    <%= counterStaff.getAddress() != null && !counterStaff.getAddress().isEmpty() ? counterStaff.getAddress() : "Not provided"%>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
                                 <div class="info-label">Job Role</div>
                                 <div class="info-value">
                                     <i class="fa fa-briefcase"></i>
@@ -277,14 +294,14 @@
                             <div class="info-item">
                                 <div class="info-label">Performance Rating</div>
                                 <div class="info-value">
-                                    <% if (counterStaff.getRating() != null && counterStaff.getRating() > 0) { %>
+                                    <% if (counterStaff.getRating() != null && counterStaff.getRating() > 0) {%>
                                     <div class="rating-display">
                                         <i class="fa fa-star"></i>
                                         <%= String.format("%.1f", counterStaff.getRating())%> / 10.0
                                     </div>
                                     <% } else { %>
                                     <span class="text-muted">No rating yet</span>
-                                    <% } %>
+                                    <% }%>
                                 </div>
                             </div>
                         </div>

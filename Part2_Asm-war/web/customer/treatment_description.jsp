@@ -2,27 +2,27 @@
 <%@ page import="java.util.List" %>
 <%@ page import="model.Treatment" %>
 <%@ page import="model.Prescription" %>
+<%@page import="model.Customer"%>
 
 <%
-    Treatment selectedTreatment = (Treatment) request.getAttribute("treatment");
-    System.out.print(selectedTreatment);
-    List<Prescription> prescriptions = (List<Prescription>) request.getAttribute("prescriptions");
-    System.out.print(prescriptions);
-%>
+    // Check if user is logged in
+    Customer loggedInCustomer = (Customer) session.getAttribute("customer");
+    System.out.println("Team.jsp" + loggedInCustomer);
 
+    if (loggedInCustomer == null) {
+        response.sendRedirect(request.getContextPath() + "/login.jsp");
+        return;
+    } else {
+        System.out.println(loggedInCustomer.getName() + " logged in succesfully!");
+    }
+
+    Treatment selectedTreatment = (Treatment) request.getAttribute("treatment");
+    List<Prescription> prescriptions = (List<Prescription>) request.getAttribute("prescriptions");
+%>
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <% if (selectedTreatment != null) {
-                String treatmentName = selectedTreatment.getName();
-                if (treatmentName != null && treatmentName.contains("-")) {
-                    treatmentName = treatmentName.substring(0, treatmentName.indexOf("-")).trim();
-                }
-        %>
-        <title><%= treatmentName%> - APU Medical Center</title>
-        <% } else { %>
         <title>Treatment Details - APU Medical Center</title>
-        <% }%>
         <%@ include file="/includes/head.jsp" %>
     </head>
 
@@ -53,10 +53,10 @@
                     longDesc = "Comprehensive treatment information will be provided during your consultation with our medical team.";
                 }
 
-                String imagePath = selectedTreatment.getTreatmentPic();
-                if (imagePath == null || imagePath.trim().isEmpty()) {
-                    imagePath = "/images/treatment/default-treatment.jpg";
-                }
+                String treatmentImagePath = selectedTreatment.getTreatmentPic();
+                String treatmentPic = (treatmentImagePath != null && !treatmentImagePath.isEmpty())
+                        ? (request.getContextPath() + "/ImageServlet?folder=treatment&file=" + treatmentImagePath)
+                        : (request.getContextPath() + "/images/placeholder/default-treatment.jpg");
 
                 double baseCharge = selectedTreatment.getBaseConsultationCharge();
                 double followUpCharge = selectedTreatment.getFollowUpCharge();
@@ -70,7 +70,7 @@
                         <!-- TREATMENT DETAIL THUMB -->
                         <div class="treatments-detail-thumb">
                             <div class="treatments-image">
-                                <img src="images/treatment/<%= imagePath%>" class="img-responsive" alt="<%= displayName%>">
+                                <img src="<%=treatmentPic%>" class="img-responsive" alt="<%= treatmentPic%>">
                             </div>
                             <h3><%= displayName%></h3>
 
