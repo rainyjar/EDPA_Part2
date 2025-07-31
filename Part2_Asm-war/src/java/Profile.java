@@ -297,7 +297,7 @@ public class Profile extends HttpServlet {
                 // Save to database and update session
                 saveUserAndUpdateSession(request, userInfo);
 
-                  Thread.sleep(1500);
+                  Thread.sleep(3000);
                 response.sendRedirect(request.getContextPath() + "/profile.jsp?success=picture_updated");
             } else {
                 response.sendRedirect(request.getContextPath() + "/profile.jsp?error=no_file");

@@ -41,8 +41,8 @@
     Integer overdueAppointments = (Integer) request.getAttribute("overdueAppointments");
     Integer completedAppointments = (Integer) request.getAttribute("completedAppointments");
     Integer pendingPaymentCount = (Integer) request.getAttribute("pendingPaymentCount");
-    Double totalRevenue = (Double) request.getAttribute("totalRevenue");
-    
+    Double totalPayment = (Double) request.getAttribute("totalPayment");
+
     // Default values if null
     if (totalCustomers == null) totalCustomers = 0;
     if (totalAppointments == null) totalAppointments = 0;
@@ -51,8 +51,8 @@
     if (overdueAppointments == null) overdueAppointments = 0;
     if (completedAppointments == null) completedAppointments = 0;
     if (pendingPaymentCount == null) pendingPaymentCount = 0;
-    if (totalRevenue == null) totalRevenue = 0.0;
-    
+    if (totalPayment == null) totalPayment = 0.0;
+
     DecimalFormat currencyFormat = new DecimalFormat("#,##0.00");
 %>
 
@@ -61,10 +61,12 @@
     <head>
         <title>Counter Staff Dashboard - APU Medical Center</title>
         <%@ include file="/includes/head.jsp" %>
-        <link rel="stylesheet" href="<%= request.getContextPath()%>/css/staff-dashboard.css">
+        <link rel="stylesheet" href="<%= contextPath %>/css/staff.css">
+        
     </head>
 
     <body id="top" data-spy="scroll" data-target=".navbar-collapse" data-offset="50">
+        <%@ include file="/includes/preloader.jsp" %>
         <%@ include file="/includes/header.jsp" %>
         <%@ include file="/includes/navbar.jsp" %>
 
@@ -129,7 +131,7 @@
                                 </span>
                                 <span class="stat-label">Pending Payments</span>
                                 <% if (pendingPaymentCount > 0) { %>
-                                <span class="urgent-indicator payment">Pay</span>
+                                <span class="urgent-indicator payment">!</span>
                                 <% } %>
                             </div>
                         </div>
@@ -137,8 +139,8 @@
                     <div class="col-md-2 col-sm-6">
                         <div class="stat-card-wrapper">
                             <div class="stat-card counter-staff wow fadeInUp" data-wow-delay="0.7s">
-                                <span class="stat-number">RM<%= currencyFormat.format(totalRevenue)%></span>
-                                <span class="stat-label">Revenue Collected</span>
+                                <span class="stat-number stat-payment">RM<%= currencyFormat.format(totalPayment)%></span>
+                                <span class="stat-label">Payment Collected</span>
                             </div>
                         </div>
                     </div>
@@ -159,7 +161,7 @@
                 <div class="row">
                     <!-- Customer Management -->
                     <div class="col-md-3 col-sm-6">
-                        <a href="<%= request.getContextPath()%>/counter_staff/manage_customers.jsp" style="text-decoration: none;">
+                        <a href="<%= request.getContextPath()%>/CounterStaffServlet?action=manageCustomers" style="text-decoration: none;">
                             <div class="action-card wow fadeInUp" data-wow-delay="0.2s">
                                 <div class="action-icon counter-staff">
                                     <i class="fa fa-users"></i>
@@ -299,28 +301,6 @@
                         </div>
                         <% } %>
                         
-                        <!-- Pending Payments -->
-                        <% if (pendingPaymentCount > 0) { %>
-                        <div class="priority-card wow fadeInRight animated" data-wow-delay="0.4s" style="margin-bottom: 15px; padding: 15px; border-radius: 8px; visibility: visible; animation-duration: 0.4s; animation-name: fadeInLeft">
-                            <div class="row">
-                                <div class="col-sm-8">
-                                    <h5 style="margin: 0; color: #dc3545;">
-                                        <i class="fa fa-credit-card"></i> Pending Payments
-                                    </h5>
-                                    <p style="margin: 5px 0; color: #666;">
-                                        <%= pendingPaymentCount%> payments awaiting collection
-                                    </p>
-                                </div>
-                                <div class="col-sm-4 text-right">
-                                    <a href="<%= request.getContextPath()%>/counter_staff/collect_payments.jsp" 
-                                       class="btn btn-sm btn-warning">
-                                        <i class="fa fa-money"></i> Collect
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        <% } %>
-                        
                         <!-- Pending Appointments -->
                         <% if (pendingAppointmentCount > 0) { %>
                         <div class="priority-card wow fadeInRight animated" data-wow-delay="0.6s" style="margin-bottom: 15px; padding: 15px; border-radius: 8px; visibility: visible; animation-duration: 0.6s; animation-name: fadeInLeft">
@@ -337,6 +317,28 @@
                                     <a href="<%= request.getContextPath()%>/counter_staff/manage_appointments.jsp?status=pending" 
                                        class="btn btn-sm btn-warning">
                                         <i class="fa fa-user-md"></i> Assign
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <% } %>
+                        
+                        <!-- Pending Payments -->
+                        <% if (pendingPaymentCount > 0) { %>
+                        <div class="priority-card wow fadeInRight animated" data-wow-delay="0.4s" style="margin-bottom: 15px; padding: 15px; border-radius: 8px; visibility: visible; animation-duration: 0.4s; animation-name: fadeInLeft">
+                            <div class="row">
+                                <div class="col-sm-8">
+                                    <h5 style="margin: 0; color: #dc3545;">
+                                        <i class="fa fa-credit-card"></i> Pending Payments
+                                    </h5>
+                                    <p style="margin: 5px 0; color: #666;">
+                                        <%= pendingPaymentCount%> payments awaiting collection
+                                    </p>
+                                </div>
+                                <div class="col-sm-4 text-right">
+                                    <a href="<%= request.getContextPath()%>/counter_staff/collect_payments.jsp" 
+                                       class="btn btn-sm btn-warning">
+                                        <i class="fa fa-money"></i> Collect
                                     </a>
                                 </div>
                             </div>
@@ -401,9 +403,12 @@
                                         <%= apt.getTreatment() != null ? apt.getTreatment().getName() : "N/A"%>
                                     </p>
                                     <small style="color: #999;">
-                                        <%= apt.getAppointmentDate() != null ? apt.getAppointmentDate().toString() : "N/A"%>
+                                        <%
+                                            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("EEE MMM dd yyyy");
+                                        %>
+                                        <%= apt.getAppointmentDate() != null ? sdf.format(apt.getAppointmentDate()) : "N/A" %>
                                         <% if (!actionText.isEmpty()) { %>
-                                        - <%= actionText%>
+                                        - <%= actionText %>
                                         <% } %>
                                     </small>
                                 </div>
