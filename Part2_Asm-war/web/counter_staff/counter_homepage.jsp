@@ -23,7 +23,7 @@
     if (request.getAttribute("totalCustomers") == null) {
         // Redirect to servlet to load dashboard data
         response.sendRedirect(request.getContextPath
-        () + "/CounterStaffServlet?action=dashboard");
+        () + "/CounterStaffServletJam?action=dashboard");
         return;
     }
 
@@ -315,7 +315,7 @@
                                     </p>
                                 </div>
                                 <div class="col-sm-4 text-right">
-                                    <a href="<%= request.getContextPath()%>/counter_staff/manage_appointments.jsp?status=pending" 
+                                    <a href="<%= request.getContextPath()%>/AppointmentServlet?action=manage&search=&status=pending&doctor=all&treatment=all&staff=all&date="
                                        class="btn btn-sm btn-warning">
                                         <i class="fa fa-user-md"></i> Assign
                                     </a>

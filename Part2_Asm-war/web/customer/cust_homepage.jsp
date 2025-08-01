@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.ArrayList" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="java.util.Date" %>
 <%@ page import="java.util.Calendar" %>
@@ -87,8 +88,48 @@
         </section>
 
         <!-- APPOINTMENT REMINDERS -->
-        <%            boolean hasAppointments = (upcomingAppointments != null && !upcomingAppointments.isEmpty())
-                    || (overdueAppointments != null && !overdueAppointments.isEmpty());
+        <%            // Separate appointments into different categories
+            List<Appointment> overdueAppointmentsList = new ArrayList<Appointment>();
+            List<Appointment> rescheduleAppointments = (List<Appointment>) request.getAttribute("rescheduleAppointments");
+            List<Appointment> regularAppointments = new ArrayList<Appointment>();
+
+            SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, MMMM dd, yyyy");
+            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+            Date today = new Date();
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(today);
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            Date todayStart = cal.getTime();
+
+            // Process overdue appointments (highest priority - separate from reschedule)
+            if (overdueAppointments != null) {
+                overdueAppointmentsList.addAll(overdueAppointments);
+            }
+
+            // Process upcoming appointments and categorize them
+            if (upcomingAppointments != null) {
+                for (Appointment appointment : upcomingAppointments) {
+                    // Skip overdue appointments (already processed above)
+                    String status = appointment.getStatus().trim().toLowerCase();
+
+                    if (appointment.getAppointmentDate().before(todayStart) && !"reschedule".equals(status)) {
+                        continue;
+                    }
+
+                    if ("reschedule".equals(status)) {
+                        rescheduleAppointments.add(appointment);
+                    } else if ("approved".equals(status) || "confirmed".equals(status)) {
+                        regularAppointments.add(appointment);
+                    }
+                }
+            }
+
+            boolean hasAppointments = !overdueAppointmentsList.isEmpty()
+                    || !rescheduleAppointments.isEmpty()
+                    || !regularAppointments.isEmpty();
 
             // Debug logging for JSP
             System.out.println("=== JSP DEBUGGING ===");
@@ -115,48 +156,7 @@
                 </div>
 
                 <div class="row">
-                    <%
-                        SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, MMMM dd, yyyy");
-                        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
-                        Date today = new Date();
-                        Calendar cal = Calendar.getInstance();
-                        cal.setTime(today);
-                        cal.set(Calendar.HOUR_OF_DAY, 0);
-                        cal.set(Calendar.MINUTE, 0);
-                        cal.set(Calendar.SECOND, 0);
-                        cal.set(Calendar.MILLISECOND, 0);
-                        Date todayStart = cal.getTime();
 
-                        cal.add(Calendar.DAY_OF_MONTH, 2);
-                        Date urgentDate = cal.getTime();
-
-                        // Separate appointments into different categories
-                        java.util.List<Appointment> overdueAppointmentsList = new java.util.ArrayList<Appointment>();
-                        java.util.List<Appointment> rescheduleAppointments = new java.util.ArrayList<Appointment>();
-                        java.util.List<Appointment> regularAppointments = new java.util.ArrayList<Appointment>();
-
-                        // Process overdue appointments (highest priority - separate from reschedule)
-                        if (overdueAppointments != null) {
-                            overdueAppointmentsList.addAll(overdueAppointments);
-                        }
-
-                        // Process upcoming appointments and categorize them
-                        if (upcomingAppointments != null) {
-                            for (Appointment appointment : upcomingAppointments) {
-                                // Skip overdue appointments (already processed above)
-                                if (appointment.getAppointmentDate().before(todayStart)) {
-                                    continue;
-                                }
-
-                                String status = appointment.getStatus().trim().toLowerCase();
-                                if ("reschedule".equals(status)) {
-                                    rescheduleAppointments.add(appointment);
-                                } else if ("approved".equals(status) || "confirmed".equals(status)) {
-                                    regularAppointments.add(appointment);
-                                }
-                            }
-                        }
-                    %>
 
                     <!-- Left Column: Overdue and Reschedule Appointments -->
                     <div class="col-md-6">

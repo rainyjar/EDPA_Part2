@@ -231,7 +231,7 @@ public class CustomerServlet extends HttpServlet {
             Part file = request.getPart("profilePic");
             if (file != null && file.getSize() > 0) {
                 try {
-                    uploadedFileName = UploadImage.uploadProfilePicture(file, getServletContext());
+                    uploadedFileName = UploadImage.uploadImage(file, "profile_pictures");
                 } catch (Exception e) {
                     request.setAttribute("error", "Profile picture upload failed: " + e.getMessage());
                     preserveFormData(request);
@@ -312,7 +312,7 @@ public class CustomerServlet extends HttpServlet {
             Part file = request.getPart("profilePic");
             if (file != null && file.getSize() > 0) {
                 try {
-                    String uploadedFileName = UploadImage.uploadProfilePicture(file, getServletContext());
+                    String uploadedFileName = UploadImage.uploadImage(file, "profile_pictures");
                     if (uploadedFileName != null) {
                         customer.setProfilePic(uploadedFileName);
                     }

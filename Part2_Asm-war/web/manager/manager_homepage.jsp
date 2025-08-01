@@ -29,7 +29,6 @@
     Integer totalManagers = (Integer) request.getAttribute("totalManagers");
     Integer totalAppointments = (Integer) request.getAttribute("totalAppointments");
     Integer pendingAppointments = (Integer) request.getAttribute("pendingAppointments");
-    Integer completedAppointments = (Integer) request.getAttribute("completedAppointments");
     Double totalRevenue = (Double) request.getAttribute("totalRevenue");
 
     // Default values if null
@@ -108,10 +107,10 @@
                             <span class="stat-label">Pending </span>
                         </div>
                     </div>
-                    <div class="col-md-2 col-sm-6">
+                      <div class="col-md-2 col-sm-6">
                         <div class="stat-card wow fadeInUp" data-wow-delay="0.7s">
-                            <span class="stat-number"><%= completedAppointments%></span>
-                            <span class="stat-label">Completed Appointments</span>
+                            <span class="stat-number"><%= currencyFormat.format(totalRevenue)%></span>
+                            <span class="stat-label">Revenue(RM)</span>
                         </div>
                     </div>
                 </div>
@@ -137,7 +136,7 @@
                                     <i class="fa fa-users"></i> 
                                 </div>
                                 <div class="action-title">Manage Staff</div>
-                                <div class="action-desc">Add, edit, view all doctors, counter staff, and managers</div>
+                                <div class="action-desc">View, search or delete doctors, counter staff, and managers</div>
                             </div>
                         </a>
                     </div>

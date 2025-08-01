@@ -15,9 +15,13 @@ import model.Doctor;
 import model.DoctorFacade;
 import model.Manager;
 import model.ManagerFacade;
+import model.PaymentFacade;
 
 @WebServlet(urlPatterns = {"/ManagerHomepageServlet", "/ManagerDashboardServlet", "/manager/dashboard"})
 public class ManagerHomepageServlet extends HttpServlet {
+
+    @EJB
+    private PaymentFacade paymentFacade;
 
     @EJB
     private AppointmentFacade appointmentFacade;
@@ -49,7 +53,7 @@ public class ManagerHomepageServlet extends HttpServlet {
             List<CounterStaff> allStaff = counterStaffFacade.findAll();
             List<Manager> allManagers = managerFacade.findAll();
             List<Appointment> recentAppointments = appointmentFacade.findAll();
-            
+
             // Get only recent appointments (limit to 10)
             if (recentAppointments != null && recentAppointments.size() > 10) {
                 recentAppointments = recentAppointments.subList(0, 10);
@@ -82,20 +86,11 @@ public class ManagerHomepageServlet extends HttpServlet {
             int totalAppointments = allAppointments != null ? allAppointments.size() : 0;
 
             int pendingAppointments = 0;
-            int completedAppointments = 0;
-
+            double totalRevenue = paymentFacade.getTotalRevenue();
             if (allAppointments != null) {
                 for (Appointment apt : allAppointments) {
                     if (apt.getStatus() != null && apt.getStatus().equalsIgnoreCase("pending")) {
                         pendingAppointments++;
-                    }
-                }
-            }
-            
-            if (allAppointments != null) {
-                for (Appointment apt : allAppointments) {
-                    if (apt.getStatus() != null && apt.getStatus().equalsIgnoreCase("completed")) {
-                        completedAppointments++;
                     }
                 }
             }
@@ -105,15 +100,14 @@ public class ManagerHomepageServlet extends HttpServlet {
             request.setAttribute("staffList", allStaff);
             request.setAttribute("managerList", allManagers);
             request.setAttribute("recentAppointments", recentAppointments);
-
             request.setAttribute("totalDoctors", totalDoctors);
             request.setAttribute("totalStaff", totalStaff);
             request.setAttribute("totalManagers", totalManagers);
             request.setAttribute("totalAppointments", totalAppointments);
             request.setAttribute("pendingAppointments", pendingAppointments);
-            request.setAttribute("completedAppointments", completedAppointments);
+            request.setAttribute("totalRevenue", totalRevenue);
             System.out.println("Manager logged in! Redirecting to manager homepage.");
-            
+
             // Forward to JSP
             request.getRequestDispatcher("/manager/manager_homepage.jsp").forward(request, response);
 

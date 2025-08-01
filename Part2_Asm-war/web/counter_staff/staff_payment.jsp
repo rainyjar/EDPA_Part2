@@ -131,7 +131,7 @@
                         <nav aria-label="breadcrumb" class="wow fadeInUp" data-wow-delay="0.3s">
                             <ol class="breadcrumb" style="background: transparent; margin: 0;">
                                 <li class="breadcrumb-item">
-                                    <a href="<%= request.getContextPath()%>/CounterStaffServlet?action=dashboard" style="color: rgba(255,255,255,0.8);">Dashboard</a> 
+                                    <a href="<%= request.getContextPath()%>/CounterStaffServletJam?action=dashboard" style="color: rgba(255,255,255,0.8);">Dashboard</a> 
                                 </li>
                                 <li class="breadcrumb-item active" style="color: white;">Payment Processing</li>
                             </ol>

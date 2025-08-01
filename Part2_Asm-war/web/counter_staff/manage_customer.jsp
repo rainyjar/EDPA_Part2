@@ -72,7 +72,7 @@
                             <ol class="breadcrumb" style="background: transparent; margin: 0;">
                                 <li class="breadcrumb-item">
                                     <!--return back to CS homepage-->
-                                    <a href="<%= request.getContextPath()%>/CounterStaffServlet?action=dashboard" style="color: rgba(255,255,255,0.8);">Dashboard</a> 
+                                    <a href="<%= request.getContextPath()%>/CounterStaffServletJam?action=dashboard" style="color: rgba(255,255,255,0.8);">Dashboard</a> 
                                 </li>
                                 <li class="breadcrumb-item active" style="color: white;">Manage Customer</li>
                             </ol>

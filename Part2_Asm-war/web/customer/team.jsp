@@ -126,10 +126,10 @@
                             }
 
                             // Handle profile picture validation
-                            String profilePic = doc.getProfilePic();
-                            if (profilePic == null || profilePic.trim().isEmpty()) {
-                                profilePic = "default-doctor.png";
-                            }
+                            String docProfilePic = doc.getProfilePic();
+                            String profilePic = (docProfilePic != null && !docProfilePic.isEmpty())
+                                    ? (request.getContextPath() + "/ImageServlet?folder=profile_pictures&file=" + docProfilePic)
+                                    : (request.getContextPath() + "/images/placeholder/user.png");
 
                             // Handle phone validation
                             String phone = doc.getPhone();
@@ -145,7 +145,7 @@
                         %>
                         <div class="<%= colClass%>">
                             <div class="team-thumb wow fadeInUp" data-wow-delay="<%= delay%>s">
-                                <img src="<%= request.getContextPath()%>/ImageServlet?folder=profile_pictures&file=<%= profilePic%>" class="img-responsive custom-image-" alt="<%= doctorName%> Profile Picture">
+                                <img src="<%= profilePic%>" class="img-responsive custom-image-" alt="<%= doctorName%> Profile Picture">
                                 <div class="team-info">
                                     <h3><%= doctorName%></h3>
                                     <p class="doctor-specialization"><%= specialization%></p>
