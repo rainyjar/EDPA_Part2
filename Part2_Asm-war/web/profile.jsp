@@ -15,6 +15,8 @@
     String userPhone = "";
     String userGender = "";
     String profilePicName = "";
+    String userIc = "";
+    String userAddress = "";
     int userId = 0;
     Date userDob = null;
 
@@ -41,6 +43,8 @@
         userGender = customer.getGender() != null ? customer.getGender() : "";
         userDob = customer.getDob();
         profilePicName = customer.getProfilePic();
+        userIc = customer.getIc() != null ? customer.getIc() : "";
+        userAddress = customer.getAddress() != null ? customer.getAddress() : "";
     } else if (doctor != null) {
         currentUser = doctor;
         userType = "doctor";
@@ -53,6 +57,8 @@
         profilePicName = doctor.getProfilePic();
         doctorSpecialization = doctor.getSpecialization() != null ? doctor.getSpecialization() : "";
         doctorRating = doctor.getRating() != null ? doctor.getRating().doubleValue() : null;
+        userIc = doctor.getIc() != null ? doctor.getIc() : "";
+        userAddress = doctor.getAddress() != null ? doctor.getAddress() : "";
     } else if (staff != null) {
         currentUser = staff;
         userType = "staff";
@@ -64,6 +70,8 @@
         userDob = staff.getDob();
         profilePicName = staff.getProfilePic();
         staffRating = staff.getRating() != null ? staff.getRating().doubleValue() : null;
+        userIc = staff.getIc() != null ? staff.getIc() : "";
+        userAddress = staff.getAddress() != null ? staff.getAddress() : "";
     } else if (manager != null) {
         currentUser = manager;
         userType = "manager";
@@ -74,6 +82,8 @@
         userGender = manager.getGender() != null ? manager.getGender() : "";
         userDob = manager.getDob();
         profilePicName = manager.getProfilePic();
+        userIc = manager.getIc() != null ? manager.getIc() : "";
+        userAddress = manager.getAddress() != null ? manager.getAddress() : "";
     } else {
         response.sendRedirect(request.getContextPath() + "/login.jsp");
         return;
@@ -83,11 +93,11 @@
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     String dobString = userDob != null ? dateFormat.format(userDob) : "";
 
-   //  working liao
-   // String profilePic = profilePicName != null && !profilePicName.isEmpty() ? profilePicName : "default-doc.png";
+    //  working liao
+    // String profilePic = profilePicName != null && !profilePicName.isEmpty() ? profilePicName : "default-doc.png";
     String profilePic = (profilePicName != null && !profilePicName.isEmpty())
-    ? (request.getContextPath() + "/ImageServlet?folder=profile_pictures&file=" + profilePicName)
-    : (request.getContextPath() + "/images/placeholder/user.png");
+            ? (request.getContextPath() + "/ImageServlet?folder=profile_pictures&file=" + profilePicName)
+            : (request.getContextPath() + "/images/placeholder/user.png");
 
     // Get success/error messages
     String successMsg = request.getParameter("success");
@@ -114,7 +124,7 @@
                             <!-- Profile Header -->
                             <div class="profile-header">
                                 <div class="profile-pic-container"> 
-                                    <img src="<%= profilePic %>" class="profile-pic" alt="Profile Picture">
+                                    <img src="<%= profilePic%>" class="profile-pic" alt="Profile Picture">
                                     <button type="button" class="pic-upload-btn" onclick="document.getElementById('profilePicInput').click();">
                                         <i class="fa fa-camera"></i>
                                     </button>
@@ -154,6 +164,12 @@
                                     Failed to update profile. Please try again.
                                     <% } else if ("invalid_email".equals(errorMsg)) { %>
                                     Please enter a valid email address!
+                                    <% } else if ("invalid_phone".equals(errorMsg)) { %>
+                                    Please enter a valid phone number (9 to 12 characters).
+                                    <% } else if ("invalid_address".equals(errorMsg)) { %>
+                                    Please enter a valid address (at least 5 characters).
+                                    <% } else if ("invalid_ic".equals(errorMsg)) { %>
+                                    Please enter a valid NRIC (e.g. 990101-14-5678)
                                     <% } else if ("email_taken".equals(errorMsg)) { %>
                                     This email address is already in use by another account!
                                     <% } else if ("missing_fields".equals(errorMsg)) { %>
@@ -183,144 +199,200 @@
                                 <h3 class="section-title-profile">Personal Information</h3>
 
                                 <!-- Profile Update Form -->
-                                <form action="<%= request.getContextPath()%>/Profile" method="post" id="profileForm">
+                                <form action="<%= request.getContextPath()%>/Profile" method="post" id="profileForm" novalidate>
                                     <input type="hidden" name="action" value="updateProfile">
 
-                                    <!-- Basic Information Row -->
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label class="form-label"><%= userType.substring(0, 1).toUpperCase() + userType.substring(1)%> ID</label>
-                                                <input type="text" class="form-control" value="<%= userId%>" disabled>
+                                    <!-- Basic Information -->
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <label class="form-label">
+                                                <i class="fa fa-id-card"></i> <%= userType.substring(0, 1).toUpperCase() + userType.substring(1)%> ID
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-icon"><i class="fa fa-hashtag"></i></span>
+                                                <input type="text" class="form-control with-icon" value="<%= userId%>" disabled>
                                             </div>
                                         </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label class="form-label">Full Name *</label>
-                                                <input type="text" class="form-control" name="name" value="<%= userName%>" required>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Contact Information Row -->
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label class="form-label">Email Address *</label>
-                                                <input type="email" class="form-control" name="email" value="<%= userEmail%>" required>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label class="form-label">Phone Number *</label>
-                                                <input type="tel" class="form-control" name="phone" value="<%= userPhone%>" required>
+                                        <div class="form-group col-md-6">
+                                            <label class="form-label">
+                                                <i class="fa fa-user"></i> Full Name *
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-icon"><i class="fa fa-user"></i></span>
+                                                <input type="text" class="form-control with-icon" id="name" name="name" value="<%= userName%>" required>
+                                                <div class="invalid-feedback"></div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Personal Details Row -->
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label class="form-label">Date of Birth *</label>
-                                                <input type="date" class="form-control" name="dob" value="<%= dobString%>" 
+                                    <!-- Contact Info -->
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <label class="form-label">
+                                                <i class="fa fa-envelope"></i> Email Address *
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-icon"><i class="fa fa-envelope"></i></span>
+                                                <input type="email" class="form-control with-icon" id="email" name="email" value="<%= userEmail%>" required>
+                                                <div class="invalid-feedback"></div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <label class="form-label">
+                                                <i class="fa fa-phone"></i> Phone Number *
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-icon"><i class="fa fa-phone"></i></span>
+                                                <input type="tel" class="form-control with-icon" id="phone" name="phone" value="<%= userPhone%>" required>
+                                                <div class="invalid-feedback"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Personal Details -->
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <label class="form-label">
+                                                <i class="fa fa-calendar"></i> Date of Birth *
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-icon"><i class="fa fa-calendar"></i></span>
+                                                <input type="date" class="form-control with-icon" id="dob" name="dob" value="<%= dobString%>"
                                                        max="<%= new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date())%>" required>
+                                                <div class="invalid-feedback"></div>
                                             </div>
                                         </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label class="form-label">Gender *</label>
-                                                <div style="margin-top: 8px;">
-                                                    <label class="gender-radio">
-                                                        <input type="radio" name="gender" value="M" <%= "M".equals(userGender) ? "checked" : ""%>>
-                                                        Male
-                                                    </label>
-                                                    <label class="gender-radio">
-                                                        <input type="radio" name="gender" value="F" <%= "F".equals(userGender) ? "checked" : ""%>>
-                                                        Female
-                                                    </label>
-                                                </div>
+                                        <div class="form-group col-md-6">
+                                            <label class="form-label">
+                                                <i class="fa fa-id-badge"></i> NRIC *
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-icon"><i class="fa fa-id-badge"></i></span>
+                                                <input type="text" class="form-control with-icon" id="nric" name="nric" value="<%= userIc%>" required>
+                                                <div class="invalid-feedback"></div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Role-Specific Fields (Read-Only) -->
-                                    <% if ("doctor".equals(userType)) {%>
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label class="form-label">Specialization</label>
-                                                <input type="text" class="form-control" value="<%= doctorSpecialization%>" disabled>
-                                                <small class="form-text text-muted">Contact administrator to update specialization</small>
+                                    <!-- Address and Gender -->
+                                    <div class="form-row">
+                                        <div class="form-group col-md-12">
+                                            <label class="form-label">
+                                                <i class="fa fa-map-marker"></i> Address *
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-icon"><i class="fa fa-map-marker"></i></span>
+                                                <textarea id="address" name="address" class="form-control with-icon" rows="3" required><%= userAddress%></textarea>
+                                                <div class="invalid-feedback"></div>
                                             </div>
                                         </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label class="form-label">Rating</label>
-                                                <div class="rating-display">
-                                                    <% if (doctorRating != null && doctorRating > 0) { %>
-                                                    <div class="star-rating">
-                                                        <%
-                                                            int fullStars = (int) Math.floor(doctorRating);
-                                                            boolean hasHalfStar = (doctorRating - fullStars) >= 0.5;
+                                    </div>
 
-                                                            for (int i = 1; i <= 5; i++) {
-                                                                if (i <= fullStars) { %>
-                                                        <i class="fa fa-star star-filled"></i>
-                                                        <% } else if (i == fullStars + 1 && hasHalfStar) { %>
-                                                        <i class="fa fa-star-half-o star-half"></i>
-                                                        <% } else { %>
-                                                        <i class="fa fa-star-o star-empty"></i>
-                                                        <% }
-                                                            }%>
-                                                        <span class="rating-text">(<%= String.format("%.1f", doctorRating)%>/5.0)</span>
-                                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group col-md-12">
+                                            <label class="form-label">
+                                                <i class="fa fa-venus-mars"></i> Gender *
+                                            </label>
+                                            <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 10px;">
+                                                <label class="gender-radio">
+                                                    <input type="radio" name="gender" value="M" <%= "M".equals(userGender) ? "checked" : ""%> required>
+                                                    <span>Male</span>
+                                                </label>
+                                                <label class="gender-radio">
+                                                    <input type="radio" name="gender" value="F" <%= "F".equals(userGender) ? "checked" : ""%> required>
+                                                    <span>Female</span>
+                                                </label>
+                                            </div>
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                    </div>
+
+
+
+                                    <!-- Role-Specific Fields -->
+                                    <% if ("doctor".equals(userType)) {%>
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <label class="form-label">
+                                                <i class="fa fa-stethoscope"></i> Specialization
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-icon"><i class="fa fa-stethoscope"></i></span>
+                                                <input type="text" class="form-control with-icon" value="<%= doctorSpecialization%>" disabled>
+                                            </div>
+                                            <small class="form-text text-muted">
+                                                <i class="fa fa-info-circle"></i> Contact administrator to update specialization
+                                            </small>
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <label class="form-label">
+                                                <i class="fa fa-star"></i> Rating
+                                            </label>
+                                            <div class="rating-display" style="padding: 15px; background: #f8f9fa; border-radius: 8px; border: 2px solid #e8ecf0;">
+                                                <% if (doctorRating != null && doctorRating > 0) { %>
+                                                <div class="star-rating">
+                                                    <%
+                                                        int fullStars = (int) Math.floor(doctorRating);
+                                                        boolean hasHalfStar = (doctorRating - fullStars) >= 0.5;
+                                                        for (int i = 1; i <= 5; i++) {
+                                                            if (i <= fullStars) { %>
+                                                    <i class="fa fa-star star-filled"></i>
+                                                    <% } else if (i == fullStars + 1 && hasHalfStar) { %>
+                                                    <i class="fa fa-star-half-o star-half"></i>
                                                     <% } else { %>
-                                                    <div class="no-rating">
-                                                        <i class="fa fa-star-o"></i> No ratings yet
-                                                    </div>
-                                                    <% } %>
+                                                    <i class="fa fa-star-o star-empty"></i>
+                                                    <% }
+                                                        }%>
+                                                    <span class="rating-text" style="margin-left: 10px; font-weight: 600; color: #2c2577;">
+                                                        (<%= String.format("%.1f", doctorRating)%>/5.0)
+                                                    </span>
                                                 </div>
+                                                <% } else { %>
+                                                <div class="no-rating">
+                                                    <i class="fa fa-star-o"></i> No ratings yet
+                                                </div>
+                                                <% } %>
                                             </div>
                                         </div>
                                     </div>
                                     <% } else if ("staff".equals(userType)) { %>
-                                    <div class="row">
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label class="form-label">Rating</label>
-                                                <div class="rating-display">
-                                                    <% if (staffRating != null && staffRating > 0) { %>
-                                                    <div class="star-rating">
-                                                        <%
-                                                            int fullStars = (int) Math.floor(staffRating);
-                                                            boolean hasHalfStar = (staffRating - fullStars) >= 0.5;
-
-                                                            for (int i = 1; i <= 5; i++) {
-                                                                if (i <= fullStars) { %>
-                                                        <i class="fa fa-star star-filled"></i>
-                                                        <% } else if (i == fullStars + 1 && hasHalfStar) { %>
-                                                        <i class="fa fa-star-half-o star-half"></i>
-                                                        <% } else { %>
-                                                        <i class="fa fa-star-o star-empty"></i>
-                                                        <% }
-                                                            }%>
-                                                        <span class="rating-text">(<%= String.format("%.1f", staffRating)%>/5.0)</span>
-                                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <label class="form-label">
+                                                <i class="fa fa-star"></i> Staff Rating
+                                            </label>
+                                            <div class="rating-display" style="padding: 15px; background: #f8f9fa; border-radius: 8px; border: 2px solid #e8ecf0;">
+                                                <% if (staffRating != null && staffRating > 0) { %>
+                                                <div class="star-rating">
+                                                    <%
+                                                        int fullStars = (int) Math.floor(staffRating);
+                                                        boolean hasHalfStar = (staffRating - fullStars) >= 0.5;
+                                                        for (int i = 1; i <= 5; i++) {
+                                                            if (i <= fullStars) { %>
+                                                    <i class="fa fa-star star-filled"></i>
+                                                    <% } else if (i == fullStars + 1 && hasHalfStar) { %>
+                                                    <i class="fa fa-star-half-o star-half"></i>
                                                     <% } else { %>
-                                                    <div class="no-rating">
-                                                        <i class="fa fa-star-o"></i> No ratings yet
-                                                    </div>
-                                                    <% } %>
+                                                    <i class="fa fa-star-o star-empty"></i>
+                                                    <% }
+                                                        }%>
+                                                    <span class="rating-text">(<%= String.format("%.1f", staffRating)%>/5.0)</span>
                                                 </div>
+                                                <% } else { %>
+                                                <div class="no-rating"><i class="fa fa-star-o"></i> No ratings yet</div>
+                                                <% } %>
                                             </div>
                                         </div>
                                     </div>
                                     <% }%>
 
-                                    <div class="text-center" style="margin-top: 30px;">
-                                        <button type="submit" class="btn btn-custom btn-primary-custom">
+                                    <!-- Submit Button -->
+                                    <div class="text-center" style="margin-top: 40px; padding-top: 30px; border-top: 2px solid #e8ecf0;">
+                                        <button type="submit" class="btn btn-custom btn-primary-custom" id="submitBtn">
                                             <i class="fa fa-save"></i> Update Profile
+                                        </button>
+                                        <button type="reset" class="btn btn-custom" style="background: #6c757d; color: white;">
+                                            <i class="fa fa-refresh"></i> Reset Form
                                         </button>
                                     </div>
                                 </form>
@@ -349,7 +421,70 @@
         </form>
 
         <!-- Change Password Modal -->
-        <div id="changePasswordModal" class="modal">
+<!--        <div id="changePasswordModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <i class="fa fa-key" style="margin-right: 10px; color: #4a90e2;"></i>
+                        Change Password
+                    </h3>
+                    <span class="close" onclick="closeChangePasswordModal()">&times;</span>
+                </div>
+                <div class="modal-body">
+
+                <form action="<%= request.getContextPath()%>/Profile" method="post" id="changePasswordForm">
+                    <input type="hidden" name="action" value="changePassword">
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fa fa-lock"></i> Current Password *
+                        </label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" name="currentPassword" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fa fa-key"></i> New Password *
+                        </label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" name="newPassword" id="newPassword" 
+                                   onkeyup="checkPasswordStrength(); checkPasswordMatch();" 
+                                   oninput="checkPasswordMatch();" required>
+                        </div>
+                        <div id="passwordStrength" class="password-strength"></div>
+                        <small class="form-text">
+                            <i class="fa fa-info-circle"></i> Password must be at least 6 characters long
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fa fa-check-circle"></i> Confirm New Password *
+                        </label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" name="confirmPassword" 
+                                   onkeyup="checkPasswordMatch();" 
+                                   oninput="checkPasswordMatch();" required>
+                        </div>
+                        <small id="passwordMatch" class="form-text"></small>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-custom btn-primary-custom">
+                            <i class="fa fa-save"></i> Change Password
+                        </button>
+                        <button type="button" class="btn btn-custom btn-secondary-custom" onclick="closeChangePasswordModal()">
+                            <i class="fa fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </form>
+                </div>
+            </div>
+        </div>-->
+
+<div id="changePasswordModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeChangePasswordModal()">&times;</span>
                 <h3 style="margin-bottom: 25px; color: #333;">Change Password</h3>

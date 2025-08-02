@@ -247,7 +247,7 @@
                                 <div class="info-label">NRIC</div>
                                 <div class="info-value">
                                     <i class="fa fa-id-card"></i>
-                                    <%= counterStaff.getIc() != null && !counterStaff.getIc().isEmpty() ? counterStaff.geIc() : "Not provided"%>
+                                    <%= counterStaff.getIc() != null && !counterStaff.getIc().isEmpty() ? counterStaff.getIc() : "Not provided"%>
                                 </div>
                             </div>
 

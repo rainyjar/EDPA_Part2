@@ -114,25 +114,17 @@ public class ManagerServlet extends HttpServlet {
                 System.out.println("Counter Staff found: " + (staffList != null ? staffList.size() : "null"));
                 System.out.println("Managers found: " + (managerList != null ? managerList.size() : "null"));
 
-                // Sort by rating/name
+                // Sort by ID (ascending) for consistent ordering
                 if (doctorList != null) {
-                    doctorList.sort((d1, d2) -> {
-                        Double rating1 = d1.getRating() != null ? d1.getRating() : 0.0;
-                        Double rating2 = d2.getRating() != null ? d2.getRating() : 0.0;
-                        return rating2.compareTo(rating1);
-                    });
+                    doctorList.sort((d1, d2) -> Integer.compare(d1.getId(), d2.getId()));
                 }
 
                 if (staffList != null) {
-                    staffList.sort((s1, s2) -> {
-                        Double rating1 = s1.getRating() != null ? s1.getRating() : 0.0;
-                        Double rating2 = s2.getRating() != null ? s2.getRating() : 0.0;
-                        return rating2.compareTo(rating1);
-                    });
+                    staffList.sort((s1, s2) -> Integer.compare(s1.getId(), s2.getId()));
                 }
 
                 if (managerList != null) {
-                    managerList.sort((m1, m2) -> m1.getName().compareToIgnoreCase(m2.getName()));
+                    managerList.sort((m1, m2) -> Integer.compare(m1.getId(), m2.getId()));
                 }
 
                 request.setAttribute("doctorList", doctorList);
@@ -330,11 +322,7 @@ public class ManagerServlet extends HttpServlet {
 
                     return matchesSearch && matchesGender;
                 })
-                .sorted((d1, d2) -> {
-                    Double rating1 = d1.getRating() != null ? d1.getRating() : 0.0;
-                    Double rating2 = d2.getRating() != null ? d2.getRating() : 0.0;
-                    return rating2.compareTo(rating1);
-                })
+                .sorted((d1, d2) -> Integer.compare(d1.getId(), d2.getId())) // Sort by ID for consistency
                 .collect(Collectors.toList());
     }
 
@@ -355,11 +343,7 @@ public class ManagerServlet extends HttpServlet {
 
                     return matchesSearch && matchesGender;
                 })
-                .sorted((s1, s2) -> {
-                    Double rating1 = s1.getRating() != null ? s1.getRating() : 0.0;
-                    Double rating2 = s2.getRating() != null ? s2.getRating() : 0.0;
-                    return rating2.compareTo(rating1);
-                })
+                .sorted((s1, s2) -> Integer.compare(s1.getId(), s2.getId())) // Sort by ID for consistency
                 .collect(Collectors.toList());
     }
 
@@ -380,7 +364,7 @@ public class ManagerServlet extends HttpServlet {
 
                     return matchesSearch && matchesGender;
                 })
-                .sorted((m1, m2) -> m1.getName().compareToIgnoreCase(m2.getName()))
+                .sorted((m1, m2) -> Integer.compare(m1.getId(), m2.getId())) // Sort by ID for consistency
                 .collect(Collectors.toList());
     }
 

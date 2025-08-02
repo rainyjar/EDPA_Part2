@@ -1,3 +1,4 @@
+
 import java.io.IOException;
 import java.util.Date;
 import javax.ejb.EJB;
@@ -181,13 +182,17 @@ public class Profile extends HttpServlet {
         String phone = request.getParameter("phone");
         String dobStr = request.getParameter("dob");
         String gender = request.getParameter("gender");
+        String ic = request.getParameter("nric");
+        String address = request.getParameter("address");
 
         // Validate required fields
         if (name == null || name.trim().isEmpty()
                 || email == null || email.trim().isEmpty()
                 || phone == null || phone.trim().isEmpty()
                 || dobStr == null || dobStr.trim().isEmpty()
-                || gender == null || gender.trim().isEmpty()) {
+                || gender == null || gender.trim().isEmpty()
+                || ic == null || ic.trim().isEmpty()
+                || address == null || address.trim().isEmpty()) {
 
             response.sendRedirect(request.getContextPath() + "/profile.jsp?error=missing_fields");
             return;
@@ -196,6 +201,32 @@ public class Profile extends HttpServlet {
         // Validate email format
         if (!email.matches("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$")) {
             response.sendRedirect(request.getContextPath() + "/profile.jsp?error=invalid_email");
+            return;
+        }
+
+        // validate phone
+        String phoneRegex = "^[\\+]?[-() 0-9]{9,12}$";
+        if (!phone.matches(phoneRegex)) {
+            response.sendRedirect(request.getContextPath() + "/profile.jsp?error=invalid_phone");
+            return;
+        }
+
+        // validate address
+        String addressRegex = "^[A-Za-z0-9\\s,./#\\-]{5,255}$";
+        if (!address.matches(addressRegex)) {
+            response.sendRedirect(request.getContextPath() + "/profile.jsp?error=invalid_address");
+            return;
+        }
+
+        // validate ic
+        String icRegex = "^\\d{6}-\\d{2}-\\d{4}$";
+        if (ic.length() != 14) {
+            response.sendRedirect(request.getContextPath() + "/profile.jsp?error=invalid_ic");
+            return;
+        }
+
+        if (!ic.matches(icRegex)) {
+            response.sendRedirect(request.getContextPath() + "/profile.jsp?error=invalid_ic");
             return;
         }
 
@@ -222,7 +253,7 @@ public class Profile extends HttpServlet {
         }
 
         // Update user object based on type
-        updateUserFields(userInfo.user, userInfo.userType, name, email, phone, gender, dob);
+        updateUserFields(userInfo.user, userInfo.userType, name, email, phone, gender, dob, ic, address);
 
         // Save to database and update session
         saveUserAndUpdateSession(request, userInfo);
@@ -313,7 +344,7 @@ public class Profile extends HttpServlet {
         if (email.equals(userInfo.email)) {
             return false; // User is keeping their same email - not taken
         }
-        
+
         // Check if email exists in any user type
         Customer customer = customerFacade.searchEmail(email);
 
@@ -339,7 +370,7 @@ public class Profile extends HttpServlet {
         return false; // Email is available
     }
 
-    private void updateUserFields(Object user, String userType, String name, String email, String phone, String gender, java.sql.Date dob) {
+    private void updateUserFields(Object user, String userType, String name, String email, String phone, String gender, java.sql.Date dob, String ic, String address) {
         switch (userType) {
             case "customer":
                 Customer customer = (Customer) user;
@@ -348,6 +379,8 @@ public class Profile extends HttpServlet {
                 customer.setPhone(phone);
                 customer.setGender(gender);
                 customer.setDob(dob);
+                customer.setIc(ic);
+                customer.setAddress(address);
                 break;
             case "doctor":
                 Doctor doctor = (Doctor) user;
@@ -356,6 +389,8 @@ public class Profile extends HttpServlet {
                 doctor.setPhone(phone);
                 doctor.setGender(gender);
                 doctor.setDob(dob);
+                doctor.setIc(ic);
+                doctor.setAddress(address);
                 break;
             case "staff":
                 CounterStaff staff = (CounterStaff) user;
@@ -364,6 +399,8 @@ public class Profile extends HttpServlet {
                 staff.setPhone(phone);
                 staff.setGender(gender);
                 staff.setDob(dob);
+                staff.setIc(ic);
+                staff.setAddress(address);
                 break;
             case "manager":
                 Manager manager = (Manager) user;
@@ -372,6 +409,8 @@ public class Profile extends HttpServlet {
                 manager.setPhone(phone);
                 manager.setGender(gender);
                 manager.setDob(dob);
+                manager.setIc(ic);
+                manager.setAddress(address);
                 break;
         }
     }

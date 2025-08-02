@@ -262,7 +262,7 @@
                                 <div class="info-label">NRIC</div>
                                 <div class="info-value">
                                     <i class="fa fa-id-card"></i>
-                                    <%= viewManager.getIc() != null && !viewManager.getIc().isEmpty() ? viewManager.geIc() : "Not provided"%>
+                                    <%= viewManager.getIc() != null && !viewManager.getIc().isEmpty() ? viewManager.getIc() : "Not provided"%>
                                 </div>
                             </div>
 

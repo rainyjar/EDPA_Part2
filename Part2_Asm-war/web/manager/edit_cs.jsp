@@ -88,7 +88,8 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="nric">NRIC <span class="required">*</span></label>
-                                <input type="text" id="nric" name="nric" class="form-control staff" required>
+                                <input type="text" id="nric" name="nric" class="form-control staff" 
+                                       value="${counterStaff != null ? counterStaff.ic : ''}" required>
                                 <div class="invalid-feedback" id="icError"></div>
                             </div>
 
@@ -105,7 +106,9 @@
 
                         <div class="form-group">
                             <label for="address">Address <span class="required">*</span></label>
-                            <textarea id="address" name="address" class="form-control staff" style="resize: none;" rows="3" required></textarea>
+                            <textarea id="address" name="address" class="form-control staff" style="resize: none;" rows="3" required>
+                                ${counterStaff != null ? counterStaff.address : ''}
+                            </textarea>
                             <div class="invalid-feedback"></div>
                         </div>
 

@@ -195,15 +195,25 @@
                     <div id="doctors-tab" class="tab-content">
                         <div class="staff-table">
                             <% if (doctorList != null && !doctorList.isEmpty()) { %>
-                            <table class="table table-hover">
+                            <table class="table table-hover" id="doctorsTable">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th>Specialization</th>
+                                        <th class="sortable" onclick="sortTable('doctorsTable', 0, 'number')">
+                                            ID <i class="fa fa-sort"></i>
+                                        </th>
+                                        <th class="sortable" onclick="sortTable('doctorsTable', 1, 'string')">
+                                            Name <i class="fa fa-sort"></i>
+                                        </th>
+                                        <th class="sortable" onclick="sortTable('doctorsTable', 2, 'string')">
+                                            Email <i class="fa fa-sort"></i>
+                                        </th>
+                                        <th class="sortable" onclick="sortTable('doctorsTable', 3, 'string')">
+                                            Specialization <i class="fa fa-sort"></i>
+                                        </th>
                                         <th>Phone</th>
-                                        <th>Rating</th>
+                                        <th class="sortable" onclick="sortTable('doctorsTable', 5, 'number')">
+                                            Rating <i class="fa fa-sort"></i>
+                                        </th>
                                         <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
@@ -280,14 +290,22 @@
                     <div id="staff-tab" class="tab-content" style="display: none;">
                         <div class="staff-table">
                             <% if (staffList != null && !staffList.isEmpty()) { %>
-                            <table class="table table-hover">
+                            <table class="table table-hover" id="staffTable">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
-                                        <th>Name</th>
-                                        <th>Email</th>
+                                        <th class="sortable" onclick="sortTable('staffTable', 0, 'number')">
+                                            ID <i class="fa fa-sort"></i>
+                                        </th>
+                                        <th class="sortable" onclick="sortTable('staffTable', 1, 'string')">
+                                            Name <i class="fa fa-sort"></i>
+                                        </th>
+                                        <th class="sortable" onclick="sortTable('staffTable', 2, 'string')">
+                                            Email <i class="fa fa-sort"></i>
+                                        </th>
                                         <th>Phone</th>
-                                        <th>Rating</th>
+                                        <th class="sortable" onclick="sortTable('staffTable', 4, 'number')">
+                                            Rating <i class="fa fa-sort"></i>
+                                        </th>
                                         <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
@@ -351,14 +369,22 @@
                     <div id="managers-tab" class="tab-content" style="display: none;">
                         <div class="staff-table">
                             <% if (managerList != null && !managerList.isEmpty()) { %>
-                            <table class="table table-hover">
+                            <table class="table table-hover" id="managersTable">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
-                                        <th>Name</th>
-                                        <th>Email</th>
+                                        <th class="sortable" onclick="sortTable('managersTable', 0, 'number')">
+                                            ID <i class="fa fa-sort"></i>
+                                        </th>
+                                        <th class="sortable" onclick="sortTable('managersTable', 1, 'string')">
+                                            Name <i class="fa fa-sort"></i>
+                                        </th>
+                                        <th class="sortable" onclick="sortTable('managersTable', 2, 'string')">
+                                            Email <i class="fa fa-sort"></i>
+                                        </th>
                                         <th>Phone</th>
-                                        <th>DOB</th>
+                                        <th class="sortable" onclick="sortTable('managersTable', 4, 'date')">
+                                            DOB <i class="fa fa-sort"></i>
+                                        </th>
                                         <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
@@ -484,6 +510,95 @@
                 if (confirm('Are you sure you want to delete Manager ' + name + '?\n\nThis action cannot be undone and may affect system administration.')) {
                     window.location.href = '<%= request.getContextPath()%>/ManagerServlet?action=delete&id=' + id;
                 }
+            }
+
+            // Table Sorting Function
+            let sortDirections = {}; // Track sort direction for each table and column
+
+            function sortTable(tableId, columnIndex, dataType) {
+                const table = document.getElementById(tableId);
+                const tbody = table.querySelector('tbody');
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                
+                // Determine sort direction
+                const sortKey = tableId + '_' + columnIndex;
+                const currentDirection = sortDirections[sortKey] || 'asc';
+                const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+                sortDirections[sortKey] = newDirection;
+                
+                // Update sort icons
+                updateSortIcons(tableId, columnIndex, newDirection);
+                
+                // Sort rows
+                rows.sort((a, b) => {
+                    let valueA = a.cells[columnIndex].textContent.trim();
+                    let valueB = b.cells[columnIndex].textContent.trim();
+                    
+                    // Handle different data types
+                    if (dataType === 'number') {
+                        // Extract numeric values (for ratings like "4.5 ★")
+                        valueA = parseFloat(valueA.replace(/[^\d.-]/g, '')) || 0;
+                        valueB = parseFloat(valueB.replace(/[^\d.-]/g, '')) || 0;
+                        
+                        if (newDirection === 'asc') {
+                            return valueA - valueB;
+                        } else {
+                            return valueB - valueA;
+                        }
+                    } else if (dataType === 'date') {
+                        // Handle date parsing
+                        valueA = new Date(valueA);
+                        valueB = new Date(valueB);
+                        
+                        if (newDirection === 'asc') {
+                            return valueA - valueB;
+                        } else {
+                            return valueB - valueA;
+                        }
+                    } else {
+                        // String comparison (case-insensitive)
+                        valueA = valueA.toLowerCase();
+                        valueB = valueB.toLowerCase();
+                        
+                        if (newDirection === 'asc') {
+                            return valueA.localeCompare(valueB);
+                        } else {
+                            return valueB.localeCompare(valueA);
+                        }
+                    }
+                });
+                
+                // Re-append sorted rows
+                rows.forEach(row => tbody.appendChild(row));
+                
+                // Add visual feedback
+                animateTableSort(tableId);
+            }
+            
+            function updateSortIcons(tableId, activeColumn, direction) {
+                const table = document.getElementById(tableId);
+                const headers = table.querySelectorAll('th.sortable');
+                
+                headers.forEach((header, index) => {
+                    const icon = header.querySelector('i');
+                    if (index === activeColumn) {
+                        // Active column
+                        icon.className = direction === 'asc' ? 'fa fa-sort-up' : 'fa fa-sort-down';
+                        header.style.color = '#667eea';
+                    } else {
+                        // Inactive columns
+                        icon.className = 'fa fa-sort';
+                        header.style.color = '';
+                    }
+                });
+            }
+            
+            function animateTableSort(tableId) {
+                const table = document.getElementById(tableId);
+                table.style.opacity = '0.7';
+                setTimeout(() => {
+                    table.style.opacity = '1';
+                }, 200);
             }
 
             // Auto-dismiss alerts

@@ -249,7 +249,7 @@
                                 <div class="info-label">NRIC</div>
                                 <div class="info-value">
                                     <i class="fa fa-id-card"></i>
-                                    <%= doctor.getIc() != null && !doctor.getIc().isEmpty() ? doctor.geIc() : "Not provided"%>
+                                    <%= doctor.getIc() != null && !doctor.getIc().isEmpty() ? doctor.getIc() : "Not provided"%>
                                 </div>
                             </div>
 
