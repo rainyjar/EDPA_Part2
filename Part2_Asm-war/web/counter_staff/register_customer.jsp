@@ -1,4 +1,14 @@
+<%@page import="model.CounterStaff"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+
+<%
+    // Check if counter staff is logged in
+    CounterStaff loggedInStaff = (CounterStaff) session.getAttribute("staff");
+    if (loggedInStaff == null) {
+        response.sendRedirect(request.getContextPath() + "/login.jsp");
+        return;
+    }
+%>
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -11,6 +21,9 @@
         <%@ include file="/includes/navbar.jsp" %>
         
         <div class="registration-container">
+              <a href="${pageContext.request.contextPath}/CustomerServlet?action=viewAll" class="back-btn" style="margin-top: 30px; margin-bottom: 30px">
+                <i class="fa fa-arrow-left"></i> Back to Customer Management
+            </a>
             <div class="registration-card">
                 <div class="card-header customer">
                     <h2>
@@ -51,42 +64,47 @@
                     </div>
                     <% }%>
 
-                    <form id="customerForm" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/CustomerServlet" novalidate>
+                    <form id="customerForm" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/CustomerServlet?action=register" novalidate>
 
-                        <!-- Personal Information Section -->
+                        <!-- Personal Information -->
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="name">Full Name <span class="required">*</span></label>
-                                <input type="text" id="name" name="name" class="form-control customer" 
-                                       value="${customer != null ? customer.name : ''}" 
-                                       placeholder="Enter full name" required>
+                                <input type="text" id="name" name="name" class="form-control customer"
+                                       value="${customer != null ? customer.name : ''}" placeholder="Enter full name" required>
                                 <div class="invalid-feedback"></div>
                             </div>
 
                             <div class="form-group">
                                 <label for="email">Email Address <span class="required">*</span></label>
-                                <input type="email" id="email" name="email" class="form-control customer" 
-                                       value="${customer != null ? customer.email : ''}" 
-                                       placeholder="customer@example.com" required>
+                                <input type="email" id="email" name="email" class="form-control customer"
+                                       value="${customer != null ? customer.email : ''}" placeholder="customer@example.com" required>
                                 <div class="invalid-feedback"></div>
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="password">Password <span class="required">*</span></label>
-                            <input type="password" id="password" name="password" class="form-control customer" 
-                                   value="${customer != null ? customer.password : ''}" 
-                                   placeholder="Minimum 6 characters" required>
-                            <div class="invalid-feedback"></div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="password">Password <span class="required">*</span></label>
+                                <input type="password" id="password" name="password" class="form-control customer"
+                                       value="${customer != null ? customer.password : ''}" placeholder="Minimum 6 characters" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="phone">Phone Number <span class="required">*</span></label>
+                                <input type="tel" id="phone" name="phone" class="form-control customer"
+                                       value="${customer != null ? customer.phone : ''}" placeholder="e.g., 60123456789" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="phone">Phone Number <span class="required">*</span></label>
-                                <input type="tel" id="phone" name="phone" class="form-control customer" 
-                                       value="${customer != null ? customer.phone : ''}" 
-                                       placeholder="e.g., +60123456789" required>
-                                <div class="invalid-feedback"></div>
+                                <label for="nric">NRIC <span class="required">*</span></label>
+                                <input type="text" id="nric" name="nric" class="form-control customer" placeholder="xxxxxx-xx-xxxx"
+                                       value="${customer != null ? customer.ic : ''}" required>
+                                <div class="invalid-feedback" id="icError"></div>
                             </div>
 
                             <div class="form-group">
@@ -97,20 +115,25 @@
                                     <option value="M" ${customer != null && customer.gender == 'M' ? "selected" : ""}>Male</option>
                                 </select>
                                 <div class="invalid-feedback"></div>
-                            </div>
+                            </div> 
+                        </div>
+
+                        <div class="form-group">
+                            <label for="address">Address <span class="required">*</span></label>
+                            <textarea id="address" name="address" class="form-control customer" style="resize: none;" rows="3" required>${customer != null ? customer.address : ''}</textarea>
+                            <div class="invalid-feedback"></div>
                         </div>
 
                         <div class="form-group">
                             <label for="dob">Date of Birth <span class="required">*</span></label>
-                            <input type="date" id="dob" name="dob" class="form-control customer" 
+                            <input type="date" id="dob" name="dob" class="form-control customer"
                                    value="${customer != null ? customer.dob : ''}" required style="line-height: normal">
                             <div class="invalid-feedback"></div>
                         </div>
 
-                        <!-- Profile Picture Section -->
+                        <!-- Profile Picture -->
                         <div class="form-group">
                             <label for="profilePic">Profile Picture <span class="required">*</span></label>
-
                             <div class="file-upload">
                                 <div class="file-upload-wrapper">
                                     <input type="file" class="form-control" id="profilePic" name="profilePic" accept="image/*" required>
@@ -119,21 +142,16 @@
                                         <span>Choose Profile Picture</span>
                                     </label>
                                 </div>
-                                <div class="invalid-feedback" style="display: block;"></div> <!-- Make sure it's visible -->
+                                <div class="invalid-feedback"  id="profilePicError" style="display: block;"></div> <!-- Make sure it's visible -->
                             </div>
                         </div>
 
-                        <div class="form-actions" style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px;">
-                            <a href="${pageContext.request.contextPath}/CustomerServlet?action=viewAll" class="btn btn-secondary" style="text-decoration: none;">
-                                <i class="fa fa-arrow-left"></i> Back to Customer Management
-                            </a>
-                            <button type="submit" class="submit-btn customer" id="submitBtn">
-                                <span class="btn-text">
-                                    <i class="fa fa-user-plus"></i>
-                                    Register Customer
-                                </span>
-                            </button>
-                        </div>
+                        <button type="submit" class="submit-btn customer" id="submitBtn">
+                            <span class="btn-text">
+                                <i class="fa fa-user-plus"></i>
+                                Register Customer
+                            </span>
+                        </button>
                     </form>
                 </div>
             </div>
@@ -143,12 +161,5 @@
 
         <script src="${pageContext.request.contextPath}/js/jquery.min.js"></script>
         <script src="<%= request.getContextPath()%>/js/validate-register.js"></script>
-        <script>
-            $(document).ready(function () {
-                // The validation is already initialized in validate-register.js
-                // No need to call initializeValidation() as it doesn't exist
-                console.log('Customer form validation loaded');
-            });
-        </script>
     </body>
 </html>

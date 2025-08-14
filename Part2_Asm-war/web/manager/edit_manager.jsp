@@ -112,14 +112,14 @@
                             <div class="invalid-feedback"></div>
                         </div>
 
-                        <div class="form-row">
+                       
                             <div class="form-group">
                                 <label for="dob">Date of Birth <span class="required">*</span></label>
                                 <input type="date" id="dob" name="dob" class="form-control manager"
                                        value="${manager.dob}" required style="line-height: normal">
                                 <div class="invalid-feedback"></div>
                             </div>
-                        </div>
+                      
 
                         <!-- Profile Picture -->
                         <div class="form-group">

@@ -11,11 +11,11 @@
 
 <%
     // Check if manager is logged in
-//    Manager loggedInManager = (Manager) session.getAttribute("manager");
-//    if (loggedInManager == null) {
-//        response.sendRedirect(request.getContextPath() + "/login.jsp");
-//        return;
-//    }
+    Manager loggedInManager = (Manager) session.getAttribute("manager");
+    if (loggedInManager == null) {
+        response.sendRedirect(request.getContextPath() + "/login.jsp");
+        return;
+    }
 
     // Get EJB facades using JNDI lookup
     DoctorFacade doctorFacade = null;
@@ -292,9 +292,9 @@
                             <div class="chart-body">
                                 <canvas id="leastDoctorsChart"></canvas>
                             </div>
-                           <p style="font-size: 0.95em;color: #888; padding-left: 16px;padding-right: 16px;">
-                               <i class="fa fa-info-circle" style="color: #667eea"></i> If a doctor's name appears with a rating of 0, it means they have not yet received any customer feedback.
-                           </p>
+                            <p style="font-size: 0.95em;color: #888; padding-left: 16px;padding-right: 16px;">
+                                <i class="fa fa-info-circle" style="color: #667eea"></i> If a doctor's name appears with a rating of 0, it means they have not yet received any customer feedback.
+                            </p>
                         </div>
                     </div>
                     <!-- Least Performing Counter Staff Chart -->
@@ -306,9 +306,9 @@
                             <div class="chart-body">
                                 <canvas id="leastStaffChart"></canvas>
                             </div>
-                           <p style="font-size: 0.95em;color: #888; padding-left: 16px;padding-right: 16px;">
-                               <i class="fa fa-info-circle" style="color: #667eea"></i> If a staff member's name appears with a rating of 0, it means they have not yet received any customer feedback.
-                           </p>
+                            <p style="font-size: 0.95em;color: #888; padding-left: 16px;padding-right: 16px;">
+                                <i class="fa fa-info-circle" style="color: #667eea"></i> If a staff member's name appears with a rating of 0, it means they have not yet received any customer feedback.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -413,11 +413,11 @@
                                         <%
                                             // Get least performing doctors (sorted by lowest rating)
                                             List<Doctor> leastDoctors = new ArrayList<Doctor>();
-                                            
+
                                             if (doctorFacade != null) {
                                                 try {
                                                     List<Doctor> allDoctors = doctorFacade.findAll();
-                                                    
+
                                                     if (!allDoctors.isEmpty()) {
                                                         // Sort by rating ascending (lowest first)
                                                         Collections.sort(allDoctors, new Comparator<Doctor>() {
@@ -427,14 +427,14 @@
                                                                 return rating1.compareTo(rating2);
                                                             }
                                                         });
-                                                        
+
                                                         leastDoctors = allDoctors.subList(0, Math.min(5, allDoctors.size()));
                                                     }
                                                 } catch (Exception e) {
                                                     System.out.println("Error fetching least performing doctors: " + e.getMessage());
                                                 }
                                             }
-                                            
+
                                             if (leastDoctors.isEmpty()) {
                                         %>
                                         <tr>
@@ -445,36 +445,36 @@
                                             </td>
                                         </tr>
                                         <%
-                                            } else {
-                                                rank = 1;
-                                                for (Doctor doctor : leastDoctors) {
+                                        } else {
+                                            rank = 1;
+                                            for (Doctor doctor : leastDoctors) {
                                         %>
                                         <tr>
-                                            <td><%= rank++ %></td>
-                                            <td><%= doctor.getName() != null ? doctor.getName() : "N/A" %></td>
-                                            <td><%= doctor.getSpecialization() != null ? doctor.getSpecialization() : "N/A" %></td>
+                                            <td><%= rank++%></td>
+                                            <td><%= doctor.getName() != null ? doctor.getName() : "N/A"%></td>
+                                            <td><%= doctor.getSpecialization() != null ? doctor.getSpecialization() : "N/A"%></td>
                                             <td>
                                                 <% if (doctor.getRating() == null || doctor.getRating() == 0.0) { %>
-                                                    <span class="rating-badge" style="background-color: #6c757d;">No Rating</span>
-                                                <% } else { %>
-                                                    <span class="rating-badge" style="background-color: #ff6b6b;">
-                                                        <%= df.format(doctor.getRating()) %>/10
-                                                    </span>
+                                                <span class="rating-badge" style="background-color: #6c757d;">No Rating</span>
+                                                <% } else {%>
+                                                <span class="rating-badge" style="background-color: #ff6b6b;">
+                                                    <%= df.format(doctor.getRating())%>/10
+                                                </span>
                                                 <% } %>
                                             </td>
                                             <td>
                                                 <% if (doctor.getRating() == null || doctor.getRating() == 0.0) { %>
-                                                    <span class="status-badge" style="background-color: #ffc107; color: #212529;">Needs Review</span>
+                                                <span class="status-badge" style="background-color: #ffc107; color: #212529;">Needs Review</span>
                                                 <% } else if (doctor.getRating() < 3.5) { %>
-                                                    <span class="status-badge" style="background-color: #dc3545;">Poor</span>
+                                                <span class="status-badge" style="background-color: #dc3545;">Poor</span>
                                                 <% } else { %>
-                                                    <span class="status-badge" style="background-color: #fd7e14;">Below Average</span>
+                                                <span class="status-badge" style="background-color: #fd7e14;">Below Average</span>
                                                 <% } %>
                                             </td>
                                         </tr>
-                                        <% 
+                                        <%
                                                 }
-                                            } 
+                                            }
                                         %>
                                     </tbody>
                                 </table>
@@ -502,11 +502,11 @@
                                         <%
                                             // Get least performing counter staff (sorted by lowest rating)
                                             List<CounterStaff> leastStaff = new ArrayList<CounterStaff>();
-                                            
+
                                             if (counterStaffFacade != null) {
                                                 try {
                                                     List<CounterStaff> allStaff = counterStaffFacade.findAll();
-                                                    
+
                                                     if (!allStaff.isEmpty()) {
                                                         // Sort by rating ascending (lowest first)
                                                         Collections.sort(allStaff, new Comparator<CounterStaff>() {
@@ -516,14 +516,14 @@
                                                                 return rating1.compareTo(rating2);
                                                             }
                                                         });
-                                                        
+
                                                         leastStaff = allStaff.subList(0, Math.min(5, allStaff.size()));
                                                     }
                                                 } catch (Exception e) {
                                                     System.out.println("Error fetching least performing staff: " + e.getMessage());
                                                 }
                                             }
-                                            
+
                                             if (leastStaff.isEmpty()) {
                                         %>
                                         <tr>
@@ -534,35 +534,35 @@
                                             </td>
                                         </tr>
                                         <%
-                                            } else {
-                                                rank = 1;
-                                                for (CounterStaff staff : leastStaff) {
+                                        } else {
+                                            rank = 1;
+                                            for (CounterStaff staff : leastStaff) {
                                         %>
                                         <tr>
-                                            <td><%= rank++ %></td>
-                                            <td><%= staff.getName() != null ? staff.getName() : "N/A" %></td>
+                                            <td><%= rank++%></td>
+                                            <td><%= staff.getName() != null ? staff.getName() : "N/A"%></td>
                                             <td>
                                                 <% if (staff.getRating() == null || staff.getRating() == 0.0) { %>
-                                                    <span class="rating-badge" style="background-color: #6c757d;">No Rating</span>
-                                                <% } else { %>
-                                                    <span class="rating-badge" style="background-color: #ff6b6b;">
-                                                        <%= df.format(staff.getRating()) %>/10
-                                                    </span>
+                                                <span class="rating-badge" style="background-color: #6c757d;">No Rating</span>
+                                                <% } else {%>
+                                                <span class="rating-badge" style="background-color: #ff6b6b;">
+                                                    <%= df.format(staff.getRating())%>/10
+                                                </span>
                                                 <% } %>
                                             </td>
                                             <td>
                                                 <% if (staff.getRating() == null || staff.getRating() == 0.0) { %>
-                                                    <span class="status-badge" style="background-color: #ffc107; color: #212529;">Needs Review</span>
+                                                <span class="status-badge" style="background-color: #ffc107; color: #212529;">Needs Review</span>
                                                 <% } else if (staff.getRating() < 3.5) { %>
-                                                    <span class="status-badge" style="background-color: #dc3545;">Poor</span>
+                                                <span class="status-badge" style="background-color: #dc3545;">Poor</span>
                                                 <% } else { %>
-                                                    <span class="status-badge" style="background-color: #fd7e14;">Below Average</span>
+                                                <span class="status-badge" style="background-color: #fd7e14;">Below Average</span>
                                                 <% } %>
                                             </td>
                                         </tr>
-                                        <% 
+                                        <%
                                                 }
-                                            } 
+                                            }
                                         %>
                                     </tbody>
                                 </table>
@@ -578,48 +578,44 @@
 
         <script>
             let doctorsChart, staffChart, leastDoctorsChart, leastStaffChart;
-
             $(document).ready(function () {
-                initializeCharts();
+            initializeCharts();
             });
-
             function initializeCharts() {
-                // Prepare top doctors data
-                var topDoctorsData = [
+            // Prepare top doctors data
+            var topDoctorsData = [
             <% for (int i = 0; i < topDoctors.size(); i++) {
-                            Doctor doctor = topDoctors.get(i);
-                            if (i > 0) {
-                                out.print(",");
-                            }
-            %>
-                    {
-                        name: '<%= doctor.getName() != null ? doctor.getName().replace("'", "\\'") : "N/A"%>',
-                                rating: <%= doctor.getRating() != null ? doctor.getRating() : 0.0%>
+                    Doctor doctor = topDoctors.get(i);
+                    if (i > 0) {
+                        out.print(",");
                     }
-            <% } %>
-                ];
-
-                // Prepare top staff data
-                var topStaffData = [
-            <% for (int i = 0; i < topStaff.size(); i++) {
-                            CounterStaff staff = topStaff.get(i);
-                            if (i > 0) {
-                                out.print(",");
-                            }
             %>
-                {
-                name: '<%= staff.getName() != null ? staff.getName().replace("'", "\\'") : "N/A"%>',
-                        rating: <%= staff.getRating() != null ? staff.getRating() : 4.0%>
-                }
+            {
+            name: '<%= doctor.getName() != null ? doctor.getName().replace("'", "\\'") : "N/A"%>',
+                    rating: <%= doctor.getRating() != null ? doctor.getRating() : 0.0%>
+            }
+            <% } %>
+            ];
+            // Prepare top staff data
+            var topStaffData = [
+            <% for (int i = 0; i < topStaff.size(); i++) {
+                    CounterStaff staff = topStaff.get(i);
+                    if (i > 0) {
+                        out.print(",");
+                    }
+            %>
+            {
+            name: '<%= staff.getName() != null ? staff.getName().replace("'", "\\'") : "N/A"%>',
+                    rating: <%= staff.getRating() != null ? staff.getRating() : 4.0%>
+            }
             <% }%>
-                ];
-
-                // Prepare least performing doctors data
-                var leastDoctorsData = [
-                <%
+            ];
+            // Prepare least performing doctors data
+            var leastDoctorsData = [
+            <%
                     // Generate JavaScript data for least performing doctors
                     List<Doctor> jsLeastDoctors = new ArrayList<Doctor>();
-                    
+
                     if (doctorFacade != null) {
                         try {
                             List<Doctor> allDoctors = doctorFacade.findAll();
@@ -637,24 +633,25 @@
                             System.out.println("Error in JS data generation for least doctors: " + e.getMessage());
                         }
                     }
-                    
-                     for (int i = 0; i < jsLeastDoctors.size(); i++) {
-        Doctor doctor = jsLeastDoctors.get(i);
-        if (i > 0) out.print(",");
-%>
-    {
-        name: '<%= doctor.getName() != null ? doctor.getName().replace("'", "\\'") : "N/A" %>',
-        rating: <%= doctor.getRating() != null ? doctor.getRating() : 0.0 %>
-    }
-<% } %>
-];
 
-                // Prepare least performing staff data
-                var leastStaffData = [
-                <%
+                    for (int i = 0; i < jsLeastDoctors.size(); i++) {
+                        Doctor doctor = jsLeastDoctors.get(i);
+                        if (i > 0) {
+                            out.print(",");
+                        }
+            %>
+            {
+            name: '<%= doctor.getName() != null ? doctor.getName().replace("'", "\\'") : "N/A"%>',
+                    rating: <%= doctor.getRating() != null ? doctor.getRating() : 0.0%>
+            }
+            <% } %>
+            ];
+            // Prepare least performing staff data
+            var leastStaffData = [
+            <%
                     // Generate JavaScript data for least performing counter staff
                     List<CounterStaff> jsLeastStaff = new ArrayList<CounterStaff>();
-                    
+
                     if (counterStaffFacade != null) {
                         try {
                             List<CounterStaff> allStaff = counterStaffFacade.findAll();
@@ -672,441 +669,421 @@
                             System.out.println("Error in JS data generation for least staff: " + e.getMessage());
                         }
                     }
-                    
+
                     for (int i = 0; i < jsLeastStaff.size(); i++) {
                         CounterStaff staff = jsLeastStaff.get(i);
-                        if (i > 0) out.print(",");
-                %>
-                {
-                    name: '<%= staff.getName() != null ? staff.getName().replace("'", "\\'") : "N/A" %>',
-                    rating: <%= staff.getRating() != null ? staff.getRating() : 0.0 %>
-                }
-                <% } %>];
-
-                createDoctorsChart(topDoctorsData);
-                createStaffChart(topStaffData);
-                createLeastDoctorsChart(leastDoctorsData);
-                createLeastStaffChart(leastStaffData);
+                        if (i > 0) {
+                            out.print(",");
+                        }
+            %>
+            {
+            name: '<%= staff.getName() != null ? staff.getName().replace("'", "\\'") : "N/A"%>',
+                    rating: <%= staff.getRating() != null ? staff.getRating() : 0.0%>
+            }
+            <% }%>];
+            createDoctorsChart(topDoctorsData);
+            createStaffChart(topStaffData);
+            createLeastDoctorsChart(leastDoctorsData);
+            createLeastStaffChart(leastStaffData);
             }
 
             function createDoctorsChart(data) {
-                const ctx = document.getElementById('doctorsChart').getContext('2d');
-                doctorsChart = new Chart(ctx, {
-                    type: 'bar',
+            const ctx = document.getElementById('doctorsChart').getContext('2d');
+            doctorsChart = new Chart(ctx, {
+            type: 'bar',
                     data: {
-                        labels: data.map(function (d) {
-                            return d.name;
-                        }),
-                        datasets: [{
-                                label: 'Rating (out of 10)',
-                                data: data.map(function (d) {
+                    labels: data.map(function (d) {
+                    return d.name;
+                    }),
+                            datasets: [{
+                            label: 'Rating (out of 10)',
+                                    data: data.map(function (d) {
                                     return d.rating;
-                                }),
-                                backgroundColor: 'rgba(244, 18, 18, 0.8)',
-                                borderColor: 'rgba(244, 18, 18, 1)',
-                                borderWidth: 2,
-                                borderRadius: 4
+                                    }),
+                                    backgroundColor: 'rgba(244, 18, 18, 0.8)',
+                                    borderColor: 'rgba(244, 18, 18, 1)',
+                                    borderWidth: 2,
+                                    borderRadius: 4
                             }]
                     },
                     options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
+                    responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
                             legend: {
-                                display: true,
-                                position: 'top'
+                            display: true,
+                                    position: 'top'
                             }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                max: 10,
-                                grid: {
-                                    color: 'rgba(0,0,0,0.1)'
-                                }
                             },
-                            x: {
-                                grid: {
+                            scales: {
+                            y: {
+                            beginAtZero: true,
+                                    max: 10,
+                                    grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                    }
+                            },
+                                    x: {
+                                    grid: {
                                     display: false
-                                }
+                                    }
+                                    }
                             }
-                        }
                     }
-                });
+            });
             }
 
             function createStaffChart(data) {
-                const ctx = document.getElementById('staffChart').getContext('2d');
-                staffChart = new Chart(ctx, {
-                    type: 'bar',
+            const ctx = document.getElementById('staffChart').getContext('2d');
+            staffChart = new Chart(ctx, {
+            type: 'bar',
                     data: {
-                        labels: data.map(function (d) {
-                            return d.name;
-                        }),
-                        datasets: [{
-                                label: 'Rating (out of 10)',
-                                data: data.map(function (d) {
+                    labels: data.map(function (d) {
+                    return d.name;
+                    }),
+                            datasets: [{
+                            label: 'Rating (out of 10)',
+                                    data: data.map(function (d) {
                                     return d.rating;
-                                }),
-                                backgroundColor: 'rgba(44, 37, 119, 0.8)',
-                                borderColor: 'rgba(44, 37, 119, 1)',
-                                borderWidth: 2,
-                                borderRadius: 4
+                                    }),
+                                    backgroundColor: 'rgba(44, 37, 119, 0.8)',
+                                    borderColor: 'rgba(44, 37, 119, 1)',
+                                    borderWidth: 2,
+                                    borderRadius: 4
                             }]
                     },
                     options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
+                    responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
                             legend: {
-                                display: true,
-                                position: 'top'
+                            display: true,
+                                    position: 'top'
                             }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                max: 10,
-                                grid: {
-                                    color: 'rgba(0,0,0,0.1)'
-                                }
                             },
-                            x: {
-                                grid: {
+                            scales: {
+                            y: {
+                            beginAtZero: true,
+                                    max: 10,
+                                    grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                    }
+                            },
+                                    x: {
+                                    grid: {
                                     display: false
-                                }
+                                    }
+                                    }
                             }
-                        }
                     }
-                });
+            });
             }
 
             function createLeastDoctorsChart(data) {
-                const ctx = document.getElementById('leastDoctorsChart').getContext('2d');
-                
-                if (data.length === 0) {
-                    // Display "No Data" message
-                    ctx.font = '16px Arial';
-                    ctx.fillStyle = '#6c757d';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('Not enough records to generate chart', ctx.canvas.width / 2, ctx.canvas.height / 2);
-                    return;
-                }
-                
-                leastDoctorsChart = new Chart(ctx, {
-                    type: 'bar',
+            const ctx = document.getElementById('leastDoctorsChart').getContext('2d');
+            if (data.length === 0) {
+            // Display "No Data" message
+            ctx.font = '16px Arial';
+            ctx.fillStyle = '#6c757d';
+            ctx.textAlign = 'center';
+            ctx.fillText('Not enough records to generate chart', ctx.canvas.width / 2, ctx.canvas.height / 2);
+            return;
+            }
+
+            leastDoctorsChart = new Chart(ctx, {
+            type: 'bar',
                     data: {
-                        labels: data.map(function (d) {
-                            return d.name;
-                        }),
-                        datasets: [{
-                                label: 'Rating (out of 10)',
-                                data: data.map(function (d) {
+                    labels: data.map(function (d) {
+                    return d.name;
+                    }),
+                            datasets: [{
+                            label: 'Rating (out of 10)',
+                                    data: data.map(function (d) {
                                     return d.rating;
-                                }),
-                                backgroundColor: 'rgba(255, 107, 107, 0.8)',
-                                borderColor: 'rgba(220, 53, 69, 1)',
-                                borderWidth: 2,
-                                borderRadius: 4
+                                    }),
+                                    backgroundColor: 'rgba(255, 107, 107, 0.8)',
+                                    borderColor: 'rgba(220, 53, 69, 1)',
+                                    borderWidth: 2,
+                                    borderRadius: 4
                             }]
                     },
                     options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
+                    responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
                             legend: {
-                                display: true,
-                                position: 'top'
+                            display: true,
+                                    position: 'top'
                             }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                max: 10,
-                                grid: {
-                                    color: 'rgba(0,0,0,0.1)'
-                                }
                             },
-                            x: {
-                                grid: {
+                            scales: {
+                            y: {
+                            beginAtZero: true,
+                                    max: 10,
+                                    grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                    }
+                            },
+                                    x: {
+                                    grid: {
                                     display: false
-                                }
+                                    }
+                                    }
                             }
-                        }
                     }
-                });
+            });
             }
 
             function createLeastStaffChart(data) {
-                const ctx = document.getElementById('leastStaffChart').getContext('2d');
-                
-                if (data.length === 0) {
-                    // Display "No Data" message
-                    ctx.font = '16px Arial';
-                    ctx.fillStyle = '#6c757d';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('Not enough records to generate chart', ctx.canvas.width / 2, ctx.canvas.height / 2);
-                    return;
-                }
-                
-                leastStaffChart = new Chart(ctx, {
-                    type: 'bar',
+            const ctx = document.getElementById('leastStaffChart').getContext('2d');
+            if (data.length === 0) {
+            // Display "No Data" message
+            ctx.font = '16px Arial';
+            ctx.fillStyle = '#6c757d';
+            ctx.textAlign = 'center';
+            ctx.fillText('Not enough records to generate chart', ctx.canvas.width / 2, ctx.canvas.height / 2);
+            return;
+            }
+
+            leastStaffChart = new Chart(ctx, {
+            type: 'bar',
                     data: {
-                        labels: data.map(function (d) {
-                            return d.name;
-                        }),
-                        datasets: [{
-                                label: 'Rating (out of 10)',
-                                data: data.map(function (d) {
+                    labels: data.map(function (d) {
+                    return d.name;
+                    }),
+                            datasets: [{
+                            label: 'Rating (out of 10)',
+                                    data: data.map(function (d) {
                                     return d.rating;
-                                }),
-                                backgroundColor: 'rgba(255, 193, 7, 0.8)',
-                                borderColor: 'rgba(253, 126, 20, 1)',
-                                borderWidth: 2,
-                                borderRadius: 4
+                                    }),
+                                    backgroundColor: 'rgba(255, 193, 7, 0.8)',
+                                    borderColor: 'rgba(253, 126, 20, 1)',
+                                    borderWidth: 2,
+                                    borderRadius: 4
                             }]
                     },
                     options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
+                    responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
                             legend: {
-                                display: true,
-                                position: 'top'
+                            display: true,
+                                    position: 'top'
                             }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                max: 10,
-                                grid: {
-                                    color: 'rgba(0,0,0,0.1)'
-                                }
                             },
-                            x: {
-                                grid: {
+                            scales: {
+                            y: {
+                            beginAtZero: true,
+                                    max: 10,
+                                    grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                    }
+                            },
+                                    x: {
+                                    grid: {
                                     display: false
-                                }
+                                    }
+                                    }
                             }
-                        }
                     }
-                });
+            });
             }
 
             function downloadPDF() {
-                // Check if jsPDF is loaded
-                if (typeof window.jspdf === 'undefined') {
-                    alert('PDF generation library is not loaded. Please try again.');
-                    return;
-                }
+            // Check if jsPDF is loaded
+            if (typeof window.jspdf === 'undefined') {
+            alert('PDF generation library is not loaded. Please try again.');
+            return;
+            }
 
-                const {jsPDF} = window.jspdf;
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const pageWidth = pdf.internal.pageSize.getWidth();
-                const pageHeight = pdf.internal.pageSize.getHeight();
+            const {jsPDF} = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            // Show loading message
+            var loadingDiv = document.createElement('div');
+            loadingDiv.innerHTML = '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border:2px solid #ccc;border-radius:10px;z-index:9999;"><i class="fa fa-spinner fa-spin"></i> Generating PDF...</div>';
+            document.body.appendChild(loadingDiv);
+            let currentY = 20;
+            // Add title and header
+            pdf.setFontSize(24);
+            pdf.setTextColor(44, 37, 119);
+            pdf.text('Staff Performance Report', 20, currentY);
+            currentY += 10;
+            // Add subtitle
+            pdf.setFontSize(12);
+            pdf.setTextColor(100, 100, 100);
+            pdf.text('APU Medical Center', 20, currentY);
+            currentY += 8;
+            pdf.text('Generated on: ' + new Date().toLocaleDateString(), 20, currentY);
+            currentY += 15;
+            // Add KPI summary section
+            pdf.setFontSize(16);
+            pdf.setTextColor(44, 37, 119);
+            pdf.text('Performance Summary', 20, currentY);
+            currentY += 10;
+            pdf.setFontSize(11);
+            pdf.setTextColor(0, 0, 0);
+            pdf.text('Total Doctors: <%= totalDoctors%>', 20, currentY);
+            pdf.text('Counter Staff: <%= totalStaff%>', 70, currentY);
+            currentY += 7;
+            pdf.text('Average Doctor Rating: <%= df.format(avgDoctorRating)%>/10', 20, currentY);
+            pdf.text('Total Appointments: <%= totalAppointments%>', 70, currentY);
+            currentY += 20;
+            // Function to capture and add chart to PDF
+            function addChartToPDF(chartId, title, callback) {
+            const canvas = document.getElementById(chartId);
+            if (!canvas) {
+            callback();
+            return;
+            }
 
-                // Show loading message
-                var loadingDiv = document.createElement('div');
-                loadingDiv.innerHTML = '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border:2px solid #ccc;border-radius:10px;z-index:9999;"><i class="fa fa-spinner fa-spin"></i> Generating PDF...</div>';
-                document.body.appendChild(loadingDiv);
+            html2canvas(canvas, {
+            scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff'
+            }).then(function (chartCanvas) {
+            const chartImg = chartCanvas.toDataURL('image/png');
+            const imgWidth = 170;
+            const imgHeight = (chartCanvas.height * imgWidth) / chartCanvas.width;
+            // Check if we need a new page
+            if (currentY + imgHeight + 20 > pageHeight - 20) {
+            pdf.addPage();
+            currentY = 20;
+            }
 
-                let currentY = 20;
-                
-                // Add title and header
-                pdf.setFontSize(24);
-                pdf.setTextColor(44, 37, 119);
-                pdf.text('Staff Performance Report', 20, currentY);
-                currentY += 10;
+            // Add chart title
+            pdf.setFontSize(14);
+            pdf.setTextColor(44, 37, 119);
+            pdf.text(title, 20, currentY);
+            currentY += 10;
+            // Add chart image
+            pdf.addImage(chartImg, 'PNG', 20, currentY, imgWidth, imgHeight);
+            currentY += imgHeight + 15;
+            callback();
+            }).catch(function (error) {
+            console.error('Error capturing chart:', error);
+            callback();
+            });
+            }
 
-                // Add subtitle
-                pdf.setFontSize(12);
-                pdf.setTextColor(100, 100, 100);
-                pdf.text('APU Medical Center', 20, currentY);
-                currentY += 8;
-                pdf.text('Generated on: ' + new Date().toLocaleDateString(), 20, currentY);
-                currentY += 15;
+            // Function to add table container to PDF
+            function addTableToPDF(tableContainerSelector, title, callback) {
+            const tableContainer = document.querySelector(tableContainerSelector);
+            if (!tableContainer) {
+            console.log('Table container not found:', tableContainerSelector);
+            callback();
+            return;
+            }
 
-                // Add KPI summary section
-                pdf.setFontSize(16);
-                pdf.setTextColor(44, 37, 119);
-                pdf.text('Performance Summary', 20, currentY);
-                currentY += 10;
+            html2canvas(tableContainer, {
+            scale: 1.5,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff'
+            }).then(function (tableCanvas) {
+            const tableImg = tableCanvas.toDataURL('image/png');
+            const imgWidth = 170;
+            const imgHeight = (tableCanvas.height * imgWidth) / tableCanvas.width;
+            // Check if we need a new page
+            if (currentY + imgHeight + 20 > pageHeight - 20) {
+            pdf.addPage();
+            currentY = 20;
+            }
 
-                pdf.setFontSize(11);
-                pdf.setTextColor(0, 0, 0);
-                pdf.text('Total Doctors: <%= totalDoctors %>', 20, currentY);
-                pdf.text('Counter Staff: <%= totalStaff %>', 70, currentY);
-                currentY += 7;
-                pdf.text('Average Doctor Rating: <%= df.format(avgDoctorRating) %>/10', 20, currentY);
-                pdf.text('Total Appointments: <%= totalAppointments %>', 70, currentY);
-                currentY += 20;
+            // Add table title
+            pdf.setFontSize(14);
+            pdf.setTextColor(44, 37, 119);
+            pdf.text(title, 20, currentY);
+            currentY += 10;
+            // Add table image
+            pdf.addImage(tableImg, 'PNG', 20, currentY, imgWidth, imgHeight);
+            currentY += imgHeight + 15;
+            callback();
+            }).catch(function (error) {
+            console.error('Error capturing table:', error);
+            callback();
+            });
+            }
 
-                // Function to capture and add chart to PDF
-                function addChartToPDF(chartId, title, callback) {
-                    const canvas = document.getElementById(chartId);
-                    if (!canvas) {
-                        callback();
-                        return;
-                    }
+            // Sequential processing of charts and tables
+            addChartToPDF('doctorsChart', 'Top Doctors Performance Chart', function() {
+            addChartToPDF('staffChart', 'Counter Staff Performance Chart', function() {
+            addChartToPDF('leastDoctorsChart', 'Least Performing Doctors Chart', function() {
+            addChartToPDF('leastStaffChart', 'Least Performing Staff Chart', function() {
+            // Add a new page for tables
+            pdf.addPage();
+            currentY = 20;
+            // Add tables section header
+            pdf.setFontSize(18);
+            pdf.setTextColor(44, 37, 119);
+            pdf.text('Performance Tables', 20, currentY);
+            currentY += 15;
+            // Get all table containers and capture them directly
+            const tableContainers = document.querySelectorAll('.table-container');
+            console.log('Found table containers:', tableContainers.length);
+            if (tableContainers.length >= 4) {
+            // Capture each table container by direct reference
+            function captureTableByIndex(index, title, callback) {
+            if (index >= tableContainers.length) {
+            callback();
+            return;
+            }
 
-                    html2canvas(canvas, {
-                        scale: 2,
-                        useCORS: true,
-                        logging: false,
-                        backgroundColor: '#ffffff'
-                    }).then(function (chartCanvas) {
-                        const chartImg = chartCanvas.toDataURL('image/png');
-                        const imgWidth = 170;
-                        const imgHeight = (chartCanvas.height * imgWidth) / chartCanvas.width;
+            const tableContainer = tableContainers[index];
+            html2canvas(tableContainer, {
+            scale: 1.5,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff'
+            }).then(function (tableCanvas) {
+            const tableImg = tableCanvas.toDataURL('image/png');
+            const imgWidth = 170;
+            const imgHeight = (tableCanvas.height * imgWidth) / tableCanvas.width;
+            // Check if we need a new page
+            if (currentY + imgHeight + 20 > pageHeight - 20) {
+            pdf.addPage();
+            currentY = 20;
+            }
 
-                        // Check if we need a new page
-                        if (currentY + imgHeight + 20 > pageHeight - 20) {
-                            pdf.addPage();
-                            currentY = 20;
-                        }
+            // Add table title
+            pdf.setFontSize(14);
+            pdf.setTextColor(44, 37, 119);
+            pdf.text(title, 20, currentY);
+            currentY += 10;
+            // Add table image
+            pdf.addImage(tableImg, 'PNG', 20, currentY, imgWidth, imgHeight);
+            currentY += imgHeight + 15;
+            callback();
+            }).catch(function (error) {
+            console.error('Error capturing table:', error);
+            callback();
+            });
+            }
 
-                        // Add chart title
-                        pdf.setFontSize(14);
-                        pdf.setTextColor(44, 37, 119);
-                        pdf.text(title, 20, currentY);
-                        currentY += 10;
-
-                        // Add chart image
-                        pdf.addImage(chartImg, 'PNG', 20, currentY, imgWidth, imgHeight);
-                        currentY += imgHeight + 15;
-
-                        callback();
-                    }).catch(function (error) {
-                        console.error('Error capturing chart:', error);
-                        callback();
-                    });
-                }
-
-                // Function to add table container to PDF
-                function addTableToPDF(tableContainerSelector, title, callback) {
-                    const tableContainer = document.querySelector(tableContainerSelector);
-                    if (!tableContainer) {
-                        console.log('Table container not found:', tableContainerSelector);
-                        callback();
-                        return;
-                    }
-
-                    html2canvas(tableContainer, {
-                        scale: 1.5,
-                        useCORS: true,
-                        logging: false,
-                        backgroundColor: '#ffffff'
-                    }).then(function (tableCanvas) {
-                        const tableImg = tableCanvas.toDataURL('image/png');
-                        const imgWidth = 170;
-                        const imgHeight = (tableCanvas.height * imgWidth) / tableCanvas.width;
-
-                        // Check if we need a new page
-                        if (currentY + imgHeight + 20 > pageHeight - 20) {
-                            pdf.addPage();
-                            currentY = 20;
-                        }
-
-                        // Add table title
-                        pdf.setFontSize(14);
-                        pdf.setTextColor(44, 37, 119);
-                        pdf.text(title, 20, currentY);
-                        currentY += 10;
-
-                        // Add table image
-                        pdf.addImage(tableImg, 'PNG', 20, currentY, imgWidth, imgHeight);
-                        currentY += imgHeight + 15;
-
-                        callback();
-                    }).catch(function (error) {
-                        console.error('Error capturing table:', error);
-                        callback();
-                    });
-                }
-
-                // Sequential processing of charts and tables
-                addChartToPDF('doctorsChart', 'Top Doctors Performance Chart', function() {
-                    addChartToPDF('staffChart', 'Counter Staff Performance Chart', function() {
-                        addChartToPDF('leastDoctorsChart', 'Least Performing Doctors Chart', function() {
-                            addChartToPDF('leastStaffChart', 'Least Performing Staff Chart', function() {
-                                // Add a new page for tables
-                                pdf.addPage();
-                                currentY = 20;
-                                
-                                // Add tables section header
-                                pdf.setFontSize(18);
-                                pdf.setTextColor(44, 37, 119);
-                                pdf.text('Performance Tables', 20, currentY);
-                                currentY += 15;
-
-                                // Get all table containers and capture them directly
-                                const tableContainers = document.querySelectorAll('.table-container');
-                                console.log('Found table containers:', tableContainers.length);
-                                
-                                if (tableContainers.length >= 4) {
-                                    // Capture each table container by direct reference
-                                    function captureTableByIndex(index, title, callback) {
-                                        if (index >= tableContainers.length) {
-                                            callback();
-                                            return;
-                                        }
-                                        
-                                        const tableContainer = tableContainers[index];
-                                        html2canvas(tableContainer, {
-                                            scale: 1.5,
-                                            useCORS: true,
-                                            logging: false,
-                                            backgroundColor: '#ffffff'
-                                        }).then(function (tableCanvas) {
-                                            const tableImg = tableCanvas.toDataURL('image/png');
-                                            const imgWidth = 170;
-                                            const imgHeight = (tableCanvas.height * imgWidth) / tableCanvas.width;
-
-                                            // Check if we need a new page
-                                            if (currentY + imgHeight + 20 > pageHeight - 20) {
-                                                pdf.addPage();
-                                                currentY = 20;
-                                            }
-
-                                            // Add table title
-                                            pdf.setFontSize(14);
-                                            pdf.setTextColor(44, 37, 119);
-                                            pdf.text(title, 20, currentY);
-                                            currentY += 10;
-
-                                            // Add table image
-                                            pdf.addImage(tableImg, 'PNG', 20, currentY, imgWidth, imgHeight);
-                                            currentY += imgHeight + 15;
-
-                                            callback();
-                                        }).catch(function (error) {
-                                            console.error('Error capturing table:', error);
-                                            callback();
-                                        });
-                                    }
-                                    
-                                    // Capture tables sequentially
-                                    captureTableByIndex(0, 'Top Doctors', function() {
-                                        captureTableByIndex(1, 'Top Counter Staff', function() {
-                                            captureTableByIndex(2, 'Least Performing Doctors', function() {
-                                                captureTableByIndex(3, 'Least Performing Counter Staff', function() {
-                                                    // Remove loading message and save PDF
-                                                    document.body.removeChild(loadingDiv);
-                                                    pdf.save('Staff_Performance_Report_' + new Date().toISOString().split('T')[0] + '.pdf');
-                                                });
-                                            });
-                                        });
-                                    });
-                                } else {
-                                    // If tables not found, just finish without tables
-                                    console.log('Not all tables found, finishing PDF without tables');
-                                    document.body.removeChild(loadingDiv);
-                                    pdf.save('Staff_Performance_Report_' + new Date().toISOString().split('T')[0] + '.pdf');
-                                }
-                            });
-                        });
-                    });
-                });
+            // Capture tables sequentially
+            captureTableByIndex(0, 'Top Doctors', function() {
+            captureTableByIndex(1, 'Top Counter Staff', function() {
+            captureTableByIndex(2, 'Least Performing Doctors', function() {
+            captureTableByIndex(3, 'Least Performing Counter Staff', function() {
+            // Remove loading message and save PDF
+            document.body.removeChild(loadingDiv);
+            pdf.save('Staff_Performance_Report_' + new Date().toISOString().split('T')[0] + '.pdf');
+            });
+            });
+            });
+            });
+            } else {
+            // If tables not found, just finish without tables
+            console.log('Not all tables found, finishing PDF without tables');
+            document.body.removeChild(loadingDiv);
+            pdf.save('Staff_Performance_Report_' + new Date().toISOString().split('T')[0] + '.pdf');
+            }
+            });
+            });
+            });
+            });
             }
         </script>
     </body>

@@ -11,11 +11,11 @@
 
 <%
     // Check if manager is logged in
-//    Manager loggedInManager = (Manager) session.getAttribute("manager");
-//    if (loggedInManager == null) {
-//        response.sendRedirect(request.getContextPath() + "/login.jsp");
-//        return;
-//    }
+    Manager loggedInManager = (Manager) session.getAttribute("manager");
+    if (loggedInManager == null) {
+        response.sendRedirect(request.getContextPath() + "/login.jsp");
+        return;
+    }
 
     // Get EJB facades using JNDI lookup
     DoctorFacade doctorFacade = null;
@@ -44,7 +44,7 @@
     // Gender counts
     int maleDoctors = 0, femaleDoctors = 0;
     int maleCounterStaff = 0, femaleCounterStaff = 0;
-    int maleManagers = 1, femaleManagers = 0; // Default assuming current manager is male
+    int maleManagers = 0, femaleManagers = 0; // Default assuming current manager is male
 
     // Specialization counts
     Map<String, Integer> specializationCounts = new HashMap<String, Integer>();

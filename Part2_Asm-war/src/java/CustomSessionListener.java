@@ -17,6 +17,8 @@ public class CustomSessionListener implements HttpSessionListener {
             // Safely clean up session attributes
             se.getSession().removeAttribute("manager");
             se.getSession().removeAttribute("customer");
+            se.getSession().removeAttribute("staff");
+            se.getSession().removeAttribute("doctor");
         } catch (Exception e) {
             // Silently ignore any cleanup errors to prevent NPE
             System.out.println("Session cleanup completed safely");

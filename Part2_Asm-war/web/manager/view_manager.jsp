@@ -144,48 +144,6 @@
                 display: inline-block;
                 transition: all 0.3s ease;
             }
-
-            .btn-edit {
-                background: #2196F3;
-                color: white;
-                border: 2px solid #2196F3;
-            }
-
-            .btn-edit:hover {
-                background: #1976D2;
-                border-color: #1976D2;
-                color: white;
-            }
-
-            .btn-delete {
-                background: transparent;
-                color: #f44336;
-                border: 2px solid #f44336;
-            }
-
-            .btn-delete:hover {
-                background: #f44336;
-                color: white;
-            }
-
-            .btn-back {
-                background: #6c757d;
-                color: white;
-                border: 2px solid #6c757d;
-            }
-
-            .btn-back:hover {
-                background: #5a6268;
-                border-color: #5a6268;
-                color: white;
-            }
-
-            .btn-disabled {
-                background: #e0e0e0;
-                color: #9e9e9e;
-                border: 2px solid #e0e0e0;
-                cursor: not-allowed;
-            }
         </style>
     </head>
 
@@ -225,17 +183,16 @@
                             <img src="<%= profilePic%>" class="profile-pic" alt="<%= profilePic%> Profile Picture">
                         </div>
                         <h2 style="color: white"><%= viewManager.getName()%></h2>
-                        <div>
-                            <div class="role-badge">
-                                System Manager
-                            </div>
-                            <br>
-                            <% if (viewManager.getId() == loggedInManager.getId()) { %>
-                            <div class="current-user-badge">
-                                Current User
-                            </div>
-                            <% }%>
+                        <div class="role-badge">
+                            System Manager
                         </div>
+                        <br>
+                        <% if (viewManager.getId() == loggedInManager.getId()) { %>
+                        <div class="current-user-badge">
+                            Current User
+                        </div>
+                        <% }%>
+
                     </div>
 
                     <!-- Manager Information -->

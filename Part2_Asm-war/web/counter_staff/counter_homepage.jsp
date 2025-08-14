@@ -22,8 +22,7 @@
     // Check if we need to load dashboard data
     if (request.getAttribute("totalCustomers") == null) {
         // Redirect to servlet to load dashboard data
-        response.sendRedirect(request.getContextPath
-        () + "/CounterStaffServletJam?action=dashboard");
+        response.sendRedirect(request.getContextPath() + "/CounterStaffServletJam?action=dashboard");
         return;
     }
 
@@ -33,7 +32,7 @@
     List<Appointment> recentAppointments = (List<Appointment>) request.getAttribute("recentAppointments");
     List<Payment> pendingPayments = (List<Payment>) request.getAttribute("pendingPayments");
     List<Feedback> recentFeedbacks = (List<Feedback>) request.getAttribute("recentFeedbacks");
-    
+
     // Dashboard statistics
     Integer totalCustomers = (Integer) request.getAttribute("totalCustomers");
     Integer totalAppointments = (Integer) request.getAttribute("totalAppointments");
@@ -45,14 +44,30 @@
     Double todayPayment = (Double) request.getAttribute("todayPayment");
 
     // Default values if null
-    if (totalCustomers == null) totalCustomers = 0;
-    if (totalAppointments == null) totalAppointments = 0;
-    if (pendingAppointmentCount == null) pendingAppointmentCount = 0;
-    if (approvedAppointments == null) approvedAppointments = 0;
-    if (overdueAppointments == null) overdueAppointments = 0;
-    if (completedAppointments == null) completedAppointments = 0;
-    if (pendingPaymentCount == null) pendingPaymentCount = 0;
-    if (todayPayment == null) todayPayment = 0.0;
+    if (totalCustomers == null) {
+        totalCustomers = 0;
+    }
+    if (totalAppointments == null) {
+        totalAppointments = 0;
+    }
+    if (pendingAppointmentCount == null) {
+        pendingAppointmentCount = 0;
+    }
+    if (approvedAppointments == null) {
+        approvedAppointments = 0;
+    }
+    if (overdueAppointments == null) {
+        overdueAppointments = 0;
+    }
+    if (completedAppointments == null) {
+        completedAppointments = 0;
+    }
+    if (pendingPaymentCount == null) {
+        pendingPaymentCount = 0;
+    }
+    if (todayPayment == null) {
+        todayPayment = 0.0;
+    }
 
     DecimalFormat currencyFormat = new DecimalFormat("#,##0.00");
 %>
@@ -62,8 +77,8 @@
     <head>
         <title>Counter Staff Homepage - APU Medical Center</title>
         <%@ include file="/includes/head.jsp" %>
-        <link rel="stylesheet" href="<%= contextPath %>/css/staff.css">
-        
+        <link rel="stylesheet" href="<%= contextPath%>/css/staff.css">
+
     </head>
 
     <body id="top" data-spy="scroll" data-target=".navbar-collapse" data-offset="50">
@@ -107,7 +122,7 @@
                                 <span class="stat-label">Pending</span>
                                 <% if (pendingAppointmentCount > 0) { %>
                                 <span class="urgent-indicator new">New</span>
-                                <% } %>
+                                <% }%>
                             </div>
                         </div>
                     </div>
@@ -120,7 +135,7 @@
                                 <span class="stat-label">Overdue</span>
                                 <% if (overdueAppointments > 0) { %>
                                 <span class="urgent-indicator">!</span>
-                                <% } %>
+                                <% }%>
                             </div>
                         </div>
                     </div>
@@ -133,7 +148,7 @@
                                 <span class="stat-label">Pending Payments</span>
                                 <% if (pendingPaymentCount > 0) { %>
                                 <span class="urgent-indicator payment">!</span>
-                                <% } %>
+                                <% }%>
                             </div>
                         </div>
                     </div>
@@ -172,7 +187,7 @@
                             </div>
                         </a>
                     </div>
-                    
+
                     <!-- Appointment Booking -->
                     <div class="col-md-3 col-sm-6">
                         <a href="<%= request.getContextPath()%>/AppointmentServlet?action=book" style="text-decoration: none;">
@@ -185,7 +200,7 @@
                             </div>
                         </a>
                     </div>
-                    
+
                     <!-- Appointment Management -->
                     <div class="col-md-3 col-sm-6">
                         <a href="<%= request.getContextPath()%>/AppointmentServlet?action=manage" style="text-decoration: none;">
@@ -198,7 +213,7 @@
                             </div>
                         </a>
                     </div>
-                    
+
                     <!-- Payment Collection -->
                     <div class="col-md-3 col-sm-6">
                         <a href="<%= request.getContextPath()%>/counter_staff/staff_payment.jsp" style="text-decoration: none;">
@@ -212,7 +227,7 @@
                         </a>
                     </div>
                 </div>
-                
+
                 <!-- Second Row of Actions -->
                 <div class="row" style="margin-top: 20px;">
                     <!-- Generate Receipts -->
@@ -227,7 +242,7 @@
                             </div>
                         </a>
                     </div>
-                    
+
                     <!-- View Treatments -->
                     <div class="col-md-3 col-sm-6">
                         <a href="<%= request.getContextPath()%>/counter_staff/view_treatments.jsp" style="text-decoration: none;">
@@ -240,20 +255,20 @@
                             </div>
                         </a>
                     </div>
-                    
-                    <!-- Customer Ratings -->
+
+                    <!-- My Ratings -->
                     <div class="col-md-3 col-sm-6">
-                        <a href="<%= request.getContextPath()%>/counter_staff/view_ratings.jsp" style="text-decoration: none;">
+                        <a href="<%= request.getContextPath()%>/CounterStaffServlet?action=viewMyRatings">
                             <div class="action-card wow fadeInUp" data-wow-delay="0.8s">
                                 <div class="action-icon counter-staff">
                                     <i class="fa fa-star"></i>
                                 </div>
-                                <div class="action-title">Customer Ratings</div>
+                                <div class="action-title">My Ratings</div>
                                 <div class="action-desc">View customer feedback and ratings received</div>
                             </div>
                         </a>
                     </div>
-                    
+
                     <!-- My Profile -->
                     <div class="col-md-3 col-sm-6">
                         <a href="<%= request.getContextPath()%>/profile.jsp" style="text-decoration: none;">
@@ -279,9 +294,9 @@
                         <div class="section-header">
                             <h3><i class="fa fa-exclamation-triangle" style="color: #dc3545;"></i> Priority Tasks</h3>
                         </div>
-                        
+
                         <!-- Overdue Appointments -->
-                        <% if (overdueAppointments > 0) { %>
+                        <% if (overdueAppointments > 0) {%>
                         <div class="priority-card wow fadeInRight animated" data-wow-delay="0.2s" style="margin-bottom: 15px; padding: 15px; border-radius: 8px; visibility: visible; animation-duration: 0.2s; animation-name: fadeInLeft">
                             <div class="row">
                                 <div class="col-sm-8">
@@ -301,9 +316,9 @@
                             </div>
                         </div>
                         <% } %>
-                        
+
                         <!-- Pending Appointments -->
-                        <% if (pendingAppointmentCount > 0) { %>
+                        <% if (pendingAppointmentCount > 0) {%>
                         <div class="priority-card wow fadeInRight animated" data-wow-delay="0.6s" style="margin-bottom: 15px; padding: 15px; border-radius: 8px; visibility: visible; animation-duration: 0.6s; animation-name: fadeInLeft">
                             <div class="row">
                                 <div class="col-sm-8">
@@ -323,9 +338,9 @@
                             </div>
                         </div>
                         <% } %>
-                        
+
                         <!-- Pending Payments -->
-                        <% if (pendingPaymentCount > 0) { %>
+                        <% if (pendingPaymentCount > 0) {%>
                         <div class="priority-card wow fadeInRight animated" data-wow-delay="0.4s" style="margin-bottom: 15px; padding: 15px; border-radius: 8px; visibility: visible; animation-duration: 0.4s; animation-name: fadeInLeft">
                             <div class="row">
                                 <div class="col-sm-8">
@@ -345,7 +360,7 @@
                             </div>
                         </div>
                         <% } %>
-                        
+
                         <!-- If no priority tasks -->
                         <% if (overdueAppointments == 0 && pendingPaymentCount == 0 && pendingAppointmentCount == 0) { %>
                         <div class="alert alert-success">
@@ -360,7 +375,7 @@
                         <div class="section-header">
                             <h3><i class="fa fa-clock-o"></i> Recent Activities</h3>
                         </div>
-                        
+
                         <%
                             if (recentAppointments != null && !recentAppointments.isEmpty()) {
                                 int maxAppointments = Math.min(5, recentAppointments.size());
@@ -370,7 +385,7 @@
                                         String statusClass = "status-pending";
                                         String statusText = "Pending";
                                         String actionText = "";
-                                        
+
                                         if (apt.getStatus() != null) {
                                             String status = apt.getStatus().toLowerCase();
                                             if ("approved".equals(status)) {
@@ -407,10 +422,10 @@
                                         <%
                                             java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("EEE MMM dd yyyy");
                                         %>
-                                        <%= apt.getAppointmentDate() != null ? sdf.format(apt.getAppointmentDate()) : "N/A" %>
-                                        <% if (!actionText.isEmpty()) { %>
-                                        - <%= actionText %>
-                                        <% } %>
+                                        <%= apt.getAppointmentDate() != null ? sdf.format(apt.getAppointmentDate()) : "N/A"%>
+                                        <% if (!actionText.isEmpty()) {%>
+                                        - <%= actionText%>
+                                        <% }%>
                                     </small>
                                 </div>
                                 <div class="col-sm-4 text-right">
@@ -421,16 +436,16 @@
                             </div>
                         </div>
                         <%
-                                    }
                                 }
-                            } else {
+                            }
+                        } else {
                         %>
                         <div class="alert alert-info">
                             <i class="fa fa-info-circle"></i>
                             No recent activities to display.
                         </div>
-                        <% } %>
-                        
+                        <% }%>
+
                         <div class="text-center" style="margin-top: 20px;">
                             <a href="<%= request.getContextPath()%>/counter_staff/manage_appointments.jsp" class="btn btn-success">
                                 <i class="fa fa-calendar"></i> View All Appointments
@@ -438,7 +453,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Performance Summary Row -->
                 <div class="row" style="margin-top: 30px;">
                     <div class="col-md-12">
@@ -447,7 +462,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="row performance-row">
                     <!-- My Rating -->
                     <div class="col-md-3 col-sm-6">
@@ -457,16 +472,16 @@
                                     <i class="fa fa-star" style="color: #ffc107;"></i> My Rating
                                 </h4>
                                 <p style="margin: 10px 0; font-size: 1.5em; color: #28a745; font-weight: bold;">
-                                    <% if (loggedInStaff.getRating() != null && loggedInStaff.getRating() > 0) { %>
+                                    <% if (loggedInStaff.getRating() != null && loggedInStaff.getRating() > 0) {%>
                                     <%= String.format("%.1f", loggedInStaff.getRating())%>/10
                                     <% } else { %>
                                     Not rated yet
-                                    <% } %>
+                                    <% }%>
                                 </p>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Today's Appointments -->
                     <div class="col-md-3 col-sm-6">
                         <div class="staff-card wow fadeInUp" data-wow-delay="0.3s">
@@ -481,7 +496,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Customer Feedback -->
                     <div class="col-md-3 col-sm-6">
                         <div class="staff-card wow fadeInUp" data-wow-delay="0.4s">
@@ -496,7 +511,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Quick Stats -->
                     <div class="col-md-3 col-sm-6">
                         <div class="staff-card wow fadeInUp" data-wow-delay="0.5s">
@@ -520,45 +535,45 @@
 
         <script>
             // Counter staff specific JavaScript
-            $(document).ready(function() {
+            $(document).ready(function () {
                 // Initialize dashboard
                 console.log('Counter Staff Dashboard loaded successfully');
-                
+
                 // Add click tracking for dashboard actions
-                $('.action-card').click(function() {
+                $('.action-card').click(function () {
                     const actionTitle = $(this).find('.action-title').text();
                     console.log('Counter Staff action clicked:', actionTitle);
                 });
-                
+
                 // Auto-refresh priority indicators every 5 minutes
-                setInterval(function() {
+                setInterval(function () {
                     // You can implement AJAX refresh here if needed
                     console.log('Checking for updates...');
                 }, 300000); // 5 minutes
-                
+
                 // Highlight urgent tasks
-                $('.urgent-indicator').each(function() {
+                $('.urgent-indicator').each(function () {
                     $(this).parent().parent().parent().addClass('priority-highlight');
                 });
             });
-            
+
             // Helper function to show notifications
             function showNotification(message, type = 'info') {
-                const alertClass = type === 'success' ? 'alert-success' : 
-                                  type === 'warning' ? 'alert-warning' : 
-                                  type === 'error' ? 'alert-danger' : 'alert-info';
-                
+                const alertClass = type === 'success' ? 'alert-success' :
+                        type === 'warning' ? 'alert-warning' :
+                        type === 'error' ? 'alert-danger' : 'alert-info';
+
                 const notification = $(`
                     <div class="alert ${alertClass} alert-dismissible" style="position: fixed; top: 80px; right: 20px; z-index: 1000; min-width: 300px;">
                         <button type="button" class="close" data-dismiss="alert">&times;</button>
-                        ${message}
+            ${message}
                     </div>
                 `);
-                
+
                 $('body').append(notification);
-                
+
                 // Auto-hide after 5 seconds
-                setTimeout(function() {
+                setTimeout(function () {
                     notification.fadeOut();
                 }, 5000);
             }

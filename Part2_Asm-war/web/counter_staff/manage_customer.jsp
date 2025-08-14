@@ -7,40 +7,37 @@
 <%@ page import="java.text.SimpleDateFormat" %>
 
 <%
-    // Check if manager is logged in
-//    Manager loggedInManager = (Manager) session.getAttribute("manager");
-//
-//    if (loggedInManager == null) {
-//        response.sendRedirect(request.getContextPath() + "/login.jsp");
-//        return;
-//    }
-//
+    // Check if counter staff is logged in
+    CounterStaff loggedInStaff = (CounterStaff) session.getAttribute("staff");
+
+    if (loggedInStaff == null) {
+        response.sendRedirect(request.getContextPath() + "/login.jsp");
+        return;
+    }
+
     // Retrieve customer data from request attributes
     List<Customer> customerList = (List<Customer>) request.getAttribute("customerList");
 
     // Debug output
-    System.out.println("doctorList: " + (customerList != null ? customerList.size() : "null"));
+    System.out.println("customerList: " + (customerList != null ? customerList.size() : "null"));
 
     // Get search/filter parameters
     String searchQuery = request.getParameter("search");
-    String roleFilter = request.getParameter("role");
     String genderFilter = request.getParameter("gender");
 
     if (searchQuery == null) {
         searchQuery = "";
     }
-    if (roleFilter == null) {
-        roleFilter = "all";
-    }
+
     if (genderFilter == null) {
         genderFilter = "all";
     }
 
-//    // Get success/error messages
+    // Get success/error messages
     String successMsg = request.getParameter("success");
     String errorMsg = request.getParameter("error");
 
-//    SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy");
+    SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy");
 %>
 
 <!DOCTYPE html>
@@ -90,18 +87,10 @@
                 <div class="alert alert-success alert-dismissible wow fadeInUp">
                     <button type="button" class="close" data-dismiss="alert">&times;</button>
                     <i class="fa fa-check-circle"></i>
-                    <% if ("staff_added".equals(successMsg)) { %>
-                    Customer added successfully!
-                    <% } else if ("customer_registered".equals(successMsg)) { %>
-                    Customer registered successfully!
-                    <% } else if ("staff_updated".equals(successMsg)) { %>
-                    Customer updated successfully!
+                    <% if ("customer_deleted".equals(successMsg)) { %>
+                    Customer deleted successfully!
                     <% } else if ("customer_updated".equals(successMsg)) { %>
                     Customer updated successfully!
-                    <% } else if ("staff_deleted".equals(successMsg)) { %>
-                    Customer deleted successfully!
-                    <% } else if ("customer_deleted".equals(successMsg)) { %>
-                    Customer deleted successfully!
                     <% } else { %>
                     Operation completed successfully!
                     <% } %>
@@ -115,41 +104,19 @@
                     <% if ("email_exists".equals(errorMsg)) { %>
                     Email address already exists!
                     <% } else if ("delete_failed".equals(errorMsg)) { %>
-                    Cannot delete customer. Please contact manager for more details.
+                    Cannot delete customer, please try again.
                     <% } else if ("invalid_data".equals(errorMsg)) { %>
                     Please check all required fields and try again.
-                    <% } else if ("customer_not_found".equals(errorMsg)) { %>
-                    Customer not found. It may have been deleted by another user.
-                    <% } else if ("invalid_id".equals(errorMsg)) { %>
-                    Invalid customer ID provided.
-                    <% } else if ("missing_id".equals(errorMsg)) { %>
-                    Customer ID is required for this operation.
-                    <% } else if ("system_error".equals(errorMsg)) { %>
-                    A system error occurred. Please try again later.
-                    <% } else if ("database_error".equals(errorMsg)) { %>
-                    Database connection error. Please contact support.
                     <% } else { %>
                     An error occurred. Please try again.
                     <% } %>
                 </div>
                 <% }%>
 
-                <!-- Info Message for No Results -->
-                <% 
-                String infoMessage = (String) request.getAttribute("infoMessage");
-                if (infoMessage != null) { %>
-                <div class="alert alert-info alert-dismissible wow fadeInUp">
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
-                    <i class="fa fa-info-circle"></i>
-                    <%= infoMessage %>
-                </div>
-                <% }%>
-
                 <!-- SEARCH AND FILTER SECTION -->
                 <div class="search-filter-section wow fadeInUp" data-wow-delay="0.2s">
-                    <h3><i class="fa fa-search"></i> Search & Filter Customers</h3>
+                    <h3><i class="fa fa-search"></i> Search & Filter Customer</h3>
 
-                    <!--perform searching function in CustomerServlet--> 
                     <form method="GET" action="<%= request.getContextPath()%>/CustomerServlet" class="search-form">
                         <input type="hidden" name="action" value="search">
 
@@ -181,113 +148,95 @@
                     </form>
                 </div>
 
-                <!-- STAFF MANAGEMENT SECTION -->
+                <!-- CUSTOMER MANAGEMENT SECTION -->
                 <div class="staff-management-section wow fadeInUp" data-wow-delay="0.4s">
-                    <!-- Add New Staff Button -->
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h3><i class="fa fa-list"></i> Customer Directory</h3>
+                      <div class="d-flex justify-content-between align-items-center mb-4">
+                      <h3><i class="fa fa-list"></i> Customer Directory</h3>
                         <div>
-                            <a href="<%= request.getContextPath()%>/CustomerServlet?action=add" class="add-staff-btn">
-                                <i class="fa fa-user-plus"></i> Add Customer
+                            <a href="<%= request.getContextPath()%>/counter_staff/register_customer.jsp" class="add-customer-btn">
+                                <i class="fa fa-user"></i> Add Customer
                             </a>
                         </div>
                     </div>
 
-                    <!-- Tab Navigation -->
-                    <div class="tab-buttons">
-                        <button class="tab-btn active" onclick="showTab('customer')">
-                            <i class="fa fa-user-md"></i> Customer 
-                            (<%= customerList != null ? customerList.size() : 0%>)
-                        </button>
-                    </div>
-
-                    <!-- CUSTOMERS TAB -->
-                    <div id="customer-tab" class="tab-content"  style="display: block;">
-                        <div class="staff-table">
-                            <% if (customerList != null && !customerList.isEmpty()) { %>
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th>Phone</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <% for (Customer customer : customerList) {%>
-                                    <tr>
-                                        <td><%= customer.getId()%></td>
-                                        <td>
-                                            <strong><%= customer.getName()%></strong><br>
-                                            <small class="text-muted">
-                                                <%= customer.getGender() != null ? (customer.getGender().equals("M") ? "Male" : "Female") : "N/A"%>
-                                            </small>
-                                        </td>
-                                        <td><%= customer.getEmail()%></td>
-                                        <td><%= customer.getPhone() != null ? customer.getPhone() : "N/A"%></td>
-                                        <td>
-                                            <span class="status-badge status-active">Active</span>
-                                        </td>
-                                        <td>
-                                            <div class="action-buttons">
-                                                <button class="btn btn-sm btn-view" onclick="viewCustomer(<%= customer.getId()%>)">
-                                                    <i class="fa fa-eye"></i>
-                                                </button>
-                                                <button class="btn btn-sm btn-edit" onclick="editCustomer(<%= customer.getId()%>)">
-                                                    <i class="fa fa-edit"></i>
-                                                </button>
-                                                <button class="btn btn-sm btn-delete" onclick="deleteCustomer(<%= customer.getId()%>, '<%= customer.getName()%>')">
-                                                    <i class="fa fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <% } %>
-                                </tbody>
-                            </table>
-                            <% } else {%>
-                            <div class="no-data">
-                                <i class="fa fa-user-md"></i>
-                                <h4>No Customer Found</h4>
-                                <p>No customer match your search criteria.</p>
-                                <a href="<%= request.getContextPath()%>/counter_staff/register_customer.jsp" class="btn btn-primary">
-                                    <i class="fa fa-plus"></i> Add First Customer
-                                </a>
+                    <!-- CUSTOMER TABLE -->
+                    <div class="staff-table">
+                                <% if (customerList != null && !customerList.isEmpty()) { %>
+                                <table class="table table-hover" id="customersTable">
+                                    <thead>
+                                        <tr>
+                                            <th class="sortable" onclick="sortTable('customersTable', 0, 'number')">
+                                                ID <i class="fa fa-sort"></i>
+                                            </th>
+                                            <th class="sortable" onclick="sortTable('customersTable', 1, 'string')">
+                                                Name <i class="fa fa-sort"></i>
+                                            </th>
+                                            <th class="sortable" onclick="sortTable('customersTable', 2, 'string')">
+                                                Email <i class="fa fa-sort"></i>
+                                            </th>
+                                            <th>Phone</th>
+                                            <th class="sortable" onclick="sortTable('customersTable', 4, 'date')">
+                                                DOB <i class="fa fa-sort"></i>
+                                            </th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% for (Customer customer : customerList) {%>
+                                        <tr>
+                                            <td><%= customer.getId()%></td>
+                                            <td>
+                                                <strong><%= customer.getName()%></strong><br>
+                                                <small class="text-muted">
+                                                    <%= customer.getGender() != null ? (customer.getGender().equals("M") ? "Male" : "Female") : "N/A"%>
+                                                </small>
+                                            </td>
+                                            <td><%= customer.getEmail()%></td>
+                                            <td><%= customer.getPhone() != null ? customer.getPhone() : "N/A"%></td>
+                                            <td>
+                                                <%= customer.getDob() != null ? dateFormat.format(customer.getDob()) : "N/A"%>
+                                            </td>
+                                            <td>
+                                                <span class="status-badge status-active">Active</span>
+                                            </td>
+                                            <td>
+                                                <div class="action-buttons">
+                                                    <button class="btn btn-sm btn-view" onclick="viewCustomer(<%= customer.getId()%>)">
+                                                        <i class="fa fa-eye"></i>
+                                                    </button>   
+                                                    <button class="btn btn-sm btn-edit" onclick="editCustomer(<%= customer.getId()%>)">
+                                                        <i class="fa fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-delete" onclick="deleteCustomer(<%= customer.getId()%>, '<%= customer.getName()%>')">
+                                                        <i class="fa fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <% } %>
+                                    </tbody>
+                                </table>
+                                <% } else {%>
+                                <div class="no-data">
+                                    <i class="fa fa-user"></i>
+                                    <h4>No Customer Found</h4>
+                                    <p>No customer match your search criteria.</p>
+                                    <a href="<%= request.getContextPath()%>/customer/register_customer.jsp" class="btn btn-primary">
+                                        <i class="fa fa-plus"></i> Add Customer
+                                    </a>
+                                </div>
+                                <% }%>
                             </div>
-                            <% }%>
                         </div>
                     </div>
-                </div>
-            </div>
-        </section>
+                </section>
 
         <%@ include file="/includes/footer.jsp" %>
         <%@ include file="/includes/scripts.jsp" %>
 
         <script>
-            // Tab switching functionality
-            function showTab(tabName) {
-                // Hide all tabs
-                document.querySelectorAll('.tab-content').forEach(tab => {
-                    tab.style.display = 'none';
-                });
-
-                // Remove active class from all buttons
-                document.querySelectorAll('.tab-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-
-                // Show selected tab
-                document.getElementById(tabName + '-tab').style.display = 'block';
-
-                // Add active class to clicked button
-                event.target.classList.add('active');
-            }
-
-            // CRUD Functions for Customers
+            // CRUD Functions for Managers
             function viewCustomer(id) {
                 window.open('<%= request.getContextPath()%>/CustomerServlet?action=view&id=' + id, '_blank');
             }
@@ -297,9 +246,98 @@
             }
 
             function deleteCustomer(id, name) {
-                if (confirm('Are you sure you want to delete ' + name + '?\n\nThis action cannot be undone.')) {
+                if (confirm('Are you sure you want to delete customer ' + name + '?\n\nThis action cannot be undone.')) {
                     window.location.href = '<%= request.getContextPath()%>/CustomerServlet?action=delete&id=' + id;
                 }
+            }
+
+            // Table Sorting Function
+            let sortDirections = {}; // Track sort direction for each table and column
+
+            function sortTable(tableId, columnIndex, dataType) {
+                const table = document.getElementById(tableId);
+                const tbody = table.querySelector('tbody');
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+
+                // Determine sort direction
+                const sortKey = tableId + '_' + columnIndex;
+                const currentDirection = sortDirections[sortKey] || 'asc';
+                const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+                sortDirections[sortKey] = newDirection;
+
+                // Update sort icons
+                updateSortIcons(tableId, columnIndex, newDirection);
+
+                // Sort rows
+                rows.sort((a, b) => {
+                    let valueA = a.cells[columnIndex].textContent.trim();
+                    let valueB = b.cells[columnIndex].textContent.trim();
+
+                    // Handle different data types
+                    if (dataType === 'number') {
+                        // Extract numeric values (for ratings like "4.5 ★")
+                        valueA = parseFloat(valueA.replace(/[^\d.-]/g, '')) || 0;
+                        valueB = parseFloat(valueB.replace(/[^\d.-]/g, '')) || 0;
+
+                        if (newDirection === 'asc') {
+                            return valueA - valueB;
+                        } else {
+                            return valueB - valueA;
+                        }
+                    } else if (dataType === 'date') {
+                        // Handle date parsing
+                        valueA = new Date(valueA);
+                        valueB = new Date(valueB);
+
+                        if (newDirection === 'asc') {
+                            return valueA - valueB;
+                        } else {
+                            return valueB - valueA;
+                        }
+                    } else {
+                        // String comparison (case-insensitive)
+                        valueA = valueA.toLowerCase();
+                        valueB = valueB.toLowerCase();
+
+                        if (newDirection === 'asc') {
+                            return valueA.localeCompare(valueB);
+                        } else {
+                            return valueB.localeCompare(valueA);
+                        }
+                    }
+                });
+
+                // Re-append sorted rows
+                rows.forEach(row => tbody.appendChild(row));
+
+                // Add visual feedback
+                animateTableSort(tableId);
+            }
+
+            function updateSortIcons(tableId, activeColumn, direction) {
+                const table = document.getElementById(tableId);
+                const headers = table.querySelectorAll('th.sortable');
+
+                headers.forEach((header, index) => {
+                    const icon = header.querySelector('i');
+                    if (index === activeColumn) {
+                        // Active column
+                        icon.className = direction === 'asc' ? 'fa fa-sort-up' : 'fa fa-sort-down';
+                        header.style.color = '#667eea';
+                    } else {
+                        // Inactive columns
+                        icon.className = 'fa fa-sort';
+                        header.style.color = '';
+                    }
+                });
+            }
+
+            function animateTableSort(tableId) {
+                const table = document.getElementById(tableId);
+                table.style.opacity = '0.7';
+                setTimeout(() => {
+                    table.style.opacity = '1';
+                }, 200);
             }
 
             // Auto-dismiss alerts
@@ -312,14 +350,10 @@
                 $('[data-toggle="tooltip"]').tooltip();
             });
 
-            // Search form validation
+            // Search form validation - Allow empty searches to show all customers
             document.querySelector('.search-form').addEventListener('submit', function (e) {
-                const searchInput = document.getElementById('search');
-                if (searchInput.value.trim() === '' &&
-                        document.getElementById('gender').value === 'all') {
-                    e.preventDefault();
-                    alert('Please enter search criteria or use filters.');
-                }
+                // Allow all searches - no validation needed for customer search
+                console.log('Customer search submitted');
             });
         </script>
     </body>

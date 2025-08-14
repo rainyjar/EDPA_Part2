@@ -156,7 +156,7 @@
 
                     <!-- Staff Ratings -->
                     <div class="col-md-3 col-sm-6">
-                        <a href="<%= request.getContextPath()%>/manager/staff_ratings.jsp" style="text-decoration: none;">
+                        <a href="<%= request.getContextPath()%>/StaffRatingServlet" style="text-decoration: none;">
                             <div class="action-card wow fadeInUp" data-wow-delay="0.4s">
                                 <div class="action-icon">
                                     <i class="fa fa-star"></i>

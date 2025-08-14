@@ -268,7 +268,7 @@
                                             </label>
                                             <div class="input-group">
                                                 <span class="input-icon"><i class="fa fa-id-badge"></i></span>
-                                                <input type="text" class="form-control with-icon" id="nric" name="nric" value="<%= userIc%>" required>
+                                                <input type="text" class="form-control with-icon" id="nric" name="nric" value="<%= userIc%>" placeholder="xxxxxx-xx-xxxx" required>
                                                 <div class="invalid-feedback"></div>
                                             </div>
                                         </div>
@@ -324,68 +324,9 @@
                                                 <i class="fa fa-info-circle"></i> Contact administrator to update specialization
                                             </small>
                                         </div>
-                                        <div class="form-group col-md-6">
-                                            <label class="form-label">
-                                                <i class="fa fa-star"></i> Rating
-                                            </label>
-                                            <div class="rating-display" style="padding: 15px; background: #f8f9fa; border-radius: 8px; border: 2px solid #e8ecf0;">
-                                                <% if (doctorRating != null && doctorRating > 0) { %>
-                                                <div class="star-rating">
-                                                    <%
-                                                        int fullStars = (int) Math.floor(doctorRating);
-                                                        boolean hasHalfStar = (doctorRating - fullStars) >= 0.5;
-                                                        for (int i = 1; i <= 5; i++) {
-                                                            if (i <= fullStars) { %>
-                                                    <i class="fa fa-star star-filled"></i>
-                                                    <% } else if (i == fullStars + 1 && hasHalfStar) { %>
-                                                    <i class="fa fa-star-half-o star-half"></i>
-                                                    <% } else { %>
-                                                    <i class="fa fa-star-o star-empty"></i>
-                                                    <% }
-                                                        }%>
-                                                    <span class="rating-text" style="margin-left: 10px; font-weight: 600; color: #2c2577;">
-                                                        (<%= String.format("%.1f", doctorRating)%>/5.0)
-                                                    </span>
-                                                </div>
-                                                <% } else { %>
-                                                <div class="no-rating">
-                                                    <i class="fa fa-star-o"></i> No ratings yet
-                                                </div>
-                                                <% } %>
-                                            </div>
-                                        </div>
                                     </div>
-                                    <% } else if ("staff".equals(userType)) { %>
-                                    <div class="form-row">
-                                        <div class="form-group col-md-6">
-                                            <label class="form-label">
-                                                <i class="fa fa-star"></i> Staff Rating
-                                            </label>
-                                            <div class="rating-display" style="padding: 15px; background: #f8f9fa; border-radius: 8px; border: 2px solid #e8ecf0;">
-                                                <% if (staffRating != null && staffRating > 0) { %>
-                                                <div class="star-rating">
-                                                    <%
-                                                        int fullStars = (int) Math.floor(staffRating);
-                                                        boolean hasHalfStar = (staffRating - fullStars) >= 0.5;
-                                                        for (int i = 1; i <= 5; i++) {
-                                                            if (i <= fullStars) { %>
-                                                    <i class="fa fa-star star-filled"></i>
-                                                    <% } else if (i == fullStars + 1 && hasHalfStar) { %>
-                                                    <i class="fa fa-star-half-o star-half"></i>
-                                                    <% } else { %>
-                                                    <i class="fa fa-star-o star-empty"></i>
-                                                    <% }
-                                                        }%>
-                                                    <span class="rating-text">(<%= String.format("%.1f", staffRating)%>/5.0)</span>
-                                                </div>
-                                                <% } else { %>
-                                                <div class="no-rating"><i class="fa fa-star-o"></i> No ratings yet</div>
-                                                <% } %>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <% }%>
-
+                                    <% } %>
+                                   
                                     <!-- Submit Button -->
                                     <div class="text-center" style="margin-top: 40px; padding-top: 30px; border-top: 2px solid #e8ecf0;">
                                         <button type="submit" class="btn btn-custom btn-primary-custom" id="submitBtn">

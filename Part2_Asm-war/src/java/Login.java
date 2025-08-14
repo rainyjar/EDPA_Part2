@@ -119,11 +119,10 @@ public class Login extends HttpServlet {
                     response.sendRedirect("ManagerHomepageServlet");
                 } else if (user instanceof Doctor) {
                     s.setAttribute("doctor", (Doctor) user);
-                    response.sendRedirect(role + "/dashboard.jsp");
+                    response.sendRedirect("DoctorHomepageServlet");
                 } else if (user instanceof CounterStaff) {
                     s.setAttribute("staff", (CounterStaff) user);
                     response.sendRedirect("CounterStaffServletJam?action=dashboard");
-                    System.out.print(((CounterStaff) user).getId());
                 } else if (user instanceof Customer) {
                     s.setAttribute("customer", (Customer) user);
                     response.sendRedirect("CustomerHomepageServlet");

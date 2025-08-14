@@ -259,14 +259,6 @@
                                                 <button class="btn btn-sm btn-delete" onclick="deleteDoctor(<%= doctor.getId()%>, '<%= doctor.getName()%>')">
                                                     <i class="fa fa-trash"></i>
                                                 </button>
-                                                <!--                                                    
-                                                                                                    
-                                                                                                <a href="${pageContext.request.contextPath}/DoctorServlet?action=delete&id=<%= doctor.getId()%>"
-                                                                                                   onclick="return confirm('Are you sure you want to delete Dr. <%= doctor.getName()%>?')"
-                                                                                                   class="btn btn-sm btn-delete">
-                                                                                                    <i class="fa fa-trash"></i>
-                                                                                                </a>-->
-
                                             </div>
                                         </td>
                                     </tr>
@@ -519,27 +511,27 @@
                 const table = document.getElementById(tableId);
                 const tbody = table.querySelector('tbody');
                 const rows = Array.from(tbody.querySelectorAll('tr'));
-                
+
                 // Determine sort direction
                 const sortKey = tableId + '_' + columnIndex;
                 const currentDirection = sortDirections[sortKey] || 'asc';
                 const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
                 sortDirections[sortKey] = newDirection;
-                
+
                 // Update sort icons
                 updateSortIcons(tableId, columnIndex, newDirection);
-                
+
                 // Sort rows
                 rows.sort((a, b) => {
                     let valueA = a.cells[columnIndex].textContent.trim();
                     let valueB = b.cells[columnIndex].textContent.trim();
-                    
+
                     // Handle different data types
                     if (dataType === 'number') {
                         // Extract numeric values (for ratings like "4.5 ★")
                         valueA = parseFloat(valueA.replace(/[^\d.-]/g, '')) || 0;
                         valueB = parseFloat(valueB.replace(/[^\d.-]/g, '')) || 0;
-                        
+
                         if (newDirection === 'asc') {
                             return valueA - valueB;
                         } else {
@@ -549,7 +541,7 @@
                         // Handle date parsing
                         valueA = new Date(valueA);
                         valueB = new Date(valueB);
-                        
+
                         if (newDirection === 'asc') {
                             return valueA - valueB;
                         } else {
@@ -559,7 +551,7 @@
                         // String comparison (case-insensitive)
                         valueA = valueA.toLowerCase();
                         valueB = valueB.toLowerCase();
-                        
+
                         if (newDirection === 'asc') {
                             return valueA.localeCompare(valueB);
                         } else {
@@ -567,18 +559,18 @@
                         }
                     }
                 });
-                
+
                 // Re-append sorted rows
                 rows.forEach(row => tbody.appendChild(row));
-                
+
                 // Add visual feedback
                 animateTableSort(tableId);
             }
-            
+
             function updateSortIcons(tableId, activeColumn, direction) {
                 const table = document.getElementById(tableId);
                 const headers = table.querySelectorAll('th.sortable');
-                
+
                 headers.forEach((header, index) => {
                     const icon = header.querySelector('i');
                     if (index === activeColumn) {
@@ -592,7 +584,7 @@
                     }
                 });
             }
-            
+
             function animateTableSort(tableId) {
                 const table = document.getElementById(tableId);
                 table.style.opacity = '0.7';

@@ -1,0 +1,214 @@
+/* Staff Feedback Details Page Styles */
+
+.feedback-header {
+    background: linear-gradient(135deg, #2c2577 0%, #f41212 100%);
+    color: white;
+    padding: 30px 20px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.feedback-summary {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.rating-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.rating-stars {
+    color: #ffc107;
+    font-size: 24px;
+}
+
+.rating-number {
+    font-size: 32px;
+    font-weight: bold;
+    color: #2c2577;
+}
+
+.feedback-item {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-left: 4px solid #2c2577;
+}
+
+.feedback-header-info {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    border-left: 3px solid #007bff;
+}
+
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.appointment-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.info-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.info-badge i {
+    color: #007bff;
+    width: 16px;
+}
+
+.customer-info {
+    font-weight: 600;
+    color: #333;
+    font-size: 16px;
+}
+
+.feedback-date {
+    color: #666;
+    font-size: 14px;
+}
+
+.appointment-details {
+    background: #e3f2fd;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    border-left: 3px solid #2196f3;
+}
+
+.appointment-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.treatment-info {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.feedback-rating {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.feedback-comment {
+    font-style: italic;
+    color: #555;
+    line-height: 1.6;
+}
+
+.no-feedback {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+
+.no-feedback i {
+    font-size: 4em;
+    color: #ddd;
+    margin-bottom: 20px;
+}
+
+.btn-close {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    z-index: 1000;
+}
+
+.btn-close:hover {
+    background: rgba(0,0,0,0.9);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .appointment-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .feedback-header {
+        padding: 20px 15px;
+    }
+    
+    .feedback-summary {
+        padding: 20px;
+    }
+    
+    .rating-display {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .rating-number {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .feedback-item {
+        padding: 15px;
+    }
+    
+    .feedback-header-info {
+        padding: 12px;
+    }
+    
+    .info-badge {
+        font-size: 12px;
+    }
+    
+    .customer-info {
+        font-size: 14px;
+    }
+}

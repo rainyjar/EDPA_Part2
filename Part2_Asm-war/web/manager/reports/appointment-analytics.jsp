@@ -13,11 +13,11 @@
 
 <%
     // Check if manager is logged in
-//    Manager loggedInManager = (Manager) session.getAttribute("manager");
-//    if (loggedInManager == null) {
-//        response.sendRedirect(request.getContextPath() + "/login.jsp");
-//        return;
-//    }
+    Manager loggedInManager = (Manager) session.getAttribute("manager");
+    if (loggedInManager == null) {
+        response.sendRedirect(request.getContextPath() + "/login.jsp");
+        return;
+    }
 
     // Get EJB facades using JNDI lookup
     AppointmentFacade appointmentFacade = null;
@@ -411,17 +411,29 @@
                     },
                     mostBookedDoctors: [
             <%
-                        // Create a list of doctors sorted by booking count
+                        // Create a list of doctors sorted by rating (highest first)
                         List<Doctor> sortedDoctors = new ArrayList<Doctor>();
                         for (Doctor doctor : allDoctors) {
+                            // Only include doctors who have bookings and a valid rating
                             if (doctorBookingCounts.get(doctor.getId()) > 0) {
                                 sortedDoctors.add(doctor);
                             }
                         }
                         
-                        // Sort by booking count (descending)
+                        // Sort by rating first (descending), then by booking count (descending) as tiebreaker
                         Collections.sort(sortedDoctors, new Comparator<Doctor>() {
                             public int compare(Doctor d1, Doctor d2) {
+                                // Get ratings, default to 0.0 if null
+                                Double rating1 = d1.getRating() != null ? d1.getRating() : 0.0;
+                                Double rating2 = d2.getRating() != null ? d2.getRating() : 0.0;
+                                
+                                // First compare by rating (descending)
+                                int ratingCompare = rating2.compareTo(rating1);
+                                if (ratingCompare != 0) {
+                                    return ratingCompare;
+                                }
+                                
+                                // If ratings are equal, compare by booking count (descending)
                                 Integer count1 = doctorBookingCounts.get(d1.getId());
                                 Integer count2 = doctorBookingCounts.get(d2.getId());
                                 return count2.compareTo(count1);
@@ -435,8 +447,8 @@
                             int completed = doctorCompletedCounts.get(doctor.getId());
                             int cancelled = doctorCancelledCounts.get(doctor.getId());
                             
-                            // Calculate rating (simplified - you may want to get actual ratings from database)
-                            double rating = 8.0 + (Math.random() * 2.0); // Random rating between 8-10
+                            // Use actual rating from database
+                            double rating = doctor.getRating() != null ? doctor.getRating() : 0.0;
                             
                             if (i > 0) out.print(",");
             %>
@@ -516,10 +528,10 @@
                         datasets: [{
                             data: data.statusDistribution.data,
                             backgroundColor: [
-                                'rgba(44, 37, 119, 0.8)',
-                                'rgba(244, 18, 18, 0.8)',
+                                'rgba(40, 167, 69, 0.8)',
                                 'rgba(255, 193, 7, 0.8)',
-                                'rgba(108, 117, 125, 0.8)'
+                                'rgba(220, 53, 69, 0.8)',
+                                'rgba(253, 126, 20, 0.8)'
                             ]
                         }]
                     },

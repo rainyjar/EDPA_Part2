@@ -163,6 +163,19 @@
     color: #721c24;
 }
 
+.add-customer-btn{
+     background: linear-gradient(135deg, #2c2577 0%, #f41212 100%);    
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
 /* Doctor Button */
 .add-doc-btn {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
