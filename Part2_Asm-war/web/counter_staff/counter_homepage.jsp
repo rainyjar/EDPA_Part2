@@ -229,20 +229,6 @@
                 </div>
 
                 <!-- Second Row of Actions -->
-                <div class="row" style="margin-top: 20px;">
-                    <!-- Generate Receipts -->
-                    <div class="col-md-3 col-sm-6">
-                        <a href="<%= request.getContextPath()%>/counter_staff/generate_receipts.jsp" style="text-decoration: none;">
-                            <div class="action-card wow fadeInUp" data-wow-delay="0.6s">
-                                <div class="action-icon counter-staff">
-                                    <i class="fa fa-file-pdf-o"></i>
-                                </div>
-                                <div class="action-title">Generate Receipts</div>
-                                <div class="action-desc">Create and print receipts for completed payments</div>
-                            </div>
-                        </a>
-                    </div>
-
                     <!-- View Treatments -->
                     <div class="col-md-3 col-sm-6">
                         <a href="<%= request.getContextPath()%>/TreatmentServlet?action=viewAll&role=staff" style="text-decoration: none;">

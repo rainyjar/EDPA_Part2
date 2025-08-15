@@ -211,11 +211,6 @@
                                     </td>
                                     <td>
                                         <div class="action-buttons">
-
-                                            <a href="<%= request.getContextPath()%>/TreatmentServlet?action=viewDetail&id=<%= treatment.getId()%>" 
-                                               class="btn btn-sm btn-view" title="View Details">
-                                                <i class="fa fa-eye"></i>
-                                            </a>
                                             <a href="<%= request.getContextPath()%>/TreatmentServlet?action=editForm&id=<%= treatment.getId()%>" 
                                                class="btn btn-sm btn-edit" title="Edit">
                                                 <i class="fa fa-edit"></i>

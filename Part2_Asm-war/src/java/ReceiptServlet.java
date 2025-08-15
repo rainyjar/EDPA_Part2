@@ -58,10 +58,19 @@ public class ReceiptServlet extends HttpServlet {
         
         String action = request.getParameter("action");
         
+        // Debug: Print all parameters received
+        System.out.println("=== ReceiptServlet doGet Debug ===");
+        System.out.println("Action parameter: " + action);
+        System.out.println("PaymentId parameter: " + request.getParameter("paymentId"));
+        System.out.println("AppointmentId parameter: " + request.getParameter("appointmentId"));
+        System.out.println("All parameters: " + request.getParameterMap().keySet());
+        
         // Handle both direct calls and action-based calls
-        if ("download".equals(action) || request.getParameter("appointmentId") != null || request.getParameter("appointment_id") != null) {
+        if ("download".equals(action) || request.getParameter("appointmentId") != null || 
+            request.getParameter("appointment_id") != null || request.getParameter("paymentId") != null) {
             handleReceiptDownload(request, response);
         } else {
+            System.out.println("No valid parameters found - redirecting to customer page");
             response.sendRedirect(request.getContextPath() + "/customer/appointment_history.jsp");
         }
     }
@@ -74,12 +83,27 @@ public class ReceiptServlet extends HttpServlet {
         
         try {
             // Get user from session - can be either customer or counter staff
-            HttpSession session = request.getSession();
+            HttpSession session = request.getSession(false); // Don't create new session
+            
+            if (session == null) {
+                System.out.println("=== ReceiptServlet Debug: No session found ===");
+                response.sendRedirect(request.getContextPath() + "/login.jsp");
+                return;
+            }
+            
             Customer loggedInCustomer = (Customer) session.getAttribute("customer");
-            Object counterStaff = session.getAttribute("counterStaff");
+            Object counterStaff = session.getAttribute("staff"); // Fixed: was "counterStaff", should be "staff"
+            
+            // Debug logging
+            System.out.println("=== ReceiptServlet Debug ===");
+            System.out.println("Session ID: " + session.getId());
+            System.out.println("Customer in session: " + (loggedInCustomer != null ? loggedInCustomer.getName() : "null"));
+            System.out.println("Staff in session: " + (counterStaff != null ? counterStaff.toString() : "null"));
+            System.out.println("Session attributes: " + java.util.Collections.list(session.getAttributeNames()));
             
             // Check if either customer or counter staff is logged in
             if (loggedInCustomer == null && counterStaff == null) {
+                System.out.println("No valid user found in session - redirecting to login");
                 response.sendRedirect(request.getContextPath() + "/login.jsp");
                 return;
             }

@@ -401,7 +401,10 @@
             }
             
             function generateReceipt(paymentId) {
-                window.open('<%= request.getContextPath()%>/ReceiptServlet?paymentId=' + paymentId, '_blank');
+                // Try direct navigation first to test session
+                console.log('Generating receipt for payment ID:', paymentId);
+                window.location.href = '<%= request.getContextPath()%>/ReceiptServlet?paymentId=' + paymentId;
+                // Alternative: window.open('<%= request.getContextPath()%>/ReceiptServlet?paymentId=' + paymentId, '_blank');
             }
             
             function generateMC(appointmentId) {

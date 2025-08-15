@@ -189,6 +189,16 @@ public class MedicalCertificateServlet extends HttpServlet {
             throws ServletException, IOException {
         
         try {
+            // Check authentication - allow doctors and counter staff
+            HttpSession session = request.getSession();
+            Doctor loggedInDoctor = (Doctor) session.getAttribute("doctor");
+            Object counterStaff = session.getAttribute("staff"); // Fixed: consistent with other servlets
+            
+            if (loggedInDoctor == null && counterStaff == null) {
+                response.sendRedirect(request.getContextPath() + "/login.jsp");
+                return;
+            }
+            
             int appointmentId = Integer.parseInt(request.getParameter("appointmentId"));
             
             MedicalCertificate mc = mcFacade.findByAppointmentId(appointmentId);
