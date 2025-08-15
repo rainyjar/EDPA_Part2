@@ -45,13 +45,21 @@ public class Login extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
 
-        // handle lougout
+        // Handle logout
         String logout = request.getParameter("logout");
-        if (logout != null && logout.equals("true")) {
+        String action = request.getParameter("action");
+        
+        if ((logout != null && logout.equals("true")) || 
+            (action != null && action.equals("logout"))) {
             HttpSession session = request.getSession(false);
             if (session != null) {
                 session.invalidate();
             }
+            // Prevent caching
+            response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+            response.setHeader("Pragma", "no-cache");
+            response.setDateHeader("Expires", 0);
+            
             response.sendRedirect("login.jsp");
             return;
         }

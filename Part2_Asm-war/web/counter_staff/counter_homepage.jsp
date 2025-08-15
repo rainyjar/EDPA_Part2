@@ -245,7 +245,7 @@
 
                     <!-- View Treatments -->
                     <div class="col-md-3 col-sm-6">
-                        <a href="<%= request.getContextPath()%>/counter_staff/view_treatments.jsp" style="text-decoration: none;">
+                        <a href="<%= request.getContextPath()%>/TreatmentServlet?action=viewAll&role=staff" style="text-decoration: none;">
                             <div class="action-card wow fadeInUp" data-wow-delay="0.7s">
                                 <div class="action-icon counter-staff">
                                     <i class="fa fa-stethoscope"></i>

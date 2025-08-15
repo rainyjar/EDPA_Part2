@@ -13,6 +13,9 @@
     </head>
     <body>
         <div class="box">
+            <div class="logo-container">
+                <img src="images/amc_logo.png" alt="APU Medical Center" class="logo">
+            </div>
             <h2 class="register_header">Register</h2>
 
             <% if (request.getAttribute("error") != null) {%>
@@ -27,12 +30,7 @@
                 <input type="text" name="name" placeholder="Name"  />
                 <input type="text" name="email" placeholder="Email"  />
                 <input type="password" name="password" placeholder="Password"  />
-                <select name="role">
-                    <option value="manager">Manager</option>
-                    <option value="doctor">Doctor</option>
-                    <option value="counter_staff">Counter Staff</option>
-                    <option value="customer">Customer</option>
-                </select>
+                <input type="hidden" name="role" value="customer" />
                 <input class="register_btn" type="submit" value="Register" />
             </form>
 

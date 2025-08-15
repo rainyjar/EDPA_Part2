@@ -1,3 +1,4 @@
+<%@page import="java.util.Set"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.List" %>
 <%@ page import="model.Treatment" %>
@@ -24,6 +25,29 @@
         <title>Edit Treatment - APU Medical Center</title>
         <%@ include file="/includes/head.jsp" %>
         <link rel="stylesheet" href="${pageContext.request.contextPath}/css/user-reg-edit.css" />
+        <style>
+            /* Multi-select dropdown styling */
+            select[multiple] {
+                height: 120px !important;
+                border: 2px solid #ddd;
+                border-radius: 5px;
+                padding: 8px;
+                font-size: 14px;
+            }
+            select[multiple] option {
+                padding: 5px 8px;
+                border-bottom: 1px solid #eee;
+            }
+            select[multiple] option:hover {
+                background-color: #667eea;
+                color: white;
+            }
+            select[multiple] option:checked {
+                background-color: #667eea;
+                color: white;
+                font-weight: bold;
+            }
+        </style>
     </head>
     <body class="doctor-theme">
         <%@ include file="/includes/header.jsp" %>
@@ -132,6 +156,38 @@
                         <div class="form-group">
                             <label for="longDesc">Long Description <span class="required">*</span></label>
                             <textarea id="longDesc" name="longDesc" class="form-control doctor" style="resize: none;" rows="5" required><%= treatment.getLongDescription() != null ? treatment.getLongDescription() : "" %></textarea>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <!-- Doctor Assignment Section -->
+                        <div class="form-group">
+                            <label for="assignedDoctors">Assign Doctors <span class="required">*</span></label>
+                            <select id="assignedDoctors" name="assignedDoctors" class="form-control doctor" multiple required>
+                                <% 
+                                List<model.Doctor> allDoctors = (List<model.Doctor>) request.getAttribute("allDoctors");
+                                Set<model.Doctor> currentDoctors = treatment.getDoctors();
+                                if (allDoctors != null && !allDoctors.isEmpty()) {
+                                    for (model.Doctor doc : allDoctors) {
+                                        boolean isSelected = currentDoctors != null && currentDoctors.contains(doc);
+                                %>
+                                    <option value="<%= doc.getId() %>" <%= isSelected ? "selected" : "" %>>
+                                        Dr. <%= doc.getName() %> - <%= doc.getSpecialization() != null ? doc.getSpecialization() : "General" %>
+                                    </option>
+                                <% 
+                                    }
+                                } else {
+                                %>
+                                    <option value="" disabled>No doctors available</option>
+                                <% } %>
+                            </select>
+                            <small class="form-text text-muted">
+                                <i class="fa fa-info-circle"></i> Hold Ctrl (Cmd on Mac) to select multiple doctors. Currently assigned: 
+                                <% if (currentDoctors != null && !currentDoctors.isEmpty()) { %>
+                                    <%= currentDoctors.size() %> doctor(s)
+                                <% } else { %>
+                                    No doctors assigned
+                                <% } %>
+                            </small>
                             <div class="invalid-feedback"></div>
                         </div>
 

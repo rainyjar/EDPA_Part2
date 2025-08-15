@@ -91,7 +91,7 @@
                             <div class="kpi-content">
                                 <h3 id="totalRevenue">RM 0.00</h3>
                                 <p>Total Revenue</p>
-                                <span class="kpi-trend positive">+12.5% this month</span>
+                                <span id="revenueTrend" class="kpi-trend positive">+12.5% this month</span>
                             </div>
                         </div>
                     </div>
@@ -103,7 +103,7 @@
                             <div class="kpi-content">
                                 <h3 id="totalAppointments">0</h3>
                                 <p>Total Appointments</p>
-                                <span class="kpi-trend positive">+8.3% this month</span>
+                                <span id="appointmentTrend" class="kpi-trend positive">+8.3% this month</span>
                             </div>
                         </div>
                     </div>
@@ -115,7 +115,7 @@
                             <div class="kpi-content">
                                 <h3 id="totalStaff">0</h3>
                                 <p>Total Staff</p>
-                                <span class="kpi-trend neutral">Stable</span>
+                                <span id="staffTrend" class="kpi-trend neutral">Stable</span>
                             </div>
                         </div>
                     </div>
@@ -127,7 +127,7 @@
                             <div class="kpi-content">
                                 <h3 id="avgRating">0.0</h3>
                                 <p>Avg. Staff Rating</p>
-                                <span class="kpi-trend positive">+0.3 this month</span>
+                                <span id="ratingTrend" class="kpi-trend positive">+0.3 this month</span>
                             </div>
                         </div>
                     </div>
@@ -161,7 +161,7 @@
                                 <h3><i class="fa fa-calendar"></i> Daily Appointment Trends</h3>
                                 <div class="chart-controls">
                                     <select id="appointmentTimeframe" class="form-control">
-                                        <option value="7days">Last 7 Days</option>
+                                        <option value="7days">Weekdays (Mon-Fri)</option>
                                         <option value="30days">Last 30 Days</option>
                                         <option value="90days">Last 3 Months</option>
                                     </select>
@@ -192,12 +192,13 @@
                     <div class="col-md-6">
                         <div class="chart-container">
                             <div class="chart-header">
-                                <h3><i class="fa fa-pie-chart"></i> Staff Demographics</h3>
+                                <h3><i class="fa fa-pie-chart"></i> Demographics</h3>
                                 <div class="chart-controls">
                                     <select id="demographicsType" class="form-control">
-                                        <option value="gender">By Gender</option>
-                                        <option value="role">By Role</option>
-                                        <option value="age">By Age Group</option>
+                                        <option value="gender">Customer Gender</option>
+                                        <option value="staff_gender">Staff Gender</option>
+                                        <option value="age">Customer Age Groups</option>
+                                        <option value="staff_role">Staff by Role</option>
                                     </select>
                                 </div>
                             </div>
@@ -249,7 +250,6 @@
                                             <th>Doctor</th>
                                             <th>Specialization</th>
                                             <th>Bookings</th>
-                                            <th>Revenue</th>
                                         </tr>
                                     </thead>
                                     <tbody id="mostBookedTable">

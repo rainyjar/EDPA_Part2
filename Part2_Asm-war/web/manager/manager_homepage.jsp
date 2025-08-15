@@ -129,7 +129,7 @@
                 </div>
                 <div class="row">
                     <!-- Staff Management -->
-                    <div class="col-md-3 col-sm-6">
+                    <div class="col-md-4 col-sm-6">
                         <a href="<%= request.getContextPath()%>/ManagerServlet?action=viewAll" style="text-decoration: none;">
                             <div class="action-card wow fadeInUp" data-wow-delay="0.2s">
                                 <div class="action-icon">
@@ -142,7 +142,7 @@
                     </div>
 
                     <!-- Appointment Management -->
-                    <div class="col-md-3 col-sm-6">
+                    <div class="col-md-4 col-sm-6">
                         <a href="<%= request.getContextPath()%>/ManagerServlet?action=viewAppointments" style="text-decoration: none;">
                             <div class="action-card wow fadeInUp" data-wow-delay="0.3s">
                                 <div class="action-icon">
@@ -155,7 +155,7 @@
                     </div>
 
                     <!-- Staff Ratings -->
-                    <div class="col-md-3 col-sm-6">
+                    <div class="col-md-4 col-sm-6">
                         <a href="<%= request.getContextPath()%>/StaffRatingServlet" style="text-decoration: none;">
                             <div class="action-card wow fadeInUp" data-wow-delay="0.4s">
                                 <div class="action-icon">
@@ -166,9 +166,12 @@
                             </div>
                         </a>
                     </div>
+                </div>
 
+                <!-- Second Row of Actions -->
+                <div class="row" style="margin-top: 20px;">
                     <!-- Reports & Analytics -->
-                    <div class="col-md-3 col-sm-6">
+                    <div class="col-md-4 col-sm-6">
                         <a href="<%= request.getContextPath()%>/manager/reports.jsp" style="text-decoration: none;">
                             <div class="action-card wow fadeInUp" data-wow-delay="0.5s">
                                 <div class="action-icon">
@@ -179,12 +182,9 @@
                             </div>
                         </a>
                     </div>
-                </div>
 
-                <!-- Second Row of Actions -->
-                <div class="row" style="margin-top: 20px;">
                     <!-- Register New Staff -->
-                    <div class="col-md-3 col-sm-6">
+                    <div class="col-md-4 col-sm-6">
                         <a href="<%= request.getContextPath()%>/manager/register_staff.jsp" style="text-decoration: none;">
                             <div class="action-card wow fadeInUp" data-wow-delay="0.6s">
                                 <div class="action-icon">
@@ -196,36 +196,10 @@
                         </a>
                     </div>
 
-                    <!-- Search Staff -->
-                    <div class="col-md-3 col-sm-6">
-                        <a href="<%= request.getContextPath()%>/manager/search_staff.jsp" style="text-decoration: none;">
-                            <div class="action-card wow fadeInUp" data-wow-delay="0.7s">
-                                <div class="action-icon">
-                                    <i class="fa fa-search"></i>
-                                </div>
-                                <div class="action-title">Search Staff</div>
-                                <div class="action-desc">Search and filter all staff information</div>
-                            </div>
-                        </a>
-                    </div>
-
-                    <!-- System Settings -->
-                    <div class="col-md-3 col-sm-6">
-                        <a href="<%= request.getContextPath()%>/manager/system_settings.jsp" style="text-decoration: none;">
-                            <div class="action-card wow fadeInUp" data-wow-delay="0.8s">
-                                <div class="action-icon">
-                                    <i class="fa fa-cogs"></i>
-                                </div>
-                                <div class="action-title">System Settings</div>
-                                <div class="action-desc">Configure system parameters and preferences</div>
-                            </div>
-                        </a>
-                    </div>
-
                     <!-- Profile Management -->
-                    <div class="col-md-3 col-sm-6">
+                    <div class="col-md-4 col-sm-6">
                         <a href="<%= request.getContextPath()%>/profile.jsp" style="text-decoration: none;">
-                            <div class="action-card wow fadeInUp" data-wow-delay="0.9s">
+                            <div class="action-card wow fadeInUp" data-wow-delay="0.7s">
                                 <div class="action-icon">
                                     <i class="fa fa-user"></i>
                                 </div>

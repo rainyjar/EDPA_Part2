@@ -43,7 +43,7 @@
                         <a href="<%= request.getContextPath()%>/Profile">Profile</a>
                     </li>
                     <li class="appointment-btn">
-                        <a href="<%= request.getContextPath()%>/Login?action=logout">Logout</a>
+                        <a href="<%= request.getContextPath()%>/Login?logout=true">Logout</a>
                     </li>
                 <% } else if (session.getAttribute("staff") != null) { %>
                     <!-- Counter Staff Navigation -->
@@ -63,7 +63,7 @@
                         <a href="<%= request.getContextPath()%>/Profile">Profile</a>
                     </li>
                     <li class="appointment-btn">
-                        <a href="<%= request.getContextPath()%>/Login?action=logout">Logout</a>
+                        <a href="<%= request.getContextPath()%>/Login?logout=true">Logout</a>
                     </li>
                 <% } else if (session.getAttribute("manager") != null) { %>
                     <!-- Manager Navigation -->
@@ -73,21 +73,18 @@
                     <li <%= request.getServletPath().contains("ManagerServlet") ? "class='active'" : ""%>>
                         <a href="<%= request.getContextPath()%>/ManagerServlet?action=viewAll">Manage Staff</a>
                     </li>
-                    <li <%= request.getServletPath().contains("view_appointments.jsp") ? "class='active'" : ""%>>
-                        <a href="<%= request.getContextPath()%>/ManagerServlet?action=viewAppointments">View Appointments</a>
-                    </li>
                     <li <%= request.getServletPath().contains("StaffRatingServlet") ? "class='active'" : ""%>>
                         <a href="<%= request.getContextPath()%>/StaffRatingServlet?action=viewAll">Ratings</a>
                     </li>
                     <li <%= request.getRequestURI().contains("reports.jsp") ? "class='active'" : ""%>>
                         <!-- // need to change here -->
-                        <a href="<%= request.getContextPath()%>/ManagerServlet?action=viewReports">Reports</a>
+                        <a href="<%= request.getContextPath()%>/manager/reports.jsp">Reports</a>
                     </li>
                     <li <%= request.getServletPath().contains("Profile") ? "class='active'" : ""%>>
                         <a href="<%= request.getContextPath()%>/Profile">Profile</a>
                     </li>
                     <li class="appointment-btn">
-                        <a href="<%= request.getContextPath()%>/Login?action=logout">Logout</a>
+                        <a href="<%= request.getContextPath()%>/Login?logout=true">Logout</a>
                     </li>
                 <% } else { %>
                     <!-- Customer Navigation -->

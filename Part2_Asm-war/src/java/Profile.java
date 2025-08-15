@@ -234,10 +234,10 @@ public class Profile extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/profile.jsp?error=invalid_ic");
                 return;
             }
-            
+
             // Check if the current user already has this IC value - if so, it's a no-op update
             boolean isCurrentUserIc = false;
-            
+
             if (userInfo.userType.equals("customer")) {
                 Customer customer = (Customer) userInfo.user;
                 if (ic.equals(customer.getIc())) {
@@ -259,7 +259,7 @@ public class Profile extends HttpServlet {
                     isCurrentUserIc = true;
                 }
             }
-            
+
             // Only do uniqueness check if this is not the current user's IC
             if (!isCurrentUserIc) {
                 // Skip the uniqueness check for now - this is handled by the database
@@ -303,13 +303,13 @@ public class Profile extends HttpServlet {
         } catch (Exception e) {
             // Log the error
             e.printStackTrace();
-            
+
             // Check if this is a uniqueness constraint violation (likely IC/NRIC constraint)
             String errorMsg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
-            
-            if (errorMsg.contains("constraint") || errorMsg.contains("unique") || 
-                errorMsg.contains("duplicate") || errorMsg.contains("violat") ||
-                errorMsg.contains("ic") || errorMsg.contains("nric")) {
+
+            if (errorMsg.contains("constraint") || errorMsg.contains("unique")
+                    || errorMsg.contains("duplicate") || errorMsg.contains("violat")
+                    || errorMsg.contains("ic") || errorMsg.contains("nric")) {
                 // NRIC/IC already in use
                 response.sendRedirect(request.getContextPath() + "/profile.jsp?error=ic_taken");
             } else if (ic != null && !ic.trim().isEmpty()) {

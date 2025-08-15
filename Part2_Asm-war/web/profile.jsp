@@ -641,7 +641,7 @@
             // Just updating the logout confirmation to be universal
             function confirmLogout() {
                 if (confirm('Are you sure you want to logout?')) {
-                    window.location.href = '<%= request.getContextPath()%>/Logout';
+                    window.location.href = '<%= request.getContextPath()%>/Login?logout=true';
                 }
             }
 

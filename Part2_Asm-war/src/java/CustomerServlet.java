@@ -125,9 +125,42 @@ public class CustomerServlet extends HttpServlet {
                 // Debug output
                 System.out.println("CustomerServlet Search - Results: " + (customerList != null ? customerList.size() : "null"));
 
-                request.setAttribute("customerList", customerList);
-
-                request.getRequestDispatcher("/counter_staff/manage_customer.jsp").forward(request, response);
+                // Check if this is an AJAX request expecting JSON
+                String acceptHeader = request.getHeader("Accept");
+                boolean isAjaxRequest = acceptHeader != null && acceptHeader.contains("application/json");
+                
+                if (isAjaxRequest) {
+                    // Return JSON response for AJAX requests
+                    response.setContentType("application/json");
+                    response.setCharacterEncoding("UTF-8");
+                    
+                    StringBuilder json = new StringBuilder();
+                    json.append("{\"customers\":[");
+                    
+                    if (customerList != null && !customerList.isEmpty()) {
+                        for (int i = 0; i < customerList.size(); i++) {
+                            Customer customer = customerList.get(i);
+                            if (i > 0) json.append(",");
+                            
+                            json.append("{")
+                                .append("\"id\":").append(customer.getId()).append(",")
+                                .append("\"name\":\"").append(escapeJson(customer.getName())).append("\",")
+                                .append("\"email\":\"").append(escapeJson(customer.getEmail())).append("\",")
+                                .append("\"phoneNumber\":\"").append(escapeJson(customer.getPhone())).append("\",")
+                                .append("\"appointmentCount\":").append(getCustomerAppointmentCount(customer.getId()))
+                                .append("}");
+                        }
+                    }
+                    
+                    json.append("]}");
+                    
+                    response.getWriter().write(json.toString());
+                    System.out.println("CustomerServlet: Returning JSON response with " + (customerList != null ? customerList.size() : 0) + " customers");
+                } else {
+                    // Regular HTML response for form submissions
+                    request.setAttribute("customerList", customerList);
+                    request.getRequestDispatcher("/counter_staff/manage_customer.jsp").forward(request, response);
+                }
             }
         } catch (NumberFormatException e) {
             e.printStackTrace();
@@ -290,11 +323,16 @@ public class CustomerServlet extends HttpServlet {
                         String query = searchQuery.toLowerCase().trim();
                         String customerName = customer.getName() != null ? customer.getName().toLowerCase() : "";
                         String customerEmail = customer.getEmail() != null ? customer.getEmail().toLowerCase() : "";
+                        String customerPhone = customer.getPhone() != null ? customer.getPhone().toLowerCase() : "";
+                        String customerId = String.valueOf(customer.getId());
                         
-                        matchesSearch = customerName.contains(query) || customerEmail.contains(query);
+                        matchesSearch = customerName.contains(query) || 
+                                       customerEmail.contains(query) || 
+                                       customerPhone.contains(query) ||
+                                       customerId.equals(query);
                         
                         // Debug individual customer matching
-                        System.out.println("Customer " + customer.getId() + " (" + customer.getName() + ", " + customer.getEmail() + ") - Matches search: " + matchesSearch);
+                        System.out.println("Customer " + customer.getId() + " (" + customer.getName() + ", " + customer.getEmail() + ", " + customer.getPhone() + ") - Matches search: " + matchesSearch);
                     }
 
                     // Check gender filter match
@@ -331,6 +369,23 @@ public class CustomerServlet extends HttpServlet {
             System.out.println("Warning: Response already committed. Skipping redirect.");
             return false;
         }
+    }
+
+    // Helper method to escape JSON strings
+    private String escapeJson(String str) {
+        if (str == null) return "";
+        return str.replace("\\", "\\\\")
+                  .replace("\"", "\\\"")
+                  .replace("\n", "\\n")
+                  .replace("\r", "\\r")
+                  .replace("\t", "\\t");
+    }
+
+    // Helper method to get customer appointment count (placeholder - you may want to implement this properly)
+    private int getCustomerAppointmentCount(int customerId) {
+        // For now, return 0. You can implement this later if you have an AppointmentFacade
+        // that can query appointments by customer ID
+        return 0;
     }
 
     @Override

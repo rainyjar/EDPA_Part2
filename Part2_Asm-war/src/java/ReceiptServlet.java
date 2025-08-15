@@ -3,9 +3,7 @@
  * Handles PDF receipt generation and download for completed and paid appointments
  */
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -27,9 +25,6 @@ import model.Customer;
 
 // iText PDF library imports for receipt generation (iText 5.x)
 import com.itextpdf.text.*;
-import com.itextpdf.text.pdf.*;
-import com.itextpdf.text.BaseColor;
-import com.itextpdf.text.Image;
 
 // For PDF generation - you'll need to add iText library to your project
 import com.itextpdf.text.Document;

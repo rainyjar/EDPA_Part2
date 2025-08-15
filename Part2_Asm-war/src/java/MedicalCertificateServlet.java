@@ -11,7 +11,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import model.Appointment;
 import model.AppointmentFacade;
-import model.CounterStaff;
 import model.Doctor;
 import model.MedicalCertificate;
 import model.MedicalCertificateFacade;

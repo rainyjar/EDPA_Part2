@@ -13,6 +13,9 @@
     </head>
     <body>
         <div class="box">
+            <div class="logo-container">
+                <img src="images/amc_logo.png" alt="APU Medical Center" class="logo">
+            </div>
             <h2>Login</h2>
 
             <!-- Error Message -->

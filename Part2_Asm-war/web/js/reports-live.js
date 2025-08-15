@@ -58,6 +58,43 @@ function updateKPIs(data) {
     document.getElementById('totalAppointments').textContent = data.totalAppointments || '0';
     document.getElementById('totalStaff').textContent = data.totalStaff || '0';
     document.getElementById('avgRating').textContent = (data.avgRating || '0.0') + '/10';
+    
+    // Update trend indicators with dynamic data
+    updateTrendIndicator('revenueTrend', data.revenueTrend);
+    updateTrendIndicator('appointmentTrend', data.appointmentTrend);
+    updateTrendIndicator('staffTrend', data.staffTrend);
+    updateTrendIndicator('ratingTrend', data.ratingTrend);
+}
+
+// Helper function to update trend indicators
+function updateTrendIndicator(elementId, trendValue) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    const value = parseFloat(trendValue) || 0;
+    const absValue = Math.abs(value);
+    
+    // Remove existing trend classes
+    element.classList.remove('text-success', 'text-danger', 'text-muted');
+    
+    // Format the trend display
+    let trendText = '';
+    let trendClass = '';
+    
+    if (value > 0) {
+        trendText = `+${absValue.toFixed(1)}% this month`;
+        trendClass = 'text-success';
+    } else if (value < 0) {
+        trendText = `-${absValue.toFixed(1)}% this month`;
+        trendClass = 'text-danger';
+    } else {
+        trendText = '0% this month';
+        trendClass = 'text-muted';
+    }
+    
+    // Update the element
+    element.textContent = trendText;
+    element.classList.add(trendClass);
 }
 
 // Update tables with real data
@@ -72,11 +109,13 @@ function updateTables(data) {
                     <td>${doctor.name}</td>
                     <td>${doctor.specialization}</td>
                     <td><span class="rating-badge">${doctor.rating}/10</span></td>
-                    <td>${doctor.appointments}</td>
+                    <td>${doctor.completed}</td>
                 </tr>
             `;
         });
         document.getElementById('topDoctorsTable').innerHTML = topDoctorsHtml;
+    } else {
+        document.getElementById('topDoctorsTable').innerHTML = '<tr><td colspan="5" class="text-center">No data available</td></tr>';
     }
 
     // Update most booked doctors table
@@ -88,12 +127,13 @@ function updateTables(data) {
                     <td>${index + 1}</td>
                     <td>${doctor.name}</td>
                     <td>${doctor.specialization}</td>
-                    <td>${doctor.bookings}</td>
-                    <td>RM ${doctor.revenue}</td>
+                    <td>${doctor.appointments}</td>
                 </tr>
             `;
         });
         document.getElementById('mostBookedTable').innerHTML = mostBookedHtml;
+    } else {
+        document.getElementById('mostBookedTable').innerHTML = '<tr><td colspan="4" class="text-center">No data available</td></tr>';
     }
 }
 

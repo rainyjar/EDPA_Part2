@@ -210,6 +210,17 @@ $(document).ready(function () {
             }
         }
 
+        // Validate doctor assignments
+        const assignedDoctors = $('#assignedDoctors').val();
+        if (!assignedDoctors || assignedDoctors.length === 0) {
+            showError('#assignedDoctors', 'At least one doctor must be assigned to the treatment');
+            errors.push('No doctors assigned');
+            isValid = false;
+        } else {
+            showValid('#assignedDoctors');
+            console.log('Assigned doctors:', assignedDoctors.length);
+        }
+
         // Validate prescriptions (optional but if provided, must be complete)
         const prescriptionRows = $('.prescription-row');
         let prescriptionErrors = 0;

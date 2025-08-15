@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import javax.ejb.EJB;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
@@ -13,6 +14,7 @@ import javax.servlet.http.Part;
 import model.Appointment;
 import model.AppointmentFacade;
 import model.Doctor;
+import model.DoctorFacade;
 import model.Prescription;
 import model.PrescriptionFacade;
 import model.Treatment;
@@ -30,6 +32,9 @@ public class TreatmentServlet extends HttpServlet {
     
     @EJB
     private AppointmentFacade appointmentFacade;
+    
+    @EJB
+    private DoctorFacade doctorFacade;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -43,7 +48,14 @@ public class TreatmentServlet extends HttpServlet {
         if ("viewAll".equalsIgnoreCase(action)) {
             List<Treatment> treatmentList = treatmentFacade.findAll();
             request.setAttribute("treatmentList", treatmentList);
-            request.getRequestDispatcher("/customer/treatment.jsp").forward(request, response);
+            
+            // Check if request is from counter staff
+            String role = request.getParameter("role");
+            if ("staff".equalsIgnoreCase(role)) {
+                request.getRequestDispatcher("/counter_staff/view_treatments.jsp").forward(request, response);
+            } else {
+                request.getRequestDispatcher("/customer/treatment.jsp").forward(request, response);
+            }
 
         } else if ("viewDetail".equalsIgnoreCase(action) && idParam != null) {
             try {
@@ -52,10 +64,24 @@ public class TreatmentServlet extends HttpServlet {
                 List<Prescription> prescriptions = prescriptionFacade.findByTreatmentId(id);
                 request.setAttribute("treatment", treatment);
                 request.setAttribute("prescriptions", prescriptions);
-                request.getRequestDispatcher("/customer/treatment_description.jsp").forward(request, response);
+                
+                // Check if request is from counter staff
+                String role = request.getParameter("role");
+                if ("staff".equalsIgnoreCase(role)) {
+                    request.getRequestDispatcher("/counter_staff/treatment_description.jsp").forward(request, response);
+                } else {
+                    request.getRequestDispatcher("/customer/treatment_description.jsp").forward(request, response);
+                }
             } catch (NumberFormatException e) {
                 request.setAttribute("error", "Invalid treatment ID.");
-                request.getRequestDispatcher("/customer/treatment.jsp").forward(request, response);
+                
+                // Check role for error redirect
+                String role = request.getParameter("role");
+                if ("staff".equalsIgnoreCase(role)) {
+                    request.getRequestDispatcher("/counter_staff/view_treatments.jsp").forward(request, response);
+                } else {
+                    request.getRequestDispatcher("/customer/treatment.jsp").forward(request, response);
+                }
             }
 
         } else if ("manage".equalsIgnoreCase(action)) {
@@ -100,6 +126,11 @@ public class TreatmentServlet extends HttpServlet {
                 response.sendRedirect("login.jsp");
                 return;
             }
+            
+            // Load all doctors for assignment
+            List<Doctor> allDoctors = doctorFacade.findAll();
+            request.setAttribute("allDoctors", allDoctors);
+            
             request.getRequestDispatcher("/doctor/create_treatment.jsp").forward(request, response);
 
         } else if ("editForm".equalsIgnoreCase(action) && idParam != null) {
@@ -112,8 +143,13 @@ public class TreatmentServlet extends HttpServlet {
                 int id = Integer.parseInt(idParam);
                 Treatment treatment = treatmentFacade.find(id);
                 List<Prescription> prescriptions = prescriptionFacade.findByTreatmentId(id);
+                
+                // Load all doctors for assignment
+                List<Doctor> allDoctors = doctorFacade.findAll();
+                
                 request.setAttribute("treatment", treatment);
                 request.setAttribute("prescriptions", prescriptions);
+                request.setAttribute("allDoctors", allDoctors);
                 request.getRequestDispatcher("/doctor/edit_treatment.jsp").forward(request, response);
             } catch (NumberFormatException e) {
                 request.setAttribute("error", "Invalid treatment ID.");
@@ -330,7 +366,36 @@ public class TreatmentServlet extends HttpServlet {
             treatment.setFollowUpCharge(followUpCharge);
             treatment.setTreatmentPic(treatmentPicPath != null ? treatmentPicPath.trim() : "");
 
+            // Handle doctor assignments
+            String[] assignedDoctorIds = request.getParameterValues("assignedDoctors");
+            if (assignedDoctorIds == null || assignedDoctorIds.length == 0) {
+                request.setAttribute("error", "At least one doctor must be assigned to the treatment.");
+                // Load all doctors again for the form
+                List<Doctor> allDoctors = doctorFacade.findAll();
+                request.setAttribute("allDoctors", allDoctors);
+                request.getRequestDispatcher("/doctor/create_treatment.jsp").forward(request, response);
+                return;
+            }
+
             treatmentFacade.create(treatment);
+
+            // Assign doctors to treatment
+            Set<Doctor> assignedDoctors = new java.util.HashSet<>();
+            for (String doctorIdStr : assignedDoctorIds) {
+                try {
+                    int doctorId = Integer.parseInt(doctorIdStr);
+                    Doctor doctor = doctorFacade.find(doctorId);
+                    if (doctor != null) {
+                        assignedDoctors.add(doctor);
+                    }
+                } catch (NumberFormatException e) {
+                    System.err.println("Invalid doctor ID: " + doctorIdStr);
+                }
+            }
+            
+            // Set the doctors and update the treatment
+            treatment.setDoctors(assignedDoctors);
+            treatmentFacade.edit(treatment);
 
             // Handle prescriptions if provided
             String[] conditionNames = request.getParameterValues("conditionName");
@@ -381,17 +446,23 @@ public class TreatmentServlet extends HttpServlet {
                 }
             }
 
-            String successMessage = "Treatment created successfully with " + prescriptionCount + " prescriptions.";
+            String successMessage = "Treatment created successfully with " + assignedDoctors.size() + " doctor(s) and " + prescriptionCount + " prescriptions.";
             request.setAttribute("success", successMessage);
             request.getRequestDispatcher("/doctor/create_treatment.jsp").forward(request, response);
 
         } catch (NumberFormatException e) {
             e.printStackTrace();
             request.setAttribute("error", "Invalid numeric values provided.");
+            // Load all doctors again for the form
+            List<Doctor> allDoctors = doctorFacade.findAll();
+            request.setAttribute("allDoctors", allDoctors);
             request.getRequestDispatcher("/doctor/create_treatment.jsp").forward(request, response);
         } catch (Exception e) {
             e.printStackTrace();
             request.setAttribute("error", "Error creating treatment: " + e.getMessage());
+            // Load all doctors again for the form
+            List<Doctor> allDoctors = doctorFacade.findAll();
+            request.setAttribute("allDoctors", allDoctors);
             request.getRequestDispatcher("/doctor/create_treatment.jsp").forward(request, response);
         }
     }
@@ -424,6 +495,37 @@ public class TreatmentServlet extends HttpServlet {
                     e.printStackTrace();
                     // Don't fail the entire update if image upload fails
                 }
+
+                // Handle doctor assignments
+                String[] assignedDoctorIds = request.getParameterValues("assignedDoctors");
+                if (assignedDoctorIds == null || assignedDoctorIds.length == 0) {
+                    request.setAttribute("error", "At least one doctor must be assigned to the treatment.");
+                    request.setAttribute("treatment", treatment);
+                    List<Prescription> prescriptions = prescriptionFacade.findByTreatmentId(id);
+                    request.setAttribute("prescriptions", prescriptions);
+                    // Load all doctors again for the form
+                    List<Doctor> allDoctors = doctorFacade.findAll();
+                    request.setAttribute("allDoctors", allDoctors);
+                    request.getRequestDispatcher("/doctor/edit_treatment.jsp").forward(request, response);
+                    return;
+                }
+
+                // Update doctor assignments
+                Set<Doctor> assignedDoctors = new java.util.HashSet<>();
+                for (String doctorIdStr : assignedDoctorIds) {
+                    try {
+                        int doctorId = Integer.parseInt(doctorIdStr);
+                        Doctor doctor = doctorFacade.find(doctorId);
+                        if (doctor != null) {
+                            assignedDoctors.add(doctor);
+                        }
+                    } catch (NumberFormatException e) {
+                        System.err.println("Invalid doctor ID: " + doctorIdStr);
+                    }
+                }
+                
+                // Set the doctors
+                treatment.setDoctors(assignedDoctors);
 
                 treatmentFacade.edit(treatment);
 
@@ -482,9 +584,9 @@ public class TreatmentServlet extends HttpServlet {
                     }
                 }
                 
-                String successMessage = "Treatment updated successfully";
+                String successMessage = "Treatment updated successfully with " + assignedDoctors.size() + " doctor(s) assigned";
                 if (newPrescriptionCount > 0) {
-                    successMessage += ". " + newPrescriptionCount + " new prescription" + (newPrescriptionCount > 1 ? "s" : "") + " added";
+                    successMessage += " and " + newPrescriptionCount + " new prescription" + (newPrescriptionCount > 1 ? "s" : "") + " added";
                 }
                 successMessage += ".";
                 
