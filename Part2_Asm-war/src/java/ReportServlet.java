@@ -37,6 +37,9 @@ public class ReportServlet extends HttpServlet {
     
     @EJB
     private model.FeedbackFacade feedbackFacade;
+    
+    @EJB
+    private model.PaymentFacade paymentFacade;
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -159,16 +162,15 @@ public class ReportServlet extends HttpServlet {
         double totalRevenue = 0;
         
         try {
-            // Get all appointments
-            List<Appointment> appointments = appointmentFacade.findAll();
+            // Get all payments directly from PaymentFacade
+            List<Payment> payments = paymentFacade.findAll();
             
-            // Sum up the revenues
-            for (Appointment appointment : appointments) {
-                if ("completed".equalsIgnoreCase(appointment.getStatus())) {
-                    Treatment treatment = appointment.getTreatment();
-                    if (treatment != null && treatment.getPrice() != null) {
-                        totalRevenue += treatment.getPrice();
-                    }
+            // Sum up the revenues from completed/paid payments
+            for (Payment payment : payments) {
+                // Only count payments that are completed/paid
+                if ("completed".equalsIgnoreCase(payment.getStatus()) || 
+                    "paid".equalsIgnoreCase(payment.getStatus())) {
+                    totalRevenue += payment.getAmount();
                 }
             }
         } catch (Exception e) {
