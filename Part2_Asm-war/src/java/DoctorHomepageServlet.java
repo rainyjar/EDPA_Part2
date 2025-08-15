@@ -52,6 +52,27 @@ public class DoctorHomepageServlet extends HttpServlet {
         if ("dashboard".equals(action)) {
             loadDashboardData(request, loggedInDoctor);
             request.getRequestDispatcher("/doctor/doctor_homepage.jsp").forward(request, response);
+        } else if ("viewRatings".equals(action)) {
+            // Handle doctor ratings view
+            try {
+                List<Feedback> feedbacks = feedbackFacade.findByDoctorId(loggedInDoctor.getId());
+                request.setAttribute("feedbackList", feedbacks);
+                
+                // Calculate average rating for this doctor
+                double averageRating = 0.0;
+                try {
+                    averageRating = feedbackFacade.getAverageRatingForDoctor(loggedInDoctor.getId());
+                } catch (Exception e) {
+                    System.out.println("Error calculating average rating: " + e.getMessage());
+                }
+                request.setAttribute("averageRating", averageRating);
+            } catch (Exception e) {
+                e.printStackTrace();
+                request.setAttribute("feedbackList", new ArrayList<Feedback>());
+                request.setAttribute("averageRating", 0.0);
+            }
+            request.setAttribute("loggedInDoctor", loggedInDoctor);
+            request.getRequestDispatcher("/doctor/view_ratings_doc.jsp").forward(request, response);
         } else {
             // Default action
             loadDashboardData(request, loggedInDoctor);

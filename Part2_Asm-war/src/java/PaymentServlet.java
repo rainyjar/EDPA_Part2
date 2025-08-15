@@ -126,17 +126,33 @@ public class PaymentServlet extends HttpServlet {
             
             String statusFilter = request.getParameter("status");
             if (statusFilter == null || statusFilter.trim().isEmpty()) {
-                statusFilter = "all";
+                statusFilter = "pending"; // Default to show pending payments
             }
+            
+            // Debug logging
+            System.out.println("PaymentServlet - Status filter: " + statusFilter);
             
             List<Payment> payments;
             if ("all".equals(statusFilter)) {
                 payments = paymentFacade.findAll();
+                System.out.println("PaymentServlet - Found all payments: " + (payments != null ? payments.size() : 0));
             } else {
                 payments = paymentFacade.findByStatus(statusFilter);
+                System.out.println("PaymentServlet - Found payments with status '" + statusFilter + "': " + (payments != null ? payments.size() : 0));
             }
             
+            // Debug: Print payment details
+            if (payments != null) {
+                for (Payment p : payments) {
+                    System.out.println("Payment ID: " + p.getId() + ", Status: " + p.getStatus() + ", Amount: " + p.getAmount());
+                }
+            }
+            
+            // Also get appointments for completed appointments that have pending payments
+            List<Appointment> completedAppointments = appointmentFacade.findByStatus("completed");
+            
             request.setAttribute("payments", payments);
+            request.setAttribute("completedAppointments", completedAppointments);
             request.setAttribute("statusFilter", statusFilter);
             request.setAttribute("staff", loggedInStaff);
             

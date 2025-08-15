@@ -23,9 +23,7 @@ import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfWriter;
 
-/**
- * MedicalCertificateServlet handles medical certificate operations
- */
+
 @WebServlet(name = "MedicalCertificateServlet", urlPatterns = {"/MedicalCertificateServlet"})
 public class MedicalCertificateServlet extends HttpServlet {
 
@@ -113,7 +111,7 @@ public class MedicalCertificateServlet extends HttpServlet {
             request.setAttribute("existingMC", existingMC);
             request.setAttribute("doctor", loggedInDoctor);
             
-            request.getRequestDispatcher("/doctor/doctor_mc.jsp").forward(request, response);
+            request.getRequestDispatcher("/doctor/generate_mc.jsp").forward(request, response);
             
         } catch (NumberFormatException e) {
             request.setAttribute("error", "Invalid appointment ID");
@@ -170,13 +168,13 @@ public class MedicalCertificateServlet extends HttpServlet {
             
             if (mc.getId() == 0) {
                 mcFacade.create(mc);
-                request.setAttribute("success", "Medical Certificate created successfully");
+                // Redirect back to generateMC view with success message
+                response.sendRedirect(request.getContextPath() + "/DoctorServlet?action=generateMC&success=Medical certificate created successfully");
             } else {
                 mcFacade.edit(mc);
-                request.setAttribute("success", "Medical Certificate updated successfully");
+                // Redirect back to generateMC view with success message
+                response.sendRedirect(request.getContextPath() + "/DoctorServlet?action=generateMC&success=Medical certificate updated successfully");
             }
-            
-            handleShowForm(request, response);
             
         } catch (Exception e) {
             e.printStackTrace();

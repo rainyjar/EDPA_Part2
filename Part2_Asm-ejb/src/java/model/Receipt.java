@@ -33,16 +33,14 @@ public class Receipt implements Serializable {
     private Payment payment;
 
     private Date issueDate;
-    private String filePath;
 
     public Receipt() {
     }
 
-    public Receipt(Appointment appointment, Payment payment, Date issueDate, String filePath) {
+    public Receipt(Appointment appointment, Payment payment, Date issueDate) {
         this.appointment = appointment;
         this.payment = payment;
         this.issueDate = issueDate;
-        this.filePath = filePath;
     }
 
     public int getId() {
@@ -75,14 +73,6 @@ public class Receipt implements Serializable {
 
     public void setIssueDate(Date issueDate) {
         this.issueDate = issueDate;
-    }
-
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
     }
 
     @Override

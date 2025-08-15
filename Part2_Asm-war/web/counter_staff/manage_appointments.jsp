@@ -665,16 +665,8 @@
                         </div>
                         
                         <!-- Quick Actions -->
-                        <div class="text-center mt-3">
-                            <button type="button" class="btn btn-warning btn-sm" onclick="$('#viewDetailsModal').modal('hide'); rescheduleAppointment($('#view-appointment-id').text());">
-                                <i class="fa fa-calendar"></i> Reschedule
-                            </button>
-                            <button type="button" class="btn btn-info btn-sm" onclick="$('#viewDetailsModal').modal('hide'); requireReschedule($('#view-appointment-id').text());">
-                                <i class="fa fa-exclamation-triangle"></i> Require Reschedule
-                            </button>
-                            <button type="button" class="btn btn-danger btn-sm" onclick="$('#viewDetailsModal').modal('hide'); cancelAppointment($('#view-appointment-id').text());">
-                                <i class="fa fa-times"></i> Cancel
-                            </button>
+                        <div class="text-center mt-3" id="modalActionButtons">
+                            <!-- Action buttons will be dynamically inserted here based on appointment status -->
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -774,6 +766,49 @@
                             $('#view-customer-message').text(apt.customerMessage || 'No message provided');
                             $('#view-doctor-message').text(apt.doctorMessage || 'No message from doctor');
                             $('#view-staff-message').text(apt.staffMessage || 'No staff notes');
+                            
+                            // Set action buttons based on appointment status
+                            const status = apt.status.toLowerCase();
+                            const actionsDiv = $('#modalActionButtons');
+                            actionsDiv.empty(); // Clear any existing buttons
+                            
+                            // Don't show action buttons for completed appointments
+                            if (status !== 'completed' && status !== 'cancelled') {
+                                // Add Reschedule button
+                                actionsDiv.append(`
+                                    <button type="button" class="btn btn-warning btn-sm" onclick="$('#viewDetailsModal').modal('hide'); rescheduleAppointment(${apt.id});">
+                                        <i class="fa fa-calendar"></i> Reschedule
+                                    </button>
+                                `);
+                                
+                                // Add Require Reschedule button
+                                if (status !== 'reschedule required') {
+                                    actionsDiv.append(`
+                                        <button type="button" class="btn btn-info btn-sm" onclick="$('#viewDetailsModal').modal('hide'); requireReschedule(${apt.id});">
+                                            <i class="fa fa-exclamation-triangle"></i> Require Reschedule
+                                        </button>
+                                    `);
+                                }
+                                
+                                // Add Cancel button
+                                actionsDiv.append(`
+                                    <button type="button" class="btn btn-danger btn-sm" onclick="$('#viewDetailsModal').modal('hide'); cancelAppointment(${apt.id});">
+                                        <i class="fa fa-times"></i> Cancel
+                                    </button>
+                                `);
+                            } else if (status === 'completed') {
+                                actionsDiv.append(`
+                                    <div class="alert alert-success">
+                                        <i class="fa fa-check-circle"></i> This appointment has been completed. No further actions are available.
+                                    </div>
+                                `);
+                            } else if (status === 'cancelled') {
+                                actionsDiv.append(`
+                                    <div class="alert alert-danger">
+                                        <i class="fa fa-times-circle"></i> This appointment has been cancelled. No further actions are available.
+                                    </div>
+                                `);
+                            }
                             
                             // Show modal
                             $('#viewDetailsModal').modal('show');

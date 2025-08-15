@@ -216,7 +216,7 @@
 
                     <!-- Payment Collection -->
                     <div class="col-md-3 col-sm-6">
-                        <a href="<%= request.getContextPath()%>/counter_staff/staff_payment.jsp" style="text-decoration: none;">
+                        <a href="<%= request.getContextPath()%>/PaymentServlet?action=viewPayments" style="text-decoration: none;">
                             <div class="action-card wow fadeInUp" data-wow-delay="0.5s">
                                 <div class="action-icon counter-staff">
                                     <i class="fa fa-credit-card"></i>
@@ -258,7 +258,7 @@
 
                     <!-- My Ratings -->
                     <div class="col-md-3 col-sm-6">
-                        <a href="<%= request.getContextPath()%>/CounterStaffServlet?action=viewMyRatings">
+                        <a href="<%= request.getContextPath()%>/CounterStaffServletJam?action=viewRatings" style="text-decoration: none;">
                             <div class="action-card wow fadeInUp" data-wow-delay="0.8s">
                                 <div class="action-icon counter-staff">
                                     <i class="fa fa-star"></i>
@@ -308,7 +308,7 @@
                                     </p>
                                 </div>
                                 <div class="col-sm-4 text-right">
-                                    <a href="<%= request.getContextPath()%>/counter_staff/manage_appointments.jsp?status=overdue" 
+                                    <a href="<%= request.getContextPath()%>/AppointmentServlet?action=manage&search=&status=overdue&doctor=all&treatment=all&staff=all&date="
                                        class="btn btn-sm btn-danger">
                                         <i class="fa fa-eye"></i> View
                                     </a>
@@ -352,7 +352,7 @@
                                     </p>
                                 </div>
                                 <div class="col-sm-4 text-right">
-                                    <a href="<%= request.getContextPath()%>/counter_staff/collect_payments.jsp" 
+                                    <a href="<%= request.getContextPath()%>/PaymentServlet?action=viewPayments" 
                                        class="btn btn-sm btn-warning">
                                         <i class="fa fa-money"></i> Collect
                                     </a>

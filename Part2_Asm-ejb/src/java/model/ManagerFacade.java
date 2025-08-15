@@ -54,4 +54,24 @@ public class ManagerFacade extends AbstractFacade<Manager> {
                  .setParameter("name", "%" + name.toLowerCase() + "%")
                  .getResultList();
     }
+    
+    /**
+     * Find manager by IC/NRIC
+     * @param ic The IC/NRIC to search for
+     * @return The manager with the given IC/NRIC, or null if not found
+     */
+    public Manager findByIc(String ic) {
+        try {
+            Query q = em.createQuery("SELECT m FROM Manager m WHERE m.ic = :ic");
+            q.setParameter("ic", ic);
+            List<Manager> results = q.getResultList();
+            if (results.isEmpty()) {
+                return null;
+            }
+            return results.get(0);
+        } catch (Exception e) {
+            System.err.println("Error finding manager by IC " + ic + ": " + e.getMessage());
+            return null;
+        }
+    }
 }

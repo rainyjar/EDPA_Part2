@@ -78,4 +78,24 @@ public class DoctorFacade extends AbstractFacade<Doctor> {
             return java.util.Collections.emptyList();
         }
     }
+    
+    /**
+     * Find doctor by IC/NRIC
+     * @param ic The IC/NRIC to search for
+     * @return The doctor with the given IC/NRIC, or null if not found
+     */
+    public Doctor findByIc(String ic) {
+        try {
+            Query q = em.createQuery("SELECT d FROM Doctor d WHERE d.ic = :ic");
+            q.setParameter("ic", ic);
+            List<Doctor> results = q.getResultList();
+            if (results.isEmpty()) {
+                return null;
+            }
+            return results.get(0);
+        } catch (Exception e) {
+            System.err.println("Error finding doctor by IC " + ic + ": " + e.getMessage());
+            return null;
+        }
+    }
 }

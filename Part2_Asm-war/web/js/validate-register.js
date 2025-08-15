@@ -179,7 +179,44 @@ $(document).ready(function () {
             showError('#nric', 'Please enter a valid NRIC (e.g. 990101-14-5678)');
             isValid = false;
         } else {
-            showValid('#nric');
+            // Check if NRIC is already in use
+            const currentUserId = $('#userId').val() || 0; // Get current user ID if editing
+            
+            // Determine user type based on form
+            let userType = '';
+            if (type === 'doctor') {
+                userType = 'doctor';
+            } else if (type === 'staff') {
+                userType = 'counterstaff';
+            } else if (type === 'manager') {
+                userType = 'manager';
+            } else {
+                userType = 'customer';
+            }
+            
+            $.ajax({
+                url: `${window.location.origin}/Part2_Asm-war/CheckNRICServlet`,
+                method: 'GET',
+                data: { 
+                    nric: nric, 
+                    userId: currentUserId,
+                    userType: userType
+                },
+                async: false, // Make synchronous to ensure validation completes before form submission
+                success: function(response) {
+                    if (response === 'taken') {
+                        showError('#nric', 'This NRIC is already registered to another user');
+                        isValid = false;
+                    } else {
+                        showValid('#nric');
+                    }
+                },
+                error: function() {
+                    // If check fails, allow submission but log warning
+                    console.warn('NRIC uniqueness check failed');
+                    showValid('#nric');
+                }
+            });
         }
 
         // Validate address

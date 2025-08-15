@@ -157,8 +157,7 @@ public class CounterStaff implements Serializable {
     public void setIc(String ic) {
         this.ic = ic;
     }
-    
-    
+     
 
     public Double getRating() {
         return rating;

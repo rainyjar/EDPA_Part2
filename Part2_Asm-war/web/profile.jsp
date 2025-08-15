@@ -170,6 +170,10 @@
                                     Please enter a valid address (at least 5 characters).
                                     <% } else if ("invalid_ic".equals(errorMsg)) { %>
                                     Please enter a valid NRIC (e.g. 990101-14-5678)
+                                    <% } else if ("ic_taken".equals(errorMsg)) { %>
+                                    This NRIC is already registered to another user
+                                    <% } else if ("nric_update_failed".equals(errorMsg)) { %>
+                                    Cannot update NRIC. Please try a different format or contact the administrator.
                                     <% } else if ("email_taken".equals(errorMsg)) { %>
                                     This email address is already in use by another account!
                                     <% } else if ("missing_fields".equals(errorMsg)) { %>
@@ -264,11 +268,11 @@
                                         </div>
                                         <div class="form-group col-md-6">
                                             <label class="form-label">
-                                                <i class="fa fa-id-badge"></i> NRIC *
+                                                <i class="fa fa-id-badge"></i> NRIC
                                             </label>
                                             <div class="input-group">
                                                 <span class="input-icon"><i class="fa fa-id-badge"></i></span>
-                                                <input type="text" class="form-control with-icon" id="nric" name="nric" value="<%= userIc%>" placeholder="xxxxxx-xx-xxxx" required>
+                                                <input type="text" class="form-control with-icon" id="nric" name="nric" value="<%= userIc%>" placeholder="xxxxxx-xx-xxxx">
                                                 <div class="invalid-feedback"></div>
                                             </div>
                                         </div>
@@ -278,11 +282,11 @@
                                     <div class="form-row">
                                         <div class="form-group col-md-12">
                                             <label class="form-label">
-                                                <i class="fa fa-map-marker"></i> Address *
+                                                <i class="fa fa-map-marker"></i> Address
                                             </label>
                                             <div class="input-group">
                                                 <span class="input-icon"><i class="fa fa-map-marker"></i></span>
-                                                <textarea id="address" name="address" class="form-control with-icon" rows="3" required><%= userAddress%></textarea>
+                                                <textarea id="address" name="address" class="form-control with-icon" rows="3"><%= userAddress%></textarea>
                                                 <div class="invalid-feedback"></div>
                                             </div>
                                         </div>

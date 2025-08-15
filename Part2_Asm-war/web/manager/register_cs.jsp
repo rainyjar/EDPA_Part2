@@ -108,7 +108,7 @@
 
                         <div class="form-group">
                             <label for="address">Address <span class="required">*</span></label>
-                            <textarea id="address" name="address" class="form-control staff" style="resize: none;" rows="3" required></textarea>
+                            <textarea id="address" name="address" class="form-control staff" style="resize: none;" rows="3" required>${cstaff != null ? cstaff.address : ''}</textarea>
                             <div class="invalid-feedback"></div>
                         </div>
 

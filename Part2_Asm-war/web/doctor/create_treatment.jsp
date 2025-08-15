@@ -1,4 +1,4 @@
-<%@ page contentType="text/html" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="model.Doctor" %>
 <%
     Doctor doctor = (Doctor) session.getAttribute("doctor");
@@ -9,247 +9,182 @@
 %>
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Treatment - Healthcare System</title>
-    
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="../css/bootstrap.min.css">
-    <link rel="stylesheet" href="../css/font-awesome.min.css">
-    <link rel="stylesheet" href="../css/animate.css">
-    <link rel="stylesheet" href="../css/templatemo-misc.css">
-    <link rel="stylesheet" href="../css/templatemo-style.css">
-</head>
-<body>
-    
-    <!-- Include header -->
-    <%@ include file="../includes/header.jsp" %>
-    
-    <section class="content-section" style="padding: 60px 0;">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="section-title">
-                        <h2><i class="fa fa-plus"></i> Create New Treatment</h2>
-                        <p>Add a new treatment with prescriptions</p>
+    <head>
+        <title>Create Treatment - APU Medical Center</title>
+        <%@ include file="/includes/head.jsp" %>
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/css/user-reg-edit.css" />
+    </head>
+    <body class="doctor-theme">
+        <%@ include file="/includes/header.jsp" %>
+        <%@ include file="/includes/navbar.jsp" %>
+        <div class="registration-container">
+            <a href="${pageContext.request.contextPath}/TreatmentServlet?action=manage" class="back-btn" style="margin-top: 30px; margin-bottom: 30px">
+                <i class="fa fa-arrow-left"></i> Back to Manage Treatments
+            </a>
+
+            <div class="registration-card">
+                <div class="card-header doctor">
+                    <h2>
+                        <i class="fa fa-stethoscope role-icon"></i>
+                        <span>Create New Treatment</span>
+                    </h2>
+                </div>
+
+                <div class="form-container">
+                    <!-- Success Message -->
+                    <% if (request.getAttribute("success") != null) {%>
+                    <div class="alert alert-success">
+                        <i class="fa fa-check-circle"></i>
+                        <%= request.getAttribute("success")%>
                     </div>
-                </div>
-            </div>
+                    <% }%>
 
-            <!-- Success/Error Messages -->
-            <% if (request.getAttribute("success") != null) { %>
-                <div class="alert alert-success alert-dismissible">
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
-                    <i class="fa fa-check-circle"></i> <%= request.getAttribute("success") %>
-                </div>
-            <% } %>
-            
-            <% if (request.getAttribute("error") != null) { %>
-                <div class="alert alert-danger alert-dismissible">
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
-                    <i class="fa fa-exclamation-triangle"></i> <%= request.getAttribute("error") %>
-                </div>
-            <% } %>
-
-            <div class="row">
-                <div class="col-md-8 offset-md-2">
-                    <div class="card">
-                        <div class="card-header">
-                            <h4><i class="fa fa-stethoscope"></i> Treatment Information</h4>
-                        </div>
-                        <div class="card-body">
-                            <form action="<%= request.getContextPath()%>/TreatmentServlet" method="post" id="treatmentForm">
-                                <input type="hidden" name="action" value="create">
-                                
-                                <!-- Treatment Basic Info -->
-                                <div class="form-group">
-                                    <label for="name"><i class="fa fa-tag"></i> Treatment Name *</label>
-                                    <input type="text" class="form-control" id="name" name="name" required 
-                                           placeholder="Enter treatment name">
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="shortDesc"><i class="fa fa-file-text-o"></i> Short Description *</label>
-                                    <textarea class="form-control" id="shortDesc" name="shortDesc" rows="3" required 
-                                              placeholder="Brief description of the treatment"></textarea>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="longDesc"><i class="fa fa-file-text"></i> Long Description</label>
-                                    <textarea class="form-control" id="longDesc" name="longDesc" rows="5" 
-                                              placeholder="Detailed description of the treatment"></textarea>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="baseCharge"><i class="fa fa-money"></i> Base Consultation Charge (RM) *</label>
-                                            <input type="number" class="form-control" id="baseCharge" name="baseCharge" 
-                                                   step="0.01" min="0" required placeholder="0.00">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="followUpCharge"><i class="fa fa-refresh"></i> Follow-up Charge (RM) *</label>
-                                            <input type="number" class="form-control" id="followUpCharge" name="followUpCharge" 
-                                                   step="0.01" min="0" required placeholder="0.00">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="treatmentPic"><i class="fa fa-image"></i> Treatment Image URL</label>
-                                    <input type="text" class="form-control" id="treatmentPic" name="treatmentPic" 
-                                           placeholder="URL to treatment image">
-                                </div>
-
-                                <hr>
-
-                                <!-- Prescriptions Section -->
-                                <div class="form-group">
-                                    <h5><i class="fa fa-pills"></i> Prescriptions</h5>
-                                    <p class="text-muted">Add prescriptions for this treatment</p>
-                                    
-                                    <div id="prescriptionContainer">
-                                        <div class="prescription-row">
-                                            <div class="row">
-                                                <div class="col-md-5">
-                                                    <div class="form-group">
-                                                        <label>Condition Name</label>
-                                                        <input type="text" class="form-control" name="conditionName" 
-                                                               placeholder="e.g., Hypertension">
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-5">
-                                                    <div class="form-group">
-                                                        <label>Medication Name</label>
-                                                        <input type="text" class="form-control" name="medicationName" 
-                                                               placeholder="e.g., Lisinopril 10mg">
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <div class="form-group">
-                                                        <label>&nbsp;</label>
-                                                        <button type="button" class="btn btn-danger btn-block remove-prescription" 
-                                                                onclick="removePrescription(this)" style="display: none;">
-                                                            <i class="fa fa-trash"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <button type="button" class="btn btn-secondary" onclick="addPrescription()">
-                                        <i class="fa fa-plus"></i> Add Prescription
-                                    </button>
-                                </div>
-
-                                <hr>
-
-                                <!-- Action Buttons -->
-                                <div class="form-group text-center">
-                                    <a href="<%= request.getContextPath()%>/TreatmentServlet?action=manage" 
-                                       class="btn btn-secondary">
-                                        <i class="fa fa-arrow-left"></i> Back to Manage
-                                    </a>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fa fa-save"></i> Create Treatment
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+                    <!-- Error Message -->
+                    <% if (request.getAttribute("error") != null) {%>
+                    <div class="alert alert-error">
+                        <i class="fa fa-exclamation-triangle"></i>
+                        <%= request.getAttribute("error")%>
                     </div>
+                    <% }%>
+
+                    <form id="treatmentForm" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/TreatmentServlet" novalidate>
+                        <input type="hidden" name="action" value="create">
+                        
+                        <!--Treatment Information Section -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="name">Treatment Name <span class="required">*</span></label>
+                                <input type="text" id="name" name="name" class="form-control doctor" 
+                                       placeholder="Enter treatment name" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="baseCharge">Base Consultation Charge (RM) <span class="required">*</span></label>
+                                <input type="number" id="baseCharge" name="baseCharge" class="form-control doctor" 
+                                       step="0.01" min="0" placeholder="0.00" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="followUpCharge">Follow-up Charge (RM) <span class="required">*</span></label>
+                                <input type="number" id="followUpCharge" name="followUpCharge" class="form-control doctor" 
+                                       step="0.01" min="0" placeholder="0.00" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="shortDesc">Short Description <span class="required">*</span></label>
+                            <textarea id="shortDesc" name="shortDesc" class="form-control doctor" style="resize: none;" rows="3" 
+                                      placeholder="Brief description of the treatment" required></textarea>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="longDesc">Long Description <span class="required">*</span></label>
+                            <textarea id="longDesc" name="longDesc" class="form-control doctor" style="resize: none;" rows="5" 
+                                      placeholder="Detailed description of the treatment" required></textarea>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <!-- Treatment Picture Section -->
+                        <div class="form-group">
+                            <label for="treatmentPic">Treatment Image <span class="required">*</span></label>
+
+                            <div class="file-upload">
+                                <div class="file-upload-wrapper">
+                                    <input type="file" class="form-control" id="treatmentPic" name="treatmentPic" accept="image/*" required>
+                                    <label for="treatmentPic" class="file-upload-btn" id="fileLabel">
+                                        <i class="fa fa-cloud-upload"></i>
+                                        <span>Choose Treatment Image</span>
+                                    </label>
+                                </div>
+                                <div class="invalid-feedback" id="treatmentPicError" style="display: block;"></div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Prescriptions Section -->
+                        <div class="form-group">
+                            <h5><i class="fa fa-pills"></i> Prescriptions</h5>
+                            <p class="text-muted">Add prescriptions for this treatment</p>
+                            
+                            <div id="prescriptionContainer">
+                                <div class="prescription-row">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Condition Name</label>
+                                            <input type="text" class="form-control doctor" name="conditionName" 
+                                                   placeholder="e.g., Hypertension">
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Medication Name</label>
+                                            <input type="text" class="form-control doctor" name="medicationName" 
+                                                   placeholder="e.g., Lisinopril 10mg">
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="text-align: center;">
+                                        <button type="button" class="btn btn-danger remove-prescription" 
+                                                onclick="removePrescription(this)" style="display: none;">
+                                            <i class="fa fa-trash"></i> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button type="button" class="btn btn-secondary" onclick="addPrescription()">
+                                <i class="fa fa-plus"></i> Add Prescription
+                            </button>
+                        </div>
+
+                        <button type="submit" class="submit-btn doctor" id="submitBtn">
+                            <span class="btn-text">
+                                <i class="fa fa-save"></i>
+                                Create Treatment
+                            </span>
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
-    </section>
 
-    <!-- Include footer -->
-    <%@ include file="../includes/footer.jsp" %>
-    
-    <!-- Scripts -->
-    <%@ include file="../includes/scripts.jsp" %>
+        <%@ include file="/includes/footer.jsp" %>
+        <%@ include file="/includes/scripts.jsp" %>
 
-    <script>
-        function addPrescription() {
-            const container = document.getElementById('prescriptionContainer');
-            const prescriptionRow = document.createElement('div');
-            prescriptionRow.className = 'prescription-row';
-            prescriptionRow.innerHTML = `
-                <div class="row">
-                    <div class="col-md-5">
-                        <div class="form-group">
-                            <label>Condition Name</label>
-                            <input type="text" class="form-control" name="conditionName" 
-                                   placeholder="e.g., Hypertension">
-                        </div>
-                    </div>
-                    <div class="col-md-5">
-                        <div class="form-group">
-                            <label>Medication Name</label>
-                            <input type="text" class="form-control" name="medicationName" 
-                                   placeholder="e.g., Lisinopril 10mg">
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            <label>&nbsp;</label>
-                            <button type="button" class="btn btn-danger btn-block remove-prescription" 
-                                    onclick="removePrescription(this)">
-                                <i class="fa fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            container.appendChild(prescriptionRow);
-            updateRemoveButtons();
-        }
+        <script src="${pageContext.request.contextPath}/js/jquery.min.js"></script>
+        <script src="${pageContext.request.contextPath}/js/validate-treatment.js"></script>
+        <script>
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert').fadeOut('slow');
+            }, 5000);
 
-        function removePrescription(button) {
-            const prescriptionRow = button.closest('.prescription-row');
-            prescriptionRow.remove();
-            updateRemoveButtons();
-        }
-
-        function updateRemoveButtons() {
-            const rows = document.querySelectorAll('.prescription-row');
-            rows.forEach((row, index) => {
-                const removeBtn = row.querySelector('.remove-prescription');
-                if (rows.length > 1) {
-                    removeBtn.style.display = 'block';
-                } else {
-                    removeBtn.style.display = 'none';
-                }
+            // Clear form after successful creation
+            <% if (request.getAttribute("success") != null) {%>
+            $(document).ready(function() {
+                // Clear the form after successful creation
+                $('#treatmentForm')[0].reset();
+                
+                // Reset file input label
+                $('#fileLabel span').text('Choose Treatment Image');
+                
+                // Clear prescription rows except the first one
+                $('#prescriptionContainer .prescription-row').not(':first').remove();
+                $('.remove-prescription').hide();
+                
+                // Reset validation classes
+                $('.form-control').removeClass('is-valid is-invalid');
+                $('.invalid-feedback').hide();
+                
+                console.log('Form cleared after successful treatment creation');
             });
-        }
-
-        // Form validation
-        document.getElementById('treatmentForm').addEventListener('submit', function(e) {
-            const name = document.getElementById('name').value.trim();
-            const shortDesc = document.getElementById('shortDesc').value.trim();
-            const baseCharge = document.getElementById('baseCharge').value;
-            const followUpCharge = document.getElementById('followUpCharge').value;
-
-            if (!name || !shortDesc || !baseCharge || !followUpCharge) {
-                e.preventDefault();
-                alert('Please fill in all required fields.');
-                return false;
-            }
-
-            if (parseFloat(baseCharge) < 0 || parseFloat(followUpCharge) < 0) {
-                e.preventDefault();
-                alert('Charges cannot be negative.');
-                return false;
-            }
-        });
-
-        // Auto-hide alerts after 5 seconds
-        setTimeout(function() {
-            $('.alert').fadeOut('slow');
-        }, 5000);
-    </script>
-</body>
+            <% }%>
+        </script>
+    </body>
 </html>

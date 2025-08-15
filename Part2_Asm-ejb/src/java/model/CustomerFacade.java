@@ -74,5 +74,25 @@ public class CustomerFacade extends AbstractFacade<Customer> {
         }
         return null;
     }
+    
+    /**
+     * Find customer by IC/NRIC
+     * @param ic The IC/NRIC to search for
+     * @return The customer with the given IC/NRIC, or null if not found
+     */
+    public Customer findByIc(String ic) {
+        try {
+            Query q = em.createQuery("SELECT c FROM Customer c WHERE c.ic = :ic");
+            q.setParameter("ic", ic);
+            List<Customer> results = q.getResultList();
+            if (results.isEmpty()) {
+                return null;
+            }
+            return results.get(0);
+        } catch (Exception e) {
+            System.err.println("Error finding customer by IC " + ic + ": " + e.getMessage());
+            return null;
+        }
+    }
 
 }

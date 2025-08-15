@@ -3,11 +3,15 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.ejb.EJB;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.Part;
+import model.Appointment;
+import model.AppointmentFacade;
 import model.Doctor;
 import model.Prescription;
 import model.PrescriptionFacade;
@@ -15,6 +19,7 @@ import model.Treatment;
 import model.TreatmentFacade;
 
 @WebServlet(urlPatterns = {"/TreatmentServlet"})
+@MultipartConfig(maxFileSize = 5 * 1024 * 1024) // 5MB max file size
 public class TreatmentServlet extends HttpServlet {
 
     @EJB
@@ -22,6 +27,9 @@ public class TreatmentServlet extends HttpServlet {
 
     @EJB
     private TreatmentFacade treatmentFacade;
+    
+    @EJB
+    private AppointmentFacade appointmentFacade;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -56,8 +64,34 @@ public class TreatmentServlet extends HttpServlet {
                 response.sendRedirect("login.jsp");
                 return;
             }
+            
+            // Get search parameters
+            String treatmentSearch = request.getParameter("treatmentSearch");
+            String prescriptionSearch = request.getParameter("prescriptionSearch");
+            String chargeFilter = request.getParameter("chargeFilter");
+            String prescriptionCountFilter = request.getParameter("prescriptionCount");
+            
             List<Treatment> treatmentList = treatmentFacade.findAll();
+            
+            // Get accurate prescription counts for each treatment
+            java.util.Map<Integer, Integer> prescriptionCounts = new java.util.HashMap<>();
+            for (Treatment treatment : treatmentList) {
+                List<Prescription> prescriptions = prescriptionFacade.findByTreatmentId(treatment.getId());
+                prescriptionCounts.put(treatment.getId(), prescriptions.size());
+            }
+            
+            // Apply server-side filtering if needed (optional - client-side filtering is already implemented)
+            if (treatmentSearch != null && !treatmentSearch.trim().isEmpty()) {
+                // You can implement server-side search here if needed
+                // For now, we'll rely on client-side filtering
+            }
+            
             request.setAttribute("treatmentList", treatmentList);
+            request.setAttribute("prescriptionCounts", prescriptionCounts);
+            request.setAttribute("treatmentSearch", treatmentSearch);
+            request.setAttribute("prescriptionSearch", prescriptionSearch);
+            request.setAttribute("chargeFilter", chargeFilter);
+            request.setAttribute("prescriptionCountFilter", prescriptionCountFilter);
             request.getRequestDispatcher("/doctor/manage_treatments.jsp").forward(request, response);
 
         } else if ("createForm".equalsIgnoreCase(action)) {
@@ -87,28 +121,87 @@ public class TreatmentServlet extends HttpServlet {
             }
 
         } else if ("deletePrescription".equalsIgnoreCase(action)) {
-            // Delete a prescription
+            // Handle prescription deletion
             if (loggedInDoctor == null) {
                 response.sendRedirect("login.jsp");
                 return;
             }
-            String prescriptionIdParam = request.getParameter("prescriptionId");
-            String treatmentIdParam = request.getParameter("treatmentId");
-            
-            if (prescriptionIdParam != null && treatmentIdParam != null) {
-                try {
-                    int prescriptionId = Integer.parseInt(prescriptionIdParam);
-                    Prescription prescription = prescriptionFacade.find(prescriptionId);
-                    if (prescription != null) {
-                        prescriptionFacade.remove(prescription);
-                        request.setAttribute("success", "Prescription deleted successfully.");
-                    }
-                    response.sendRedirect("TreatmentServlet?action=editForm&id=" + treatmentIdParam);
-                } catch (NumberFormatException e) {
-                    request.setAttribute("error", "Invalid prescription ID.");
-                    response.sendRedirect("TreatmentServlet?action=manage");
+            try {
+                int prescriptionId = Integer.parseInt(request.getParameter("prescriptionId"));
+                int treatmentId = Integer.parseInt(request.getParameter("treatmentId"));
+                
+                Prescription prescription = prescriptionFacade.find(prescriptionId);
+                if (prescription != null) {
+                    String conditionName = prescription.getConditionName();
+                    String medicationName = prescription.getMedicationName();
+                    
+                    prescriptionFacade.remove(prescription);
+                    
+                    String successMessage = "Prescription deleted successfully";
+                    response.sendRedirect("TreatmentServlet?action=editForm&id=" + treatmentId + "&prescriptionSuccess=" + 
+                        java.net.URLEncoder.encode(successMessage, "UTF-8"));
+                } else {
+                    response.sendRedirect("TreatmentServlet?action=editForm&id=" + treatmentId + "&prescriptionError=" + 
+                        java.net.URLEncoder.encode("Prescription not found.", "UTF-8"));
                 }
+            } catch (NumberFormatException e) {
+                response.sendRedirect("TreatmentServlet?action=manage&error=" + 
+                    java.net.URLEncoder.encode("Invalid prescription or treatment ID.", "UTF-8"));
+            } catch (Exception e) {
+                String treatmentId = request.getParameter("treatmentId");
+                response.sendRedirect("TreatmentServlet?action=editForm&id=" + treatmentId + "&prescriptionError=" + 
+                    java.net.URLEncoder.encode("Error deleting prescription: " + e.getMessage(), "UTF-8"));
             }
+
+        } else if ("myTasks".equalsIgnoreCase(action)) {
+            // Show doctor's approved appointments only (tasks to be completed)
+            if (loggedInDoctor == null) {
+                response.sendRedirect("login.jsp");
+                return;
+            }
+            
+            // Get only approved appointments for this doctor
+            List<Appointment> approvedAppointments = appointmentFacade.findByDoctorAndStatus(loggedInDoctor.getId(), "approved");
+            
+            // Handle search and filter parameters (no status filter needed here)
+            String searchQuery = request.getParameter("searchQuery");
+            String dateFilter = request.getParameter("dateFilter");
+            
+            request.setAttribute("appointments", approvedAppointments);
+            request.setAttribute("searchQuery", searchQuery);
+            request.setAttribute("dateFilter", dateFilter);
+            request.getRequestDispatcher("/doctor/my_tasks.jsp").forward(request, response);
+
+        } else if ("viewAppointmentHistory".equalsIgnoreCase(action)) {
+            // Show all appointment history with all statuses
+            if (loggedInDoctor == null) {
+                response.sendRedirect("login.jsp");
+                return;
+            }
+            
+            // Get all appointments for this doctor (all statuses)
+            List<Appointment> approvedAppointments = appointmentFacade.findByDoctorAndStatus(loggedInDoctor.getId(), "approved");
+            List<Appointment> completedAppointments = appointmentFacade.findByDoctorAndStatus(loggedInDoctor.getId(), "completed");
+            List<Appointment> pendingAppointments = appointmentFacade.findByDoctorAndStatus(loggedInDoctor.getId(), "pending");
+            List<Appointment> cancelledAppointments = appointmentFacade.findByDoctorAndStatus(loggedInDoctor.getId(), "cancelled");
+            
+            // Combine all appointments
+            List<Appointment> allAppointments = new ArrayList<>();
+            allAppointments.addAll(approvedAppointments);
+            allAppointments.addAll(completedAppointments);
+            allAppointments.addAll(pendingAppointments);
+            allAppointments.addAll(cancelledAppointments);
+            
+            // Handle search and filter parameters
+            String searchQuery = request.getParameter("searchQuery");
+            String statusFilter = request.getParameter("statusFilter");
+            String dateFilter = request.getParameter("dateFilter");
+            
+            request.setAttribute("appointments", allAppointments);
+            request.setAttribute("searchQuery", searchQuery);
+            request.setAttribute("statusFilter", statusFilter);
+            request.setAttribute("dateFilter", dateFilter);
+            request.getRequestDispatcher("/doctor/view_apt_history.jsp").forward(request, response);
 
         } else {
             response.sendRedirect("error.jsp");
@@ -142,6 +235,9 @@ public class TreatmentServlet extends HttpServlet {
         } else if ("updatePrescription".equalsIgnoreCase(action)) {
             handleUpdatePrescription(request, response);
 
+        } else if ("completeAppointment".equalsIgnoreCase(action)) {
+            handleCompleteAppointment(request, response);
+
         } else {
             response.sendRedirect("TreatmentServlet?action=manage");
         }
@@ -149,15 +245,90 @@ public class TreatmentServlet extends HttpServlet {
 
     private void handleCreateTreatment(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
+        
         try {
+            String name = request.getParameter("name");
+            String shortDesc = request.getParameter("shortDesc");
+            String longDesc = request.getParameter("longDesc");
+            String baseChargeStr = request.getParameter("baseCharge");
+            String followUpChargeStr = request.getParameter("followUpCharge");
+            
+            // Handle treatment image (file upload)
+            String treatmentPicPath = "";
+            try {
+                Part treatmentPicPart = request.getPart("treatmentPic");
+                if (treatmentPicPart != null && treatmentPicPart.getSize() > 0) {
+                    String uploadedFileName = UploadImage.uploadImage(treatmentPicPart, "treatment");
+                    if (uploadedFileName != null) {
+                        treatmentPicPath = uploadedFileName;
+                    } else {
+                        request.setAttribute("error", "Failed to upload treatment image.");
+                        request.getRequestDispatcher("/doctor/create_treatment.jsp").forward(request, response);
+                        return;
+                    }
+                } else {
+                    request.setAttribute("error", "Treatment image is required.");
+                    request.getRequestDispatcher("/doctor/create_treatment.jsp").forward(request, response);
+                    return;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                request.setAttribute("error", "Treatment image upload failed: " + e.getMessage());
+                request.getRequestDispatcher("/doctor/create_treatment.jsp").forward(request, response);
+                return;
+            }
+            
+            // Validate required fields
+            if (name == null || name.trim().isEmpty()) {
+                request.setAttribute("error", "Treatment name is required.");
+                request.getRequestDispatcher("/doctor/create_treatment.jsp").forward(request, response);
+                return;
+            }
+            
+            if (shortDesc == null || shortDesc.trim().isEmpty()) {
+                request.setAttribute("error", "Short description is required.");
+                request.getRequestDispatcher("/doctor/create_treatment.jsp").forward(request, response);
+                return;
+            }
+            
+            if (baseChargeStr == null || baseChargeStr.trim().isEmpty()) {
+                request.setAttribute("error", "Base consultation charge is required.");
+                request.getRequestDispatcher("/doctor/create_treatment.jsp").forward(request, response);
+                return;
+            }
+            
+            if (followUpChargeStr == null || followUpChargeStr.trim().isEmpty()) {
+                request.setAttribute("error", "Follow-up charge is required.");
+                request.getRequestDispatcher("/doctor/create_treatment.jsp").forward(request, response);
+                return;
+            }
+
+            // Parse numeric values
+            double baseCharge, followUpCharge;
+            try {
+                baseCharge = Double.parseDouble(baseChargeStr);
+                followUpCharge = Double.parseDouble(followUpChargeStr);
+            } catch (NumberFormatException e) {
+                request.setAttribute("error", "Invalid numeric values for charges.");
+                request.getRequestDispatcher("/doctor/create_treatment.jsp").forward(request, response);
+                return;
+            }
+            
+            // Validate charge values
+            if (baseCharge < 0 || followUpCharge < 0) {
+                request.setAttribute("error", "Charges cannot be negative.");
+                request.getRequestDispatcher("/doctor/create_treatment.jsp").forward(request, response);
+                return;
+            }
+
             // Create new treatment
             Treatment treatment = new Treatment();
-            treatment.setName(request.getParameter("name"));
-            treatment.setShortDescription(request.getParameter("shortDesc"));
-            treatment.setLongDescription(request.getParameter("longDesc"));
-            treatment.setBaseConsultationCharge(Double.parseDouble(request.getParameter("baseCharge")));
-            treatment.setFollowUpCharge(Double.parseDouble(request.getParameter("followUpCharge")));
-            treatment.setTreatmentPic(request.getParameter("treatmentPic"));
+            treatment.setName(name.trim());
+            treatment.setShortDescription(shortDesc.trim());
+            treatment.setLongDescription(longDesc != null ? longDesc.trim() : "");
+            treatment.setBaseConsultationCharge(baseCharge);
+            treatment.setFollowUpCharge(followUpCharge);
+            treatment.setTreatmentPic(treatmentPicPath != null ? treatmentPicPath.trim() : "");
 
             treatmentFacade.create(treatment);
 
@@ -165,28 +336,61 @@ public class TreatmentServlet extends HttpServlet {
             String[] conditionNames = request.getParameterValues("conditionName");
             String[] medicationNames = request.getParameterValues("medicationName");
 
+            int prescriptionCount = 0;
             if (conditionNames != null && medicationNames != null) {
                 for (int i = 0; i < Math.min(conditionNames.length, medicationNames.length); i++) {
-                    if (conditionNames[i] != null && !conditionNames[i].trim().isEmpty() &&
-                        medicationNames[i] != null && !medicationNames[i].trim().isEmpty()) {
+                    String condition = conditionNames[i];
+                    String medication = medicationNames[i];
+                    
+                    // Validate prescription fields - both must be filled or both must be empty
+                    boolean hasCondition = condition != null && !condition.trim().isEmpty();
+                    boolean hasMedication = medication != null && !medication.trim().isEmpty();
+                    
+                    if (hasCondition || hasMedication) {
+                        // If either field has content, both must have content
+                        if (!hasCondition || !hasMedication) {
+                            String errorMessage = "Invalid prescription at row " + (i+1) + ": Both condition name and medication name are required. Please fill both fields or leave both empty.";
+                            request.setAttribute("error", errorMessage);
+                            request.getRequestDispatcher("/doctor/create_treatment.jsp").forward(request, response);
+                            return;
+                        }
                         
+                        // Both fields have content - validate length
+                        if (condition.trim().length() < 2) {
+                            String errorMessage = "Condition name at row " + (i+1) + " must be at least 2 characters long.";
+                            request.setAttribute("error", errorMessage);
+                            request.getRequestDispatcher("/doctor/create_treatment.jsp").forward(request, response);
+                            return;
+                        }
+                        
+                        if (medication.trim().length() < 2) {
+                            String errorMessage = "Medication name at row " + (i+1) + " must be at least 2 characters long.";
+                            request.setAttribute("error", errorMessage);
+                            request.getRequestDispatcher("/doctor/create_treatment.jsp").forward(request, response);
+                            return;
+                        }
+                    
                         Prescription prescription = new Prescription();
-                        prescription.setConditionName(conditionNames[i].trim());
-                        prescription.setMedicationName(medicationNames[i].trim());
+                        prescription.setConditionName(condition.trim());
+                        prescription.setMedicationName(medication.trim());
                         prescription.setTreatment(treatment);
                         
                         prescriptionFacade.create(prescription);
+                        prescriptionCount++;
                     }
                 }
             }
 
-            request.setAttribute("success", "Treatment created successfully with prescriptions.");
-            response.sendRedirect("TreatmentServlet?action=manage");
+            String successMessage = "Treatment created successfully with " + prescriptionCount + " prescriptions.";
+            request.setAttribute("success", successMessage);
+            request.getRequestDispatcher("/doctor/create_treatment.jsp").forward(request, response);
 
         } catch (NumberFormatException e) {
+            e.printStackTrace();
             request.setAttribute("error", "Invalid numeric values provided.");
             request.getRequestDispatcher("/doctor/create_treatment.jsp").forward(request, response);
         } catch (Exception e) {
+            e.printStackTrace();
             request.setAttribute("error", "Error creating treatment: " + e.getMessage());
             request.getRequestDispatcher("/doctor/create_treatment.jsp").forward(request, response);
         }
@@ -194,6 +398,7 @@ public class TreatmentServlet extends HttpServlet {
 
     private void handleUpdateTreatment(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
+        
         try {
             int id = Integer.parseInt(request.getParameter("id"));
             Treatment treatment = treatmentFacade.find(id);
@@ -204,7 +409,21 @@ public class TreatmentServlet extends HttpServlet {
                 treatment.setLongDescription(request.getParameter("longDesc"));
                 treatment.setBaseConsultationCharge(Double.parseDouble(request.getParameter("baseCharge")));
                 treatment.setFollowUpCharge(Double.parseDouble(request.getParameter("followUpCharge")));
-                treatment.setTreatmentPic(request.getParameter("treatmentPic"));
+                
+                // Handle treatment image update (optional for edit)
+                try {
+                    Part treatmentPicPart = request.getPart("treatmentPic");
+                    if (treatmentPicPart != null && treatmentPicPart.getSize() > 0) {
+                        String uploadedFileName = UploadImage.uploadImage(treatmentPicPart, "treatment");
+                        if (uploadedFileName != null) {
+                            treatment.setTreatmentPic(uploadedFileName);
+                        }
+                    }
+                    // Keep existing image if no new file uploaded
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    // Don't fail the entire update if image upload fails
+                }
 
                 treatmentFacade.edit(treatment);
 
@@ -212,34 +431,81 @@ public class TreatmentServlet extends HttpServlet {
                 String[] conditionNames = request.getParameterValues("conditionName");
                 String[] medicationNames = request.getParameterValues("medicationName");
 
+                int newPrescriptionCount = 0;
                 if (conditionNames != null && medicationNames != null) {
                     for (int i = 0; i < Math.min(conditionNames.length, medicationNames.length); i++) {
-                        if (conditionNames[i] != null && !conditionNames[i].trim().isEmpty() &&
-                            medicationNames[i] != null && !medicationNames[i].trim().isEmpty()) {
+                        String condition = conditionNames[i];
+                        String medication = medicationNames[i];
+                        
+                        // Validate prescription fields - both must be filled or both must be empty
+                        boolean hasCondition = condition != null && !condition.trim().isEmpty();
+                        boolean hasMedication = medication != null && !medication.trim().isEmpty();
+                        
+                        if (hasCondition || hasMedication) {
+                            // If either field has content, both must have content
+                            if (!hasCondition || !hasMedication) {
+                                String errorMessage = "Invalid prescription at row " + (i+1) + ": Both condition name and medication name are required. Please fill both fields or leave both empty.";
+                                request.setAttribute("error", errorMessage);
+                                request.setAttribute("treatment", treatment);
+                                request.setAttribute("prescriptions", prescriptionFacade.findByTreatmentId(id));
+                                request.getRequestDispatcher("/doctor/edit_treatment.jsp").forward(request, response);
+                                return;
+                            }
                             
+                            // Both fields have content - validate length
+                            if (condition.trim().length() < 2) {
+                                String errorMessage = "Condition name at row " + (i+1) + " must be at least 2 characters long.";
+                                request.setAttribute("error", errorMessage);
+                                request.setAttribute("treatment", treatment);
+                                request.setAttribute("prescriptions", prescriptionFacade.findByTreatmentId(id));
+                                request.getRequestDispatcher("/doctor/edit_treatment.jsp").forward(request, response);
+                                return;
+                            }
+                            
+                            if (medication.trim().length() < 2) {
+                                String errorMessage = "Medication name at row " + (i+1) + " must be at least 2 characters long.";
+                                request.setAttribute("error", errorMessage);
+                                request.setAttribute("treatment", treatment);
+                                request.setAttribute("prescriptions", prescriptionFacade.findByTreatmentId(id));
+                                request.getRequestDispatcher("/doctor/edit_treatment.jsp").forward(request, response);
+                                return;
+                            }
+                        
                             Prescription prescription = new Prescription();
-                            prescription.setConditionName(conditionNames[i].trim());
-                            prescription.setMedicationName(medicationNames[i].trim());
+                            prescription.setConditionName(condition.trim());
+                            prescription.setMedicationName(medication.trim());
                             prescription.setTreatment(treatment);
                             
                             prescriptionFacade.create(prescription);
+                            newPrescriptionCount++;
                         }
                     }
                 }
-
-                request.setAttribute("success", "Treatment updated successfully.");
+                
+                String successMessage = "Treatment updated successfully";
+                if (newPrescriptionCount > 0) {
+                    successMessage += ". " + newPrescriptionCount + " new prescription" + (newPrescriptionCount > 1 ? "s" : "") + " added";
+                }
+                successMessage += ".";
+                
+                // Redirect with success message
+                response.sendRedirect("TreatmentServlet?action=editForm&id=" + id + "&success=" + 
+                    java.net.URLEncoder.encode(successMessage, "UTF-8"));
             } else {
-                request.setAttribute("error", "Treatment not found.");
+                response.sendRedirect("TreatmentServlet?action=editForm&id=" + id + "&error=" + 
+                    java.net.URLEncoder.encode("Treatment not found.", "UTF-8"));
             }
-            
-            response.sendRedirect("TreatmentServlet?action=editForm&id=" + id);
 
         } catch (NumberFormatException e) {
-            request.setAttribute("error", "Invalid treatment ID or numeric values.");
-            response.sendRedirect("TreatmentServlet?action=manage");
+            e.printStackTrace();
+            String treatmentId = request.getParameter("id");
+            response.sendRedirect("TreatmentServlet?action=editForm&id=" + treatmentId + "&error=" + 
+                java.net.URLEncoder.encode("Invalid treatment ID or numeric values.", "UTF-8"));
         } catch (Exception e) {
-            request.setAttribute("error", "Error updating treatment: " + e.getMessage());
-            response.sendRedirect("TreatmentServlet?action=manage");
+            e.printStackTrace();
+            String treatmentId = request.getParameter("id");
+            response.sendRedirect("TreatmentServlet?action=editForm&id=" + treatmentId + "&error=" + 
+                java.net.URLEncoder.encode("Error updating treatment: " + e.getMessage(), "UTF-8"));
         }
     }
 
@@ -323,19 +589,56 @@ public class TreatmentServlet extends HttpServlet {
                 prescription.setMedicationName(medicationName.trim());
                 
                 prescriptionFacade.edit(prescription);
-                request.setAttribute("success", "Prescription updated successfully.");
+                
+                String successMessage = "Prescription updated successfully";
+                response.sendRedirect("TreatmentServlet?action=editForm&id=" + treatmentId + "&prescriptionSuccess=" + 
+                    java.net.URLEncoder.encode(successMessage, "UTF-8"));
             } else {
-                request.setAttribute("error", "Invalid data provided for prescription.");
+                response.sendRedirect("TreatmentServlet?action=editForm&id=" + treatmentId + "&prescriptionError=" + 
+                    java.net.URLEncoder.encode("Invalid data provided for prescription.", "UTF-8"));
             }
             
-            response.sendRedirect("TreatmentServlet?action=editForm&id=" + treatmentId);
-            
         } catch (NumberFormatException e) {
-            request.setAttribute("error", "Invalid prescription or treatment ID.");
-            response.sendRedirect("TreatmentServlet?action=manage");
+            response.sendRedirect("TreatmentServlet?action=manage&error=" + 
+                java.net.URLEncoder.encode("Invalid prescription or treatment ID.", "UTF-8"));
         } catch (Exception e) {
-            request.setAttribute("error", "Error updating prescription: " + e.getMessage());
-            response.sendRedirect("TreatmentServlet?action=manage");
+            String treatmentId = request.getParameter("treatmentId");
+            response.sendRedirect("TreatmentServlet?action=editForm&id=" + treatmentId + "&prescriptionError=" + 
+                java.net.URLEncoder.encode("Error updating prescription: " + e.getMessage(), "UTF-8"));
+        }
+    }
+
+    private void handleCompleteAppointment(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        try {
+            int appointmentId = Integer.parseInt(request.getParameter("appointmentId"));
+            String docMessage = request.getParameter("docMessage");
+            
+            Appointment appointment = appointmentFacade.find(appointmentId);
+            if (appointment != null && "approved".equals(appointment.getStatus())) {
+                appointment.setStatus("completed");
+                if (docMessage != null && !docMessage.trim().isEmpty()) {
+                    appointment.setDocMessage(docMessage.trim());
+                }
+                appointmentFacade.edit(appointment);
+                
+                String successMessage = "Appointment completed successfully.";
+                response.sendRedirect("TreatmentServlet?action=myTasks&success=" + 
+                    java.net.URLEncoder.encode(successMessage, "UTF-8"));
+            } else {
+                String errorMessage = "Appointment not found or not in approved status.";
+                response.sendRedirect("TreatmentServlet?action=myTasks&error=" + 
+                    java.net.URLEncoder.encode(errorMessage, "UTF-8"));
+            }
+        } catch (NumberFormatException e) {
+            String errorMessage = "Invalid appointment ID.";
+            response.sendRedirect("TreatmentServlet?action=myTasks&error=" + 
+                java.net.URLEncoder.encode(errorMessage, "UTF-8"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            String errorMessage = "Error completing appointment: " + e.getMessage();
+            response.sendRedirect("TreatmentServlet?action=myTasks&error=" + 
+                java.net.URLEncoder.encode(errorMessage, "UTF-8"));
         }
     }
 

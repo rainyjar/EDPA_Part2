@@ -143,7 +143,7 @@
 
                     <!-- Appointment Management -->
                     <div class="col-md-3 col-sm-6">
-                        <a href="<%= request.getContextPath()%>/manager/view_appointments.jsp" style="text-decoration: none;">
+                        <a href="<%= request.getContextPath()%>/ManagerServlet?action=viewAppointments" style="text-decoration: none;">
                             <div class="action-card wow fadeInUp" data-wow-delay="0.3s">
                                 <div class="action-icon">
                                     <i class="fa fa-calendar"></i>
@@ -384,7 +384,7 @@
                         <% }%>
 
                         <div class="text-center" style="margin-top: 20px;">
-                            <a href="<%= request.getContextPath()%>/manager/view_appointments.jsp" class="btn btn-primary">
+                            <a href="<%= request.getContextPath()%>/ManagerServlet?action=viewAppointments" class="btn btn-primary">
                                 View All Appointments
                             </a>
                         </div>

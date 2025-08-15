@@ -40,8 +40,6 @@ import model.Schedule;
 import model.ScheduleFacade;
 import model.Payment;
 import model.PaymentFacade;
-import model.LeaveRequest;
-import model.LeaveRequestFacade;
 
 @WebServlet(urlPatterns = {"/AppointmentServlet"})
 public class AppointmentServlet extends HttpServlet {
@@ -67,9 +65,6 @@ public class AppointmentServlet extends HttpServlet {
     @EJB
     private PaymentFacade paymentFacade;
 
-    @EJB
-    private LeaveRequestFacade scheduleUnavailableFacade;
-
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -90,8 +85,11 @@ public class AppointmentServlet extends HttpServlet {
         if ("view".equals(action)) {
             // Manager view - show all appointments
             List<Appointment> appointments = appointmentFacade.findAll();
-            request.setAttribute("appointments", appointments);
-            request.getRequestDispatcher("manager/view_apt.jsp").forward(request, response);
+            request.setAttribute("appointmentList", appointments);
+            request.setAttribute("doctorList", doctorFacade.findAll());
+            request.setAttribute("treatmentList", treatmentFacade.findAll());
+            request.setAttribute("staffList", counterStaffFacade.findAll());
+            request.getRequestDispatcher("/manager/view_appointments.jsp").forward(request, response);
 
         } else if ("reschedule".equals(action)) {
             // Load reschedule form
@@ -348,10 +346,9 @@ public class AppointmentServlet extends HttpServlet {
     }
 
     /**
-     * Generate comprehensive time slots with cross-table validation Step 1:
-     * Check LeaveRequest - doctor is off on specific dates Step 2: Get the
-     * doctor's working hours on that weekday (Schedule) Step 3: Check existing
-     * bookings (Appointment)
+     * Generate comprehensive time slots with cross-table validation 
+     * Step 1: Get the doctor's working hours on that weekday (Schedule) 
+     * Step 2: Check existing bookings (Appointment)
      */
     private List<Map<String, Object>> generateComprehensiveTimeSlots(int doctorId, Date appointmentDate, List<Schedule> schedules) {
         List<Map<String, Object>> timeSlots = new ArrayList<>();
@@ -566,11 +563,10 @@ public class AppointmentServlet extends HttpServlet {
     }
 
     /**
-     * Generate available time slots based on doctor schedules,
-     * unavailabilities, and existing appointments This method implements
-     * comprehensive cross-table validation: 1. Check LeaveRequest - doctor is
-     * off on specific dates 2. Check Schedule - doctor's working hours on that
-     * weekday 3. Check Appointment - already booked slots by other customers
+     * Generate available time slots based on doctor schedules and existing appointments 
+     * This method implements cross-table validation: 
+     * 1. Check Schedule - doctor's working hours on that weekday 
+     * 2. Check Appointment - already booked slots by other customers
      */
     private List<Map<String, Object>> generateAvailableTimeSlots(List<Schedule> schedules, List<Appointment> existingAppointments) {
         List<Map<String, Object>> timeSlots = new ArrayList<>();
@@ -1773,12 +1769,10 @@ public class AppointmentServlet extends HttpServlet {
 
     /**
      * Comprehensive availability check for appointment booking/rescheduling
-     * Implements cross-table validation across Schedule, LeaveRequest, and
-     * Appointment tables
+     * Implements cross-table validation across Schedule and Appointment tables
      *
-     * Step 1: Check if doctor is unavailable that day (LeaveRequest) Step 2:
-     * Get the doctor's working hours on that weekday (Schedule) Step 3: Check
-     * existing bookings (Appointment)
+     * Step 1: Get the doctor's working hours on that weekday (Schedule)
+     * Step 2: Check existing bookings (Appointment)
      *
      * @param doctorId The doctor's ID
      * @param appointmentDate The requested appointment date
@@ -1796,17 +1790,8 @@ public class AppointmentServlet extends HttpServlet {
             System.out.println("Time: " + appointmentTime);
             System.out.println("Exclude Appointment ID: " + excludeAppointmentId);
 
-            // Step 1: Check LeaveRequest - doctor is off on specific dates
-            System.out.println("\n--- Step 1: Checking Doctor Unavailability ---");
-            boolean isDoctorUnavailable = scheduleUnavailableFacade.isDoctorUnavailable(doctorId, appointmentDate, appointmentTime);
-            if (isDoctorUnavailable) {
-                System.out.println("Doctor is unavailable at this time (marked as unavailable)");
-                return new AvailabilityResult(false, "Doctor is unavailable at this time", "DOCTOR_UNAVAILABLE");
-            }
-            System.out.println("Doctor is not marked as unavailable");
-
-            // Step 2: Check Schedule - doctor's working hours on that weekday
-            System.out.println("\n--- Step 2: Checking Doctor's Schedule ---");
+            // Step 1: Check Schedule - doctor's working hours on that weekday
+            System.out.println("\n--- Step 1: Checking Doctor's Schedule ---");
             Calendar cal = Calendar.getInstance();
             cal.setTime(appointmentDate);
             String dayOfWeek = getDayOfWeekString(cal.get(Calendar.DAY_OF_WEEK));
@@ -2614,7 +2599,9 @@ public class AppointmentServlet extends HttpServlet {
             if (appointment.getTreatment() != null) {
                 json.append("\"treatment\": {");
                 json.append("\"id\": ").append(appointment.getTreatment().getId()).append(",");
-                json.append("\"name\": \"").append(appointment.getTreatment().getName() != null ? appointment.getTreatment().getName() : "").append("\"");
+                json.append("\"name\": \"").append(appointment.getTreatment().getName() != null ? appointment.getTreatment().getName() : "").append("\",");
+                json.append("\"durationMinutes\": 60,");
+                json.append("\"price\": ").append(appointment.getTreatment().getBaseConsultationCharge());
                 json.append("},");
             } else {
                 json.append("\"treatment\": null,");
@@ -2644,8 +2631,12 @@ public class AppointmentServlet extends HttpServlet {
             // Date and time
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy");
             SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
-            json.append("\"date\": \"").append(appointment.getAppointmentDate() != null ? dateFormat.format(appointment.getAppointmentDate()) : "").append("\",");
-            json.append("\"time\": \"").append(appointment.getAppointmentTime() != null ? timeFormat.format(appointment.getAppointmentTime()) : "").append("\",");
+            json.append("\"appointmentDate\": \"").append(appointment.getAppointmentDate() != null ? dateFormat.format(appointment.getAppointmentDate()) : "").append("\",");
+            json.append("\"appointmentTime\": \"").append(appointment.getAppointmentTime() != null ? timeFormat.format(appointment.getAppointmentTime()) : "").append("\",");
+            
+            // Add placeholder dates for created and updated times since the model doesn't have these fields
+            json.append("\"createdAt\": \"").append(dateFormat.format(new Date())).append("\",");
+            json.append("\"updatedAt\": \"").append(dateFormat.format(new Date())).append("\",");
 
             // Messages
             json.append("\"customerMessage\": \"").append(appointment.getCustMessage() != null ? appointment.getCustMessage().replace("\"", "\\\"") : "").append("\",");
@@ -2795,116 +2786,5 @@ public class AppointmentServlet extends HttpServlet {
         }
     }
 
-    /**
-     * Post-booking validation: Check affected appointments when doctor
-     * unavailability is added This method should be called when a new
-     * LeaveRequest entry is created It automatically changes affected
-     * appointment statuses and clears staffId
-     *
-     * @param scheduleUnavailable The new unavailability record
-     * @return Number of appointments affected
-     */
-    public int handlePostBookingValidation(LeaveRequest scheduleUnavailable) {
-        int affectedCount = 0;
-
-        try {
-            System.out.println("=== POST-BOOKING VALIDATION ===");
-            System.out.println("Doctor ID: " + scheduleUnavailable.getDoctor().getId());
-            System.out.println("Unavailable Date: " + scheduleUnavailable.getUnavailableDate());
-            System.out.println("Unavailable Time: " + scheduleUnavailable.getStartTime() + " - " + scheduleUnavailable.getEndTime());
-
-            // Find appointments that conflict with this unavailability
-            List<Appointment> allAppointments = appointmentFacade.findByDoctorAndDate(
-                    scheduleUnavailable.getDoctor().getId(),
-                    new SimpleDateFormat("yyyy-MM-dd").format(scheduleUnavailable.getUnavailableDate())
-            );
-
-            if (allAppointments == null || allAppointments.isEmpty()) {
-                System.out.println("No appointments found for this doctor on this date");
-                return 0;
-            }
-
-            System.out.println("Checking " + allAppointments.size() + " appointments for conflicts");
-
-            for (Appointment appointment : allAppointments) {
-                try {
-                    // Skip null appointments or already processed ones
-                    if (appointment == null || appointment.getAppointmentTime() == null) {
-                        continue;
-                    }
-
-                    // Skip appointments that are already cancelled or completed
-                    String currentStatus = appointment.getStatus();
-                    if ("cancelled".equals(currentStatus) || "completed".equals(currentStatus)) {
-                        System.out.println("Skipping appointment ID " + appointment.getId() + " - already " + currentStatus);
-                        continue;
-                    }
-
-                    // Check if appointment time conflicts with unavailability
-                    Time appointmentTime = appointment.getAppointmentTime();
-                    Time unavailableStart = scheduleUnavailable.getStartTime();
-                    Time unavailableEnd = scheduleUnavailable.getEndTime();
-
-                    // Check if appointment time falls within unavailable period
-                    if (appointmentTime.compareTo(unavailableStart) >= 0
-                            && appointmentTime.compareTo(unavailableEnd) < 0) {
-
-                        System.out.println("CONFLICT DETECTED!");
-                        System.out.println("  Appointment ID: " + appointment.getId());
-                        System.out.println("  Current Status: " + currentStatus);
-                        System.out.println("  Appointment Time: " + appointmentTime);
-                        System.out.println("  Unavailable Period: " + unavailableStart + " - " + unavailableEnd);
-
-                        // Update appointment status based on current status
-                        String newStatus = "reschedule";
-                        if ("approved".equals(currentStatus)) {
-                            newStatus = "reschedule";
-                            System.out.println("  Status change: Approved → Reschedule Required");
-                        } else if ("pending".equals(currentStatus)) {
-                            newStatus = "reschedule";
-                            System.out.println("  Status change: Pending → Reschedule Required");
-                        }
-
-                        // Update the appointment
-                        appointment.setStatus(newStatus);
-
-                        // Clear staffId automatically (as per requirement)
-                        appointment.setCounterStaff(null);
-                        System.out.println("  Staff ID cleared - will display 'Not assigned'");
-
-                        // Add automatic staff message explaining the change
-                        String autoMessage = "Appointment requires rescheduling due to doctor unavailability on "
-                                + scheduleUnavailable.getUnavailableDate() + " from "
-                                + unavailableStart + " to " + unavailableEnd;
-                        if (scheduleUnavailable.getReason() != null && !scheduleUnavailable.getReason().trim().isEmpty()) {
-                            autoMessage += ". Reason: " + scheduleUnavailable.getReason();
-                        }
-                        appointment.setStaffMessage(autoMessage);
-
-                        // Save the updated appointment
-                        appointmentFacade.edit(appointment);
-                        affectedCount++;
-
-                        System.out.println("Appointment updated successfully");
-                    }
-
-                } catch (Exception appointmentException) {
-                    System.out.println("Error processing appointment ID " + appointment.getId() + ": " + appointmentException.getMessage());
-                    appointmentException.printStackTrace();
-                }
-            }
-
-            System.out.println("=== POST-BOOKING VALIDATION COMPLETE ===");
-            System.out.println("Total appointments affected: " + affectedCount);
-            System.out.println("========================================");
-
-            return affectedCount;
-
-        } catch (Exception e) {
-            System.out.println("ERROR in post-booking validation: " + e.getMessage());
-            e.printStackTrace();
-            return affectedCount;
-        }
-    }
-
 }
+

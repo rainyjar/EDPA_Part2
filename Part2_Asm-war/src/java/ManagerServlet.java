@@ -1,4 +1,3 @@
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -15,12 +14,18 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.Part;
+import model.Appointment;
+import model.AppointmentFacade;
 import model.CounterStaff;
 import model.CounterStaffFacade;
 import model.Doctor;
 import model.DoctorFacade;
 import model.Manager;
 import model.ManagerFacade;
+import model.Treatment;
+import model.TreatmentFacade;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 
 @WebServlet(urlPatterns = {"/ManagerServlet"})
 @MultipartConfig(fileSizeThreshold = 1024 * 1024, // 1MB
@@ -37,6 +42,12 @@ public class ManagerServlet extends HttpServlet {
 
     @EJB
     private DoctorFacade doctorFacade;
+    
+    @EJB
+    private AppointmentFacade appointmentFacade;
+    
+    @EJB
+    private TreatmentFacade treatmentFacade;
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -134,6 +145,42 @@ public class ManagerServlet extends HttpServlet {
                 System.out.println("ManagerServlet: Forwarding to manage_staff.jsp");
                 request.getRequestDispatcher("/manager/manage_staff.jsp").forward(request, response);
 
+            } else if ("viewAppointments".equals(action)) {
+                // Get filter parameters
+                String searchQuery = request.getParameter("search");
+                String statusFilter = request.getParameter("status");
+                String doctorFilter = request.getParameter("doctor");
+                String treatmentFilter = request.getParameter("treatment");
+                String staffFilter = request.getParameter("staff");
+                String dateFilter = request.getParameter("date");
+                
+                // Get all appointments for manager to view
+                List<Appointment> allAppointments = appointmentFacade.findAll();
+                List<Appointment> filteredAppointments = filterAppointments(allAppointments, searchQuery, statusFilter, 
+                                                                           doctorFilter, treatmentFilter, staffFilter, dateFilter);
+                
+                // Get doctors, treatments, and staff for filter dropdowns
+                List<Doctor> doctorList = doctorFacade.findAll();
+                List<Treatment> treatmentList = treatmentFacade.findAll();
+                List<CounterStaff> staffList = counterStaffFacade.findAll();
+                
+                // Set attributes for JSP
+                request.setAttribute("appointmentList", filteredAppointments);
+                request.setAttribute("doctorList", doctorList);
+                request.setAttribute("treatmentList", treatmentList);
+                request.setAttribute("staffList", staffList);
+                
+                // Set filter values for form retention
+                request.setAttribute("searchQuery", searchQuery);
+                request.setAttribute("statusFilter", statusFilter);
+                request.setAttribute("doctorFilter", doctorFilter);
+                request.setAttribute("treatmentFilter", treatmentFilter);
+                request.setAttribute("staffFilter", staffFilter);
+                request.setAttribute("dateFilter", dateFilter);
+                
+                // Forward to view appointments page
+                request.getRequestDispatcher("/manager/view_appointments.jsp").forward(request, response);
+                
             } else if ("search".equals(action)) {
                 // Handle search and filter
                 String searchQuery = request.getParameter("search");
@@ -305,6 +352,111 @@ public class ManagerServlet extends HttpServlet {
     }
 
 // Helper methods for search functionality
+    private List<Appointment> filterAppointments(List<Appointment> allAppointments, String searchQuery, 
+                                          String statusFilter, String doctorFilter, String treatmentFilter, 
+                                          String staffFilter, String dateFilter) {
+        List<Appointment> filteredAppointments = new ArrayList<>();
+        
+        // Apply filters
+        for (Appointment apt : allAppointments) {
+            boolean matches = true;
+            
+            // Search filter (customer name, email, or appointment ID)
+            if (searchQuery != null && !searchQuery.trim().isEmpty()) {
+                String search = searchQuery.toLowerCase().trim();
+                boolean searchMatches = false;
+                
+                // Check appointment ID
+                if (String.valueOf(apt.getId()).contains(search)) {
+                    searchMatches = true;
+                } 
+                // Check customer name and email
+                else if (apt.getCustomer() != null) {
+                    String custName = apt.getCustomer().getName().toLowerCase();
+                    String custEmail = apt.getCustomer().getEmail().toLowerCase();
+                    if (custName.contains(search) || custEmail.contains(search)) {
+                        searchMatches = true;
+                    }
+                }
+                
+                if (!searchMatches) {
+                    matches = false;
+                }
+            }
+            
+            // Status filter
+            if (statusFilter != null && !statusFilter.equals("all") && !statusFilter.trim().isEmpty()) {
+                String aptStatus = apt.getStatus() != null ? apt.getStatus().toLowerCase() : "pending";
+                if (!aptStatus.equals(statusFilter.toLowerCase())) {
+                    matches = false;
+                }
+            }
+            
+            // Doctor filter
+            if (doctorFilter != null && !doctorFilter.equals("all") && !doctorFilter.trim().isEmpty()) {
+                try {
+                    int doctorId = Integer.parseInt(doctorFilter);
+                    if (apt.getDoctor() == null || apt.getDoctor().getId() != doctorId) {
+                        matches = false;
+                    }
+                } catch (NumberFormatException e) {
+                    matches = false;
+                }
+            }
+            
+            // Treatment filter
+            if (treatmentFilter != null && !treatmentFilter.equals("all") && !treatmentFilter.trim().isEmpty()) {
+                try {
+                    int treatmentId = Integer.parseInt(treatmentFilter);
+                    if (apt.getTreatment() == null || apt.getTreatment().getId() != treatmentId) {
+                        matches = false;
+                    }
+                } catch (NumberFormatException e) {
+                    matches = false;
+                }
+            }
+            
+            // Staff filter
+            if (staffFilter != null && !staffFilter.equals("all") && !staffFilter.trim().isEmpty()) {
+                if ("not_assigned".equals(staffFilter)) {
+                    // Filter for appointments with no assigned counter staff (staffId is null)
+                    if (apt.getCounterStaff() != null) {
+                        matches = false;
+                    }
+                } else {
+                    try {
+                        int staffId = Integer.parseInt(staffFilter);
+                        if (apt.getCounterStaff() == null || apt.getCounterStaff().getId() != staffId) {
+                            matches = false;
+                        }
+                    } catch (NumberFormatException e) {
+                        matches = false;
+                    }
+                }
+            }
+            
+            // Date filter
+            if (dateFilter != null && !dateFilter.trim().isEmpty()) {
+                try {
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                    java.util.Date filterDate = sdf.parse(dateFilter);
+                    if (apt.getAppointmentDate() == null
+                            || !sdf.format(apt.getAppointmentDate()).equals(dateFilter)) {
+                        matches = false;
+                    }
+                } catch (Exception e) {
+                    matches = false;
+                }
+            }
+            
+            if (matches) {
+                filteredAppointments.add(apt);
+            }
+        }
+        
+        return filteredAppointments;
+    }
+    
     private List<Doctor> searchDoctors(String searchQuery, String genderFilter) {
         List<Doctor> allDoctors = doctorFacade.findAll();
         if (allDoctors == null) {

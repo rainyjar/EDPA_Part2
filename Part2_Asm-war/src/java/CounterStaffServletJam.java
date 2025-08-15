@@ -470,13 +470,25 @@ public class CounterStaffServletJam extends HttpServlet {
                 }
                 try {
                     List<Feedback> feedbacks = feedbackFacade.findAll();
-                    request.setAttribute("feedbacks", feedbacks);
+                    request.setAttribute("feedbackList", feedbacks);
+                    
+                    // Calculate average rating for this staff
+                    double averageRating = 0.0;
+                    if (loggedInStaff != null) {
+                        try {
+                            averageRating = feedbackFacade.getAverageRatingForCounterStaff(loggedInStaff.getId());
+                        } catch (Exception e) {
+                            System.out.println("Error calculating average rating: " + e.getMessage());
+                        }
+                    }
+                    request.setAttribute("averageRating", averageRating);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    request.setAttribute("feedbacks", new ArrayList<Feedback>());
+                    request.setAttribute("feedbackList", new ArrayList<Feedback>());
+                    request.setAttribute("averageRating", 0.0);
                 }
                 request.setAttribute("loggedInStaff", loggedInStaff);
-                request.getRequestDispatcher("/counter_staff/view_ratings.jsp").forward(request, response);
+                request.getRequestDispatcher("/counter_staff/view_ratings_counter.jsp").forward(request, response);
 
             } else if ("searchCustomers".equals(action)) {
                 // Validate counter staff session

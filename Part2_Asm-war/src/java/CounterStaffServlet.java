@@ -60,6 +60,8 @@ public class CounterStaffServlet extends HttpServlet {
                 counter_staff.setPassword(request.getParameter("password"));
                 counter_staff.setPhone(request.getParameter("phone"));
                 counter_staff.setGender(request.getParameter("gender"));
+                counter_staff.setAddress(request.getParameter("address"));
+                counter_staff.setIc(request.getParameter("nric"));
 
                 try {
                     String dobStr = request.getParameter("dob");
@@ -78,21 +80,24 @@ public class CounterStaffServlet extends HttpServlet {
                     }
                 } catch (IllegalArgumentException e) {
                     request.setAttribute("error", e.getMessage());
+                    request.setAttribute("counterStaff", counter_staff);
                     request.getRequestDispatcher("/manager/edit_cs.jsp").forward(request, response);
                     return;
                 } catch (Exception e) {
                     e.printStackTrace();
                     request.setAttribute("error", "Upload failed: " + e.getMessage());
+                    request.setAttribute("counterStaff", counter_staff);
                     request.getRequestDispatcher("/manager/edit_cs.jsp").forward(request, response);
                     return;
                 }
 
                 counterStaffFacade.edit(counter_staff);
+                request.setAttribute("success", "Counter staff updated successfully!");
+                request.setAttribute("counterStaff", counter_staff);
+                request.getRequestDispatcher("/manager/edit_cs.jsp").forward(request, response);
+            } else {
+                response.sendRedirect(request.getContextPath() + "/CounterStaffServlet?error=staff_not_found");
             }
-            response.sendRedirect("CounterStaffServlet");
-            request.setAttribute("manager", manager);
-            request.setAttribute("success", "Counter staff updated successfully!");
-            request.getRequestDispatcher("/manager/edit_cs.jsp").forward(request, response);
         } else if ("register".equals(action)) {
             // Registration block with comprehensive validation
             try {
@@ -111,6 +116,8 @@ public class CounterStaffServlet extends HttpServlet {
                 String phone = request.getParameter("phone").trim();
                 String gender = request.getParameter("gender");
                 String dobStr = request.getParameter("dob");
+                String address = request.getParameter("address");
+                String ic = request.getParameter("nric");
 
                 // Parse date of birth
                 Date dob = null;
@@ -144,6 +151,8 @@ public class CounterStaffServlet extends HttpServlet {
                 cs.setGender(gender);
                 cs.setDob(dob);
                 cs.setProfilePic(uploadedFileName);
+                cs.setAddress(address);
+                cs.setIc(ic);
 
                 counterStaffFacade.create(cs);
                 request.setAttribute("success", "Counter staff registered successfully.");
@@ -166,6 +175,8 @@ public class CounterStaffServlet extends HttpServlet {
         String phone = request.getParameter("phone");
         String gender = request.getParameter("gender");
         String dobStr = request.getParameter("dob");
+        String address = request.getParameter("address");
+        String nric = request.getParameter("nric");
 
         // Validate required fields
         if (name == null || name.trim().isEmpty()) {
@@ -185,6 +196,12 @@ public class CounterStaffServlet extends HttpServlet {
         }
         if (dobStr == null || dobStr.trim().isEmpty()) {
             return "Date of birth is required";
+        }
+        if (address == null || address.trim().isEmpty()) {
+            return "Address is required";
+        }
+        if (nric == null || nric.trim().isEmpty()) {
+            return "NRIC is required";
         }
 
         // Validate name length
@@ -262,6 +279,8 @@ public class CounterStaffServlet extends HttpServlet {
         staff.setPassword(request.getParameter("password"));
         staff.setPhone(request.getParameter("phone"));
         staff.setGender(request.getParameter("gender"));
+        staff.setAddress(request.getParameter("address"));
+        staff.setIc(request.getParameter("nric"));
 
         String dobStr = request.getParameter("dob");
         if (dobStr != null && !dobStr.isEmpty()) {

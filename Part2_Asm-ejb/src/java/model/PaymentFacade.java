@@ -46,10 +46,21 @@ public class PaymentFacade extends AbstractFacade<Payment> {
      */
     public java.util.List<Payment> findByStatus(String status) {
         try {
-            return em.createQuery("SELECT p FROM Payment p WHERE p.status = :status ORDER BY p.paymentDate DESC", Payment.class)
+            String orderClause;
+            if ("pending".equals(status)) {
+                // For pending payments, order by appointment date or ID since paymentDate is null
+                orderClause = "ORDER BY p.appointment.appointmentDate DESC, p.id DESC";
+            } else {
+                // For paid payments, order by payment date
+                orderClause = "ORDER BY p.paymentDate DESC";
+            }
+            
+            return em.createQuery("SELECT p FROM Payment p WHERE p.status = :status " + orderClause, Payment.class)
                     .setParameter("status", status)
                     .getResultList();
         } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Error finding payments by status: " + e.getMessage());
             return new java.util.ArrayList<>();
         }
     }

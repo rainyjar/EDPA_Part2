@@ -1,4 +1,4 @@
-<%@ page contentType="text/html" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.List" %>
 <%@ page import="model.Treatment" %>
 <%@ page import="model.Prescription" %>
@@ -20,278 +20,433 @@
 %>
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Treatment - Healthcare System</title>
-    
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="../css/bootstrap.min.css">
-    <link rel="stylesheet" href="../css/font-awesome.min.css">
-    <link rel="stylesheet" href="../css/animate.css">
-    <link rel="stylesheet" href="../css/templatemo-misc.css">
-    <link rel="stylesheet" href="../css/templatemo-style.css">
-</head>
-<body>
-    
-    <!-- Include header -->
-    <%@ include file="../includes/header.jsp" %>
-    
-    <section class="content-section" style="padding: 60px 0;">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="section-title">
-                        <h2><i class="fa fa-edit"></i> Edit Treatment</h2>
-                        <p>Update treatment information and manage prescriptions</p>
+    <head>
+        <title>Edit Treatment - APU Medical Center</title>
+        <%@ include file="/includes/head.jsp" %>
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/css/user-reg-edit.css" />
+    </head>
+    <body class="doctor-theme">
+        <%@ include file="/includes/header.jsp" %>
+        <%@ include file="/includes/navbar.jsp" %>
+        <div class="registration-container">
+            <a href="${pageContext.request.contextPath}/TreatmentServlet?action=manage" class="back-btn" style="margin-top: 30px; margin-bottom: 30px">
+                <i class="fa fa-arrow-left"></i> Back to Manage Treatments
+            </a>
+
+            <div class="registration-card">
+                <div class="card-header doctor">
+                    <h2>
+                        <i class="fa fa-edit role-icon"></i>
+                        <span>Edit Treatment</span>
+                    </h2>
+                </div>
+
+                <div class="form-container">
+                    <!-- Success Message -->
+                    <% 
+                    String successMsg = (String) request.getAttribute("success");
+                    if (successMsg == null) {
+                        successMsg = request.getParameter("success");
+                    }
+                    if (successMsg != null) {
+                    %>
+                    <div class="alert alert-success" id="successAlert">
+                        <i class="fa fa-check-circle"></i>
+                        <%= successMsg %>
                     </div>
+                    <% } %>
+
+                    <!-- Error Message -->
+                    <% 
+                    String errorMsg = (String) request.getAttribute("error");
+                    if (errorMsg == null) {
+                        errorMsg = request.getParameter("error");
+                    }
+                    if (errorMsg != null) {
+                    %>
+                    <div class="alert alert-error" id="errorAlert">
+                        <i class="fa fa-exclamation-triangle"></i>
+                        <%= errorMsg %>
+                    </div>
+                    <% } %>
+
+                    <!-- Prescription Success Message -->
+                    <% 
+                    String prescriptionSuccessMsg = request.getParameter("prescriptionSuccess");
+                    if (prescriptionSuccessMsg != null) {
+                    %>
+                    <div class="alert alert-success" id="prescriptionSuccessAlert">
+                        <i class="fa fa-check-circle"></i>
+                        <%= prescriptionSuccessMsg %>
+                    </div>
+                    <% } %>
+
+                    <!-- Prescription Error Message -->
+                    <% 
+                    String prescriptionErrorMsg = request.getParameter("prescriptionError");
+                    if (prescriptionErrorMsg != null) {
+                    %>
+                    <div class="alert alert-error" id="prescriptionErrorAlert">
+                        <i class="fa fa-exclamation-triangle"></i>
+                        <%= prescriptionErrorMsg %>
+                    </div>
+                    <% } %>
+
+                    <!-- Treatment Information Form -->
+                    <form id="treatmentForm" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/TreatmentServlet" novalidate>
+                        <input type="hidden" name="action" value="update">
+                        <input type="hidden" name="id" value="<%= treatment.getId() %>">
+                        
+                        <!--Treatment Information Section -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="name">Treatment Name <span class="required">*</span></label>
+                                <input type="text" id="name" name="name" class="form-control doctor" 
+                                       value="<%= treatment.getName() != null ? treatment.getName() : "" %>" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="baseCharge">Base Consultation Charge (RM) <span class="required">*</span></label>
+                                <input type="number" id="baseCharge" name="baseCharge" class="form-control doctor" 
+                                       step="0.01" min="0" value="<%= treatment.getBaseConsultationCharge() %>" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="followUpCharge">Follow-up Charge (RM) <span class="required">*</span></label>
+                                <input type="number" id="followUpCharge" name="followUpCharge" class="form-control doctor" 
+                                       step="0.01" min="0" value="<%= treatment.getFollowUpCharge() %>" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="shortDesc">Short Description <span class="required">*</span></label>
+                            <textarea id="shortDesc" name="shortDesc" class="form-control doctor" style="resize: none;" rows="3" required><%= treatment.getShortDescription() != null ? treatment.getShortDescription() : "" %></textarea>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="longDesc">Long Description <span class="required">*</span></label>
+                            <textarea id="longDesc" name="longDesc" class="form-control doctor" style="resize: none;" rows="5" required><%= treatment.getLongDescription() != null ? treatment.getLongDescription() : "" %></textarea>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <!-- Treatment Picture Section -->
+                        <div class="form-group">
+                            <label for="treatmentPic">Treatment Image</label>
+                            <div class="file-upload">
+                                <div class="file-upload-wrapper">
+                                    <input type="file" class="form-control" id="treatmentPic" name="treatmentPic" accept="image/*">
+                                    <label for="treatmentPic" class="file-upload-btn" id="fileLabel">
+                                        <i class="fa fa-cloud-upload"></i>
+                                        <span>Choose New Treatment Image</span>
+                                    </label>
+                                </div>
+                                <div class="invalid-feedback" id="treatmentPicError" style="display: block;"></div>
+                                <% if (treatment.getTreatmentPic() != null && !treatment.getTreatmentPic().isEmpty()) { %>
+                                <small class="text-muted">Current image: <%= treatment.getTreatmentPic() %></small>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Add New Prescriptions Section -->
+                        <div class="form-group">
+                            <h5><i class="fa fa-plus"></i> Add New Prescriptions</h5>
+                            
+                            <div id="prescriptionContainer">
+                                <div class="prescription-row">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Condition Name</label>
+                                            <input type="text" class="form-control doctor" name="conditionName" 
+                                                   placeholder="e.g., Hypertension">
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Medication Name</label>
+                                            <input type="text" class="form-control doctor" name="medicationName" 
+                                                   placeholder="e.g., Lisinopril 10mg">
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="text-align: center;">
+                                        <button type="button" class="btn btn-danger remove-prescription" 
+                                                onclick="removePrescription(this)" style="display: none;">
+                                            <i class="fa fa-trash"></i> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button type="button" class="btn btn-secondary" onclick="addPrescription()">
+                                <i class="fa fa-plus"></i> Add Prescription
+                            </button>
+                        </div>
+
+                        <button type="submit" class="submit-btn doctor" id="submitBtn">
+                            <span class="btn-text">
+                                <i class="fa fa-save"></i>
+                                Update Treatment
+                            </span>
+                        </button>
+                    </form>
                 </div>
             </div>
 
-            <!-- Success/Error Messages -->
-            <% if (request.getAttribute("success") != null) { %>
-                <div class="alert alert-success alert-dismissible">
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
-                    <i class="fa fa-check-circle"></i> <%= request.getAttribute("success") %>
+            <!-- Existing Prescriptions Section (Separate from Form) -->
+            <div class="registration-card" style="margin-top: 30px;">
+                <div class="card-header doctor">
+                    <h3>
+                        <i class="fa fa-list-ul"></i>
+                        <span>Existing Prescriptions</span>
+                        <%
+                            int totalPrescriptions = (prescriptions != null) ? prescriptions.size() : 0;
+                        %>
+                        <span style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 15px; font-size: 14px; margin-left: 10px;">
+                            <%= totalPrescriptions %> Total
+                        </span>
+                    </h3>
                 </div>
-            <% } %>
-            
-            <% if (request.getAttribute("error") != null) { %>
-                <div class="alert alert-danger alert-dismissible">
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
-                    <i class="fa fa-exclamation-triangle"></i> <%= request.getAttribute("error") %>
-                </div>
-            <% } %>
 
-            <div class="row">
-                <!-- Treatment Information -->
-                <div class="col-md-8">
-                    <div class="card">
-                        <div class="card-header">
-                            <h4><i class="fa fa-stethoscope"></i> Treatment Information</h4>
+                <div class="form-container">
+                    <%
+                        if (prescriptions != null && !prescriptions.isEmpty()) {
+                            for (int i = 0; i < prescriptions.size(); i++) {
+                                Prescription prescription = prescriptions.get(i);
+                    %>
+                    <div class="prescription-item" style="border: 1px solid #ddd; padding: 20px; margin-bottom: 20px; border-radius: 10px; background: #f9f9f9; position: relative;">
+                        <!-- Prescription Number Badge -->
+                        <div style="position: absolute; top: -10px; left: 20px; background: #2c2577; color: white; padding: 8px 15px; border-radius: 20px; font-weight: 600; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <i class="fa fa-hashtag"></i> Prescription <%= (i + 1) %>
                         </div>
-                        <div class="card-body">
-                            <form action="<%= request.getContextPath()%>/TreatmentServlet" method="post" id="treatmentForm">
-                                <input type="hidden" name="action" value="update">
-                                <input type="hidden" name="id" value="<%= treatment.getId() %>">
+                        
+                        <form action="<%= request.getContextPath()%>/TreatmentServlet" method="post" style="margin: 0; margin-top: 15px;">
+                            <input type="hidden" name="action" value="updatePrescription">
+                            <input type="hidden" name="prescriptionId" value="<%= prescription.getId() %>">
+                            <input type="hidden" name="treatmentId" value="<%= treatment.getId() %>">
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label style="font-weight: 600; color: #2c2577; margin-bottom: 10px; display: block; font-size: 14px;">
+                                        <i class="fa fa-heartbeat"></i> Condition Name
+                                    </label>
+                                    <input type="text" class="form-control doctor" name="conditionName" 
+                                           value="<%= prescription.getConditionName() != null ? prescription.getConditionName() : "" %>" 
+                                           style="padding: 12px; border: 2px solid #ddd; border-radius: 8px;" required>
+                                </div>
                                 
                                 <div class="form-group">
-                                    <label for="name"><i class="fa fa-tag"></i> Treatment Name *</label>
-                                    <input type="text" class="form-control" id="name" name="name" required 
-                                           value="<%= treatment.getName() != null ? treatment.getName() : "" %>">
+                                    <label style="font-weight: 600; color: #2c2577; margin-bottom: 10px; display: block; font-size: 14px;">
+                                        <i class="fa fa-medkit"></i> Medication Name
+                                    </label>
+                                    <input type="text" class="form-control doctor" name="medicationName" 
+                                           value="<%= prescription.getMedicationName() != null ? prescription.getMedicationName() : "" %>" 
+                                           style="padding: 12px; border: 2px solid #ddd; border-radius: 8px;" required>
                                 </div>
-
-                                <div class="form-group">
-                                    <label for="shortDesc"><i class="fa fa-file-text-o"></i> Short Description *</label>
-                                    <textarea class="form-control" id="shortDesc" name="shortDesc" rows="3" required><%= treatment.getShortDescription() != null ? treatment.getShortDescription() : "" %></textarea>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="longDesc"><i class="fa fa-file-text"></i> Long Description</label>
-                                    <textarea class="form-control" id="longDesc" name="longDesc" rows="5"><%= treatment.getLongDescription() != null ? treatment.getLongDescription() : "" %></textarea>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="baseCharge"><i class="fa fa-money"></i> Base Consultation Charge (RM) *</label>
-                                            <input type="number" class="form-control" id="baseCharge" name="baseCharge" 
-                                                   step="0.01" min="0" required value="<%= treatment.getBaseConsultationCharge() %>">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="followUpCharge"><i class="fa fa-refresh"></i> Follow-up Charge (RM) *</label>
-                                            <input type="number" class="form-control" id="followUpCharge" name="followUpCharge" 
-                                                   step="0.01" min="0" required value="<%= treatment.getFollowUpCharge() %>">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="treatmentPic"><i class="fa fa-image"></i> Treatment Image URL</label>
-                                    <input type="text" class="form-control" id="treatmentPic" name="treatmentPic" 
-                                           value="<%= treatment.getTreatmentPic() != null ? treatment.getTreatmentPic() : "" %>">
-                                </div>
-
-                                <hr>
-
-                                <!-- Add New Prescriptions -->
-                                <div class="form-group">
-                                    <h5><i class="fa fa-plus"></i> Add New Prescriptions</h5>
-                                    
-                                    <div id="prescriptionContainer">
-                                        <div class="prescription-row">
-                                            <div class="row">
-                                                <div class="col-md-5">
-                                                    <div class="form-group">
-                                                        <label>Condition Name</label>
-                                                        <input type="text" class="form-control" name="conditionName" 
-                                                               placeholder="e.g., Hypertension">
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-5">
-                                                    <div class="form-group">
-                                                        <label>Medication Name</label>
-                                                        <input type="text" class="form-control" name="medicationName" 
-                                                               placeholder="e.g., Lisinopril 10mg">
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <div class="form-group">
-                                                        <label>&nbsp;</label>
-                                                        <button type="button" class="btn btn-danger btn-block remove-prescription" 
-                                                                onclick="removePrescription(this)" style="display: none;">
-                                                            <i class="fa fa-trash"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <button type="button" class="btn btn-secondary" onclick="addPrescription()">
-                                        <i class="fa fa-plus"></i> Add Prescription
-                                    </button>
-                                </div>
-
-                                <hr>
-
-                                <!-- Action Buttons -->
-                                <div class="form-group text-center">
-                                    <a href="<%= request.getContextPath()%>/TreatmentServlet?action=manage" 
-                                       class="btn btn-secondary">
-                                        <i class="fa fa-arrow-left"></i> Back to Manage
-                                    </a>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fa fa-save"></i> Update Treatment
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Existing Prescriptions -->
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h4><i class="fa fa-pills"></i> Existing Prescriptions</h4>
-                        </div>
-                        <div class="card-body">
-                            <%
-                                if (prescriptions != null && !prescriptions.isEmpty()) {
-                                    for (Prescription prescription : prescriptions) {
-                            %>
-                            <div class="prescription-item" style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
-                                <form action="<%= request.getContextPath()%>/TreatmentServlet" method="post" style="margin: 0;">
-                                    <input type="hidden" name="action" value="updatePrescription">
-                                    <input type="hidden" name="prescriptionId" value="<%= prescription.getId() %>">
-                                    <input type="hidden" name="treatmentId" value="<%= treatment.getId() %>">
-                                    
-                                    <div class="form-group">
-                                        <label><i class="fa fa-heartbeat"></i> Condition</label>
-                                        <input type="text" class="form-control form-control-sm" name="conditionName" 
-                                               value="<%= prescription.getConditionName() != null ? prescription.getConditionName() : "" %>" required>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label><i class="fa fa-pills"></i> Medication</label>
-                                        <input type="text" class="form-control form-control-sm" name="medicationName" 
-                                               value="<%= prescription.getMedicationName() != null ? prescription.getMedicationName() : "" %>" required>
-                                    </div>
-                                    
-                                    <div class="btn-group btn-block">
-                                        <button type="submit" class="btn btn-sm btn-success">
-                                            <i class="fa fa-save"></i> Update
-                                        </button>
-                                        <a href="<%= request.getContextPath()%>/TreatmentServlet?action=deletePrescription&prescriptionId=<%= prescription.getId() %>&treatmentId=<%= treatment.getId() %>" 
-                                           class="btn btn-sm btn-danger" 
-                                           onclick="return confirm('Are you sure you want to delete this prescription?')">
-                                            <i class="fa fa-trash"></i> Delete
-                                        </a>
-                                    </div>
-                                </form>
                             </div>
-                            <%
-                                    }
-                                } else {
-                            %>
-                            <div class="alert alert-info">
-                                <i class="fa fa-info-circle"></i> No prescriptions found for this treatment.
+                            
+                            <div style="display: flex; gap: 15px; margin-top: 20px; justify-content: center;">
+                                <button type="submit" class="btn btn-success" style="flex: 0 0 auto; padding: 12px 25px; font-weight: 600;">
+                                    <i class="fa fa-save"></i> Update Prescription
+                                </button>
+                                <a href="<%= request.getContextPath()%>/TreatmentServlet?action=deletePrescription&prescriptionId=<%= prescription.getId() %>&treatmentId=<%= treatment.getId() %>" 
+                                   class="btn btn-danger" style="flex: 0 0 auto; padding: 12px 25px; text-decoration: none; color: white; font-weight: 600;"
+                                   onclick="return confirm('Are you sure you want to delete Prescription <%= (i + 1) %>?\n\nCondition: <%= prescription.getConditionName() %>\nMedication: <%= prescription.getMedicationName() %>\n\nThis action cannot be undone.')">
+                                    <i class="fa fa-trash"></i> Delete Prescription
+                                </a>
                             </div>
-                            <% } %>
-                        </div>
+                        </form>
                     </div>
+                    <%
+                            }
+                        } else {
+                    %>
+                    <div class="alert alert-info" style="padding: 25px; background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%); border: 2px solid #86cfda; border-radius: 10px; color: #0c5460; text-align: center; font-size: 16px;">
+                        <i class="fa fa-info-circle" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                        <strong>No prescriptions found for this treatment.</strong>
+                        <br><small>You can add new prescriptions using the form above.</small>
+                    </div>
+                    <% } %>
                 </div>
             </div>
         </div>
-    </section>
 
-    <!-- Include footer -->
-    <%@ include file="../includes/footer.jsp" %>
-    
-    <!-- Scripts -->
-    <%@ include file="../includes/scripts.jsp" %>
+        <%@ include file="/includes/footer.jsp" %>
+        <%@ include file="/includes/scripts.jsp" %>
 
-    <script>
-        function addPrescription() {
-            const container = document.getElementById('prescriptionContainer');
-            const prescriptionRow = document.createElement('div');
-            prescriptionRow.className = 'prescription-row';
-            prescriptionRow.innerHTML = `
-                <div class="row">
-                    <div class="col-md-5">
-                        <div class="form-group">
-                            <label>Condition Name</label>
-                            <input type="text" class="form-control" name="conditionName" 
-                                   placeholder="e.g., Hypertension">
-                        </div>
-                    </div>
-                    <div class="col-md-5">
-                        <div class="form-group">
-                            <label>Medication Name</label>
-                            <input type="text" class="form-control" name="medicationName" 
-                                   placeholder="e.g., Lisinopril 10mg">
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            <label>&nbsp;</label>
-                            <button type="button" class="btn btn-danger btn-block remove-prescription" 
-                                    onclick="removePrescription(this)">
-                                <i class="fa fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            container.appendChild(prescriptionRow);
-            updateRemoveButtons();
-        }
-
-        function removePrescription(button) {
-            const prescriptionRow = button.closest('.prescription-row');
-            prescriptionRow.remove();
-            updateRemoveButtons();
-        }
-
-        function updateRemoveButtons() {
-            const rows = document.querySelectorAll('.prescription-row');
-            rows.forEach((row, index) => {
-                const removeBtn = row.querySelector('.remove-prescription');
-                if (rows.length > 1) {
-                    removeBtn.style.display = 'block';
+        <script src="${pageContext.request.contextPath}/js/jquery.min.js"></script>
+        <script src="${pageContext.request.contextPath}/js/validate-treatment.js"></script>
+        <script>
+            // Override form validation for edit mode (file upload is optional)
+            $('#treatmentForm').off('submit').on('submit', function (e) {
+                console.log('Edit treatment form submitted');
+                let isValid = validateEditTreatmentForm();
+                
+                if (!isValid) {
+                    e.preventDefault();
+                    console.log('Edit form validation failed - preventing submission');
+                    scrollToFirstError();
                 } else {
-                    removeBtn.style.display = 'none';
+                    console.log('Edit form validation passed - submitting');
+                    showLoadingState('#submitBtn', 'Updating Treatment...');
                 }
             });
-        }
 
-        // Auto-hide alerts after 5 seconds
-        setTimeout(function() {
-            $('.alert').fadeOut('slow');
-        }, 5000);
-    </script>
-</body>
+            function validateEditTreatmentForm() {
+                console.log('Starting edit form validation');
+                let isValid = true;
+
+                // Reset validation styles
+                $('.form-control').removeClass('is-invalid is-valid');
+                $('.invalid-feedback').empty().hide();
+
+                // Validate treatment name
+                const name = $('#name').val().trim();
+                if (!name) {
+                    showError('#name', 'Treatment name is required');
+                    isValid = false;
+                } else if (name.length < 2) {
+                    showError('#name', 'Treatment name must be at least 2 characters');
+                    isValid = false;
+                } else {
+                    showValid('#name');
+                }
+
+                // Validate short description
+                const shortDesc = $('#shortDesc').val().trim();
+                if (!shortDesc) {
+                    showError('#shortDesc', 'Short description is required');
+                    isValid = false;
+                } else if (shortDesc.length < 10) {
+                    showError('#shortDesc', 'Short description must be at least 10 characters');
+                    isValid = false;
+                } else {
+                    showValid('#shortDesc');
+                }
+
+                // Validate long description (required)
+                const longDesc = $('#longDesc').val().trim();
+                if (!longDesc) {
+                    showError('#longDesc', 'Long description is required');
+                    isValid = false;
+                } else if (longDesc.length > 2000) {
+                    showError('#longDesc', 'Long description must be less than 2000 characters');
+                    isValid = false;
+                } else {
+                    showValid('#longDesc');
+                }
+
+                // Validate base charge
+                const baseCharge = $('#baseCharge').val();
+                if (!baseCharge) {
+                    showError('#baseCharge', 'Base consultation charge is required');
+                    isValid = false;
+                } else if (parseFloat(baseCharge) < 0) {
+                    showError('#baseCharge', 'Base charge cannot be negative');
+                    isValid = false;
+                } else if (parseFloat(baseCharge) > 10000) {
+                    showError('#baseCharge', 'Base charge seems unusually high (max RM 10,000)');
+                    isValid = false;
+                } else {
+                    showValid('#baseCharge');
+                }
+
+                // Validate follow-up charge
+                const followUpCharge = $('#followUpCharge').val();
+                if (!followUpCharge) {
+                    showError('#followUpCharge', 'Follow-up charge is required');
+                    isValid = false;
+                } else if (parseFloat(followUpCharge) < 0) {
+                    showError('#followUpCharge', 'Follow-up charge cannot be negative');
+                    isValid = false;
+                } else if (parseFloat(followUpCharge) > 10000) {
+                    showError('#followUpCharge', 'Follow-up charge seems unusually high (max RM 10,000)');
+                    isValid = false;
+                } else {
+                    showValid('#followUpCharge');
+                }
+
+                // Validate treatment image (optional for edit)
+                const treatmentPic = $('#treatmentPic')[0].files[0];
+                if (treatmentPic) {
+                    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                    const maxSize = 5 * 1024 * 1024;
+
+                    if (!allowedTypes.includes(treatmentPic.type)) {
+                        showError('#treatmentPic', 'Only JPEG, PNG, and GIF images are allowed');
+                        isValid = false;
+                    } else if (treatmentPic.size > maxSize) {
+                        showError('#treatmentPic', 'Image size must be less than 5MB');
+                        isValid = false;
+                    } else {
+                        showValid('#treatmentPic');
+                    }
+                }
+
+                // Validate new prescriptions (if any)
+                const prescriptionRows = $('.prescription-row');
+                let prescriptionErrors = 0;
+
+                prescriptionRows.each(function() {
+                    const conditionName = $(this).find('input[name="conditionName"]').val().trim();
+                    const medicationName = $(this).find('input[name="medicationName"]').val().trim();
+
+                    // Both must be filled or both must be empty
+                    if (conditionName || medicationName) {
+                        // If one field has content, both must have content
+                        if (!conditionName || !medicationName) {
+                            prescriptionErrors++;
+                            if (!conditionName) {
+                                showError($(this).find('input[name="conditionName"]')[0], 'Condition name is required if medication is provided');
+                            }
+                            if (!medicationName) {
+                                showError($(this).find('input[name="medicationName"]')[0], 'Medication name is required if condition is provided');
+                            }
+                        } else {
+                            // Both fields have content - validate length
+                            if (conditionName.length >= 2 && medicationName.length >= 2) {
+                                showValid($(this).find('input[name="conditionName"]')[0]);
+                                showValid($(this).find('input[name="medicationName"]')[0]);
+                            } else {
+                                prescriptionErrors++;
+                                if (conditionName.length < 2) {
+                                    showError($(this).find('input[name="conditionName"]')[0], 'Condition name must be at least 2 characters');
+                                }
+                                if (medicationName.length < 2) {
+                                    showError($(this).find('input[name="medicationName"]')[0], 'Medication name must be at least 2 characters');
+                                }
+                            }
+                        }
+                    } else {
+                        // Both fields are empty - this is okay, clear any validation states
+                        $(this).find('input[name="conditionName"]').removeClass('is-invalid is-valid');
+                        $(this).find('input[name="medicationName"]').removeClass('is-invalid is-valid');
+                        $(this).find('.invalid-feedback').hide();
+                    }
+                });
+
+                if (prescriptionErrors > 0) {
+                    isValid = false;
+                }
+
+                console.log('Edit validation result:', isValid ? 'PASSED' : 'FAILED');
+                console.log('Prescription errors:', prescriptionErrors);
+
+                return isValid;
+            }
+
+            // Auto-hide alerts after 5 seconds
+            $(document).ready(function() {
+                setTimeout(function() {
+                    $('#successAlert, #errorAlert, #prescriptionSuccessAlert, #prescriptionErrorAlert').fadeOut('slow');
+                }, 5000);
+            });
+        </script>
+    </body>
 </html>

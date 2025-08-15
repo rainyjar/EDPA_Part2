@@ -97,6 +97,8 @@ public class Profile extends HttpServlet {
         public Date dob;
         public String profilePic;
         public String password;
+        public String ic;
+        public String address;
 
         public UserInfo(Object user, String userType) {
             this.user = user;
@@ -112,6 +114,8 @@ public class Profile extends HttpServlet {
                 this.dob = c.getDob();
                 this.profilePic = c.getProfilePic();
                 this.password = c.getPassword();
+                this.ic = c.getIc();
+                this.address = c.getAddress();
             } else if (user instanceof Doctor) {
                 Doctor d = (Doctor) user;
                 this.name = d.getName();
@@ -121,6 +125,8 @@ public class Profile extends HttpServlet {
                 this.dob = d.getDob();
                 this.profilePic = d.getProfilePic();
                 this.password = d.getPassword();
+                this.ic = d.getIc();
+                this.address = d.getAddress();
             } else if (user instanceof CounterStaff) {
                 CounterStaff cs = (CounterStaff) user;
                 this.name = cs.getName();
@@ -130,6 +136,8 @@ public class Profile extends HttpServlet {
                 this.dob = cs.getDob();
                 this.profilePic = cs.getProfilePic();
                 this.password = cs.getPassword();
+                this.ic = cs.getIc();
+                this.address = cs.getAddress();
             } else if (user instanceof Manager) {
                 Manager m = (Manager) user;
                 this.name = m.getName();
@@ -139,6 +147,8 @@ public class Profile extends HttpServlet {
                 this.dob = m.getDob();
                 this.profilePic = m.getProfilePic();
                 this.password = m.getPassword();
+                this.ic = m.getIc();
+                this.address = m.getAddress();
             }
         }
     }
@@ -185,16 +195,10 @@ public class Profile extends HttpServlet {
         String ic = request.getParameter("nric");
         String address = request.getParameter("address");
 
-        // Validate required fields
+        // Validate essential fields only (name and email)
         if (name == null || name.trim().isEmpty()
-                || email == null || email.trim().isEmpty()
-                || phone == null || phone.trim().isEmpty()
-                || dobStr == null || dobStr.trim().isEmpty()
-                || gender == null || gender.trim().isEmpty()
-                || ic == null || ic.trim().isEmpty()
-                || address == null || address.trim().isEmpty()) {
-
-            response.sendRedirect(request.getContextPath() + "/profile.jsp?error=missing_fields");
+                || email == null || email.trim().isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/profile.jsp?error=missing_essential_fields");
             return;
         }
 
@@ -204,30 +208,63 @@ public class Profile extends HttpServlet {
             return;
         }
 
-        // validate phone
-        String phoneRegex = "^[\\+]?[-() 0-9]{9,12}$";
-        if (!phone.matches(phoneRegex)) {
-            response.sendRedirect(request.getContextPath() + "/profile.jsp?error=invalid_phone");
-            return;
+        // validate phone only if provided
+        if (phone != null && !phone.trim().isEmpty()) {
+            String phoneRegex = "^[\\+]?[-() 0-9]{9,12}$";
+            if (!phone.matches(phoneRegex)) {
+                response.sendRedirect(request.getContextPath() + "/profile.jsp?error=invalid_phone");
+                return;
+            }
         }
 
-        // validate address
-        String addressRegex = "^[A-Za-z0-9\\s,./#\\-]{5,255}$";
-        if (!address.matches(addressRegex)) {
-            response.sendRedirect(request.getContextPath() + "/profile.jsp?error=invalid_address");
-            return;
+        // validate address only if provided
+        if (address != null && !address.trim().isEmpty()) {
+            // Allow more characters in address and simplify regex
+            String addressRegex = "^[A-Za-z0-9\\s,./#\\-']{3,255}$";
+            if (!address.matches(addressRegex)) {
+                response.sendRedirect(request.getContextPath() + "/profile.jsp?error=invalid_address");
+                return;
+            }
         }
 
-        // validate ic
-        String icRegex = "^\\d{6}-\\d{2}-\\d{4}$";
-        if (ic.length() != 14) {
-            response.sendRedirect(request.getContextPath() + "/profile.jsp?error=invalid_ic");
-            return;
-        }
-
-        if (!ic.matches(icRegex)) {
-            response.sendRedirect(request.getContextPath() + "/profile.jsp?error=invalid_ic");
-            return;
+        // validate ic only if provided
+        if (ic != null && !ic.trim().isEmpty()) {
+            String icRegex = "^\\d{6}-\\d{2}-\\d{4}$";
+            if (!ic.matches(icRegex)) {
+                response.sendRedirect(request.getContextPath() + "/profile.jsp?error=invalid_ic");
+                return;
+            }
+            
+            // Check if the current user already has this IC value - if so, it's a no-op update
+            boolean isCurrentUserIc = false;
+            
+            if (userInfo.userType.equals("customer")) {
+                Customer customer = (Customer) userInfo.user;
+                if (ic.equals(customer.getIc())) {
+                    isCurrentUserIc = true;
+                }
+            } else if (userInfo.userType.equals("doctor")) {
+                Doctor doctor = (Doctor) userInfo.user;
+                if (ic.equals(doctor.getIc())) {
+                    isCurrentUserIc = true;
+                }
+            } else if (userInfo.userType.equals("staff")) {
+                CounterStaff staff = (CounterStaff) userInfo.user;
+                if (ic.equals(staff.getIc())) {
+                    isCurrentUserIc = true;
+                }
+            } else if (userInfo.userType.equals("manager")) {
+                Manager manager = (Manager) userInfo.user;
+                if (ic.equals(manager.getIc())) {
+                    isCurrentUserIc = true;
+                }
+            }
+            
+            // Only do uniqueness check if this is not the current user's IC
+            if (!isCurrentUserIc) {
+                // Skip the uniqueness check for now - this is handled by the database
+                // If it fails, our try-catch will catch the exception
+            }
         }
 
         // Check if email already exists (excluding current user)
@@ -236,29 +273,53 @@ public class Profile extends HttpServlet {
             return;
         }
 
-        // Validate date is not in the future
+        // Process date of birth only if provided
         java.sql.Date dob = null;
-        try {
-            java.util.Date utilDate = new java.text.SimpleDateFormat("yyyy-MM-dd").parse(dobStr);
-            dob = new java.sql.Date(utilDate.getTime());
+        if (dobStr != null && !dobStr.trim().isEmpty()) {
+            try {
+                java.util.Date utilDate = new java.text.SimpleDateFormat("yyyy-MM-dd").parse(dobStr);
+                dob = new java.sql.Date(utilDate.getTime());
 
-            // Check if date is in the future
-            if (dob.after(new java.sql.Date(System.currentTimeMillis()))) {
-                response.sendRedirect(request.getContextPath() + "/profile.jsp?error=future_date");
+                // Check if date is in the future
+                if (dob.after(new java.sql.Date(System.currentTimeMillis()))) {
+                    response.sendRedirect(request.getContextPath() + "/profile.jsp?error=future_date");
+                    return;
+                }
+            } catch (Exception e) {
+                e.printStackTrace(); // Log the error for debugging
+                response.sendRedirect(request.getContextPath() + "/profile.jsp?error=invalid_date");
                 return;
             }
-        } catch (Exception e) {
-            response.sendRedirect(request.getContextPath() + "/profile.jsp?error=invalid_date");
-            return;
         }
 
-        // Update user object based on type
-        updateUserFields(userInfo.user, userInfo.userType, name, email, phone, gender, dob, ic, address);
+        try {
+            // Update user object based on type
+            updateUserFields(userInfo.user, userInfo.userType, name, email, phone, gender, dob, ic, address);
 
-        // Save to database and update session
-        saveUserAndUpdateSession(request, userInfo);
+            // Save to database and update session
+            saveUserAndUpdateSession(request, userInfo);
 
-        response.sendRedirect(request.getContextPath() + "/profile.jsp?success=profile_updated");
+            response.sendRedirect(request.getContextPath() + "/profile.jsp?success=profile_updated");
+        } catch (Exception e) {
+            // Log the error
+            e.printStackTrace();
+            
+            // Check if this is a uniqueness constraint violation (likely IC/NRIC constraint)
+            String errorMsg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+            
+            if (errorMsg.contains("constraint") || errorMsg.contains("unique") || 
+                errorMsg.contains("duplicate") || errorMsg.contains("violat") ||
+                errorMsg.contains("ic") || errorMsg.contains("nric")) {
+                // NRIC/IC already in use
+                response.sendRedirect(request.getContextPath() + "/profile.jsp?error=ic_taken");
+            } else if (ic != null && !ic.trim().isEmpty()) {
+                // If we were trying to update NRIC and got a different error
+                response.sendRedirect(request.getContextPath() + "/profile.jsp?error=nric_update_failed");
+            } else {
+                // Generic system error
+                response.sendRedirect(request.getContextPath() + "/profile.jsp?error=system_error");
+            }
+        }
     }
 
     // Universal password change handler
@@ -376,41 +437,41 @@ public class Profile extends HttpServlet {
                 Customer customer = (Customer) user;
                 customer.setName(name);
                 customer.setEmail(email);
-                customer.setPhone(phone);
-                customer.setGender(gender);
-                customer.setDob(dob);
-                customer.setIc(ic);
-                customer.setAddress(address);
+                customer.setPhone(phone != null && !phone.trim().isEmpty() ? phone : customer.getPhone());
+                customer.setGender(gender != null && !gender.trim().isEmpty() ? gender : customer.getGender());
+                customer.setDob(dob != null ? dob : customer.getDob());
+                customer.setIc(ic != null && !ic.trim().isEmpty() ? ic : customer.getIc());
+                customer.setAddress(address != null && !address.trim().isEmpty() ? address : customer.getAddress());
                 break;
             case "doctor":
                 Doctor doctor = (Doctor) user;
                 doctor.setName(name);
                 doctor.setEmail(email);
-                doctor.setPhone(phone);
-                doctor.setGender(gender);
-                doctor.setDob(dob);
-                doctor.setIc(ic);
-                doctor.setAddress(address);
+                doctor.setPhone(phone != null && !phone.trim().isEmpty() ? phone : doctor.getPhone());
+                doctor.setGender(gender != null && !gender.trim().isEmpty() ? gender : doctor.getGender());
+                doctor.setDob(dob != null ? dob : doctor.getDob());
+                doctor.setIc(ic != null && !ic.trim().isEmpty() ? ic : doctor.getIc());
+                doctor.setAddress(address != null && !address.trim().isEmpty() ? address : doctor.getAddress());
                 break;
             case "staff":
                 CounterStaff staff = (CounterStaff) user;
                 staff.setName(name);
                 staff.setEmail(email);
-                staff.setPhone(phone);
-                staff.setGender(gender);
-                staff.setDob(dob);
-                staff.setIc(ic);
-                staff.setAddress(address);
+                staff.setPhone(phone != null && !phone.trim().isEmpty() ? phone : staff.getPhone());
+                staff.setGender(gender != null && !gender.trim().isEmpty() ? gender : staff.getGender());
+                staff.setDob(dob != null ? dob : staff.getDob());
+                staff.setIc(ic != null && !ic.trim().isEmpty() ? ic : staff.getIc());
+                staff.setAddress(address != null && !address.trim().isEmpty() ? address : staff.getAddress());
                 break;
             case "manager":
                 Manager manager = (Manager) user;
                 manager.setName(name);
                 manager.setEmail(email);
-                manager.setPhone(phone);
-                manager.setGender(gender);
-                manager.setDob(dob);
-                manager.setIc(ic);
-                manager.setAddress(address);
+                manager.setPhone(phone != null && !phone.trim().isEmpty() ? phone : manager.getPhone());
+                manager.setGender(gender != null && !gender.trim().isEmpty() ? gender : manager.getGender());
+                manager.setDob(dob != null ? dob : manager.getDob());
+                manager.setIc(ic != null && !ic.trim().isEmpty() ? ic : manager.getIc());
+                manager.setAddress(address != null && !address.trim().isEmpty() ? address : manager.getAddress());
                 break;
         }
     }

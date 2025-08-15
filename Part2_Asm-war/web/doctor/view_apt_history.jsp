@@ -1,0 +1,370 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.util.List" %>
+<%@ page import="java.text.SimpleDateFormat" %>
+<%@ page import="model.Appointment" %>
+<%@ page import="model.Doctor" %>
+<%
+    Doctor doctor = (Doctor) session.getAttribute("doctor");
+    if (doctor == null) {
+        response.sendRedirect("../login.jsp");
+        return;
+    }
+    List<Appointment> appointments = (List<Appointment>) request.getAttribute("appointments");
+%>
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Appointment History - AMC Healthcare System</title>
+
+        <%@ include file="/includes/head.jsp" %>
+        <link rel="stylesheet" href="<%= request.getContextPath()%>/css/manager-homepage.css">
+        <link rel="stylesheet" href="<%= request.getContextPath()%>/css/manage-staff.css">
+
+        <style>
+            @media (max-width: 768px) {
+                .search-form .form-row {
+                    flex-direction: column;
+                }
+
+                .search-form .form-group {
+                    width: 100%;
+                    min-width: unset;
+                }
+            }
+
+            .status-badge {
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: bold;
+            }
+
+            .status-approved {
+                background-color: #28a745;
+                color: white;
+            }
+
+            .status-completed {
+                background-color: #6c757d;
+                color: white;
+            }
+
+            .status-pending {
+                background-color: #ffc107;
+                color: #212529;
+            }
+
+            .status-cancelled {
+                background-color: #dc3545;
+                color: white;
+            }
+        </style>
+
+    </head>
+    <body id="top">
+        <%@ include file="/includes/header.jsp" %>
+        <%@ include file="/includes/navbar.jsp" %>
+
+        <!-- PAGE HEADER -->
+        <section class="page-header">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h1 class="wow fadeInUp">
+                            <i class="fa fa-history" style="color:white"></i>
+                            <span style="color:white">Appointment History</span>
+                        </h1>
+                        <p class="lead wow fadeInUp" data-wow-delay="0.2s" style="color: whitesmoke">
+                            View all your appointment history with search and filter options
+                        </p>
+                        <nav aria-label="breadcrumb" class="wow fadeInUp" data-wow-delay="0.3s">
+                            <ol class="breadcrumb" style="background: transparent; margin: 0;">
+                                <li class="breadcrumb-item">
+                                    <a href="<%= request.getContextPath()%>/DoctorHomepageServlet" style="color: rgba(255,255,255,0.8);">Dashboard</a> 
+                                </li>
+                                <li class="breadcrumb-item active" style="color: white;">Appointment History</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section style="padding: 40px 0; background: #f5f5f5;">
+            <div class="container">
+                <!-- Success/Error Messages -->
+                <% String successParam = request.getParameter("success"); %>
+                <% if (successParam != null) {%>
+                <div class="alert alert-success alert-dismissible">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    <i class="fa fa-check-circle"></i> <%= successParam%>
+                </div>
+                <% } %>
+
+                <% String errorParam = request.getParameter("error"); %>
+                <% if (errorParam != null) {%>
+                <div class="alert alert-danger alert-dismissible">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    <i class="fa fa-exclamation-triangle"></i> <%= errorParam%>
+                </div>
+                <% }%>
+
+                <!-- SEARCH AND FILTER SECTION -->
+                <div class="search-filter-section wow fadeInUp" data-wow-delay="0.2s">
+                    <h3><i class="fa fa-search"></i> Search & Filter Appointment History</h3>
+
+                    <form method="GET" action="<%= request.getContextPath()%>/TreatmentServlet" class="search-form">
+                        <input type="hidden" name="action" value="viewAppointmentHistory">
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="searchQuery">Search by Patient Name/Treatment</label>
+                                <input type="text" class="form-control" id="searchQuery" name="searchQuery" 
+                                       placeholder="Enter patient name or treatment..." onkeyup="filterAppointments()"
+                                       value="<%= request.getParameter("searchQuery") != null ? request.getParameter("searchQuery") : "" %>">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="dateFilter">Filter by Date</label>
+                                <input type="date" class="form-control" id="dateFilter" name="dateFilter" onchange="filterAppointments()"
+                                       value="<%= request.getParameter("dateFilter") != null ? request.getParameter("dateFilter") : "" %>">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="statusFilter">Filter by Status</label>
+                                <select class="form-control" id="statusFilter" name="statusFilter" onchange="filterAppointments()">
+                                    <option value="all" <%= "all".equals(request.getParameter("statusFilter")) ? "selected" : "" %>>All Status</option>
+                                    <option value="pending" <%= "pending".equals(request.getParameter("statusFilter")) ? "selected" : "" %>>Pending</option>
+                                    <option value="approved" <%= "approved".equals(request.getParameter("statusFilter")) ? "selected" : "" %>>Approved</option>
+                                    <option value="completed" <%= "completed".equals(request.getParameter("statusFilter")) ? "selected" : "" %>>Completed</option>
+                                    <option value="cancelled" <%= "cancelled".equals(request.getParameter("statusFilter")) ? "selected" : "" %>>Cancelled</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="resultsInfo" class="text-muted small" style="margin-top: 5px;">
+                            Showing all appointments
+                        </div>
+
+                        <div class="form-group">
+                            <button type="button" class="btn btn-secondary" onclick="clearFilters()">
+                                <i class="fa fa-refresh"></i> Clear Filters
+                            </button>
+                            <a href="<%= request.getContextPath()%>/TreatmentServlet?action=myTasks" class="btn btn-primary">
+                                <i class="fa fa-tasks"></i> Back to My Tasks
+                            </a>
+                        </div>
+
+                    </form>
+                </div>
+
+                <!-- APPOINTMENTS SECTION -->
+                <div class="staff-management-section wow fadeInUp" data-wow-delay="0.4s">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h3><i class="fa fa-calendar"></i> Appointment History</h3>
+                        </div>
+                    </div>
+
+                    <!-- Appointments Table -->
+                    <div class="staff-table">
+                        <%  if (appointments != null && !appointments.isEmpty()) { %>
+
+                        <table class="table table-hover" id="appointmentsTable">
+                            <thead>
+                                <tr>
+                                    <th class="sortable" onclick="sortTable('appointmentsTable', 0, 'number')">
+                                        ID <i class="fa fa-sort"></i>
+                                    </th>
+                                    <th class="sortable" onclick="sortTable('appointmentsTable', 1, 'string')">
+                                        Patient Name <i class="fa fa-sort"></i>
+                                    </th>
+                                    <th class="sortable" onclick="sortTable('appointmentsTable', 2, 'string')">
+                                        Treatment <i class="fa fa-sort"></i>
+                                    </th>
+                                    <th class="sortable" onclick="sortTable('appointmentsTable', 3, 'date')">
+                                        Date & Time <i class="fa fa-sort"></i>
+                                    </th>
+                                    <th class="sortable" onclick="sortTable('appointmentsTable', 4, 'string')">
+                                        Status <i class="fa fa-sort"></i>
+                                    </th>
+                                    <th>Patient Message</th>
+                                    <th>Doctor Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <%
+                                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+                                    SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+                                    for (Appointment appointment : appointments) {
+                                %>
+                                <tr>
+                                    <td><%= appointment.getId()%></td>
+                                    <td><strong><%= appointment.getCustomer() != null ? appointment.getCustomer().getName() : "N/A"%></strong></td>
+                                    <td><%= appointment.getTreatment() != null ? appointment.getTreatment().getName() : "N/A"%></td>
+                                    <td>
+                                        <%= appointment.getAppointmentDate() != null ? dateFormat.format(appointment.getAppointmentDate()) : "N/A"%><br>
+                                        <small class="text-muted"><%= appointment.getAppointmentTime() != null ? timeFormat.format(appointment.getAppointmentTime()) : "N/A"%></small>
+                                    </td>
+                                    <td>
+                                        <% String status = appointment.getStatus(); %>
+                                        <span class="status-badge status-<%= status.toLowerCase() %>">
+                                            <%= status.toUpperCase() %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <%
+                                            String custMessage = appointment.getCustMessage();
+                                            if (custMessage != null && custMessage.length() > 50) {
+                                                out.print(custMessage.substring(0, 50) + "...");
+                                            } else {
+                                                out.print(custMessage != null ? custMessage : "No message");
+                                            }
+                                        %>
+                                    </td>
+                                    <td>
+                                        <%
+                                            String docMessage = appointment.getDocMessage();
+                                            if (docMessage != null && !docMessage.trim().isEmpty()) {
+                                                if (docMessage.length() > 50) {
+                                                    out.print(docMessage.substring(0, 50) + "...");
+                                                } else {
+                                                    out.print(docMessage);
+                                                }
+                                            } else {
+                                                out.print("<em class='text-muted'>No notes</em>");
+                                            }
+                                        %>
+                                    </td>
+                                </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                        <% } else {%>
+
+                        <div class="no-data">
+                            <i class="fa fa-calendar-times"></i>
+                            <h4>No Appointment History Found</h4>
+                            <p>You don't have any appointment history at the moment.</p>
+                        </div>
+
+                        <% }%>
+
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <%@ include file="/includes/footer.jsp" %>
+        <%@ include file="/includes/scripts.jsp" %>
+
+        <script>
+            // Filter appointments function
+            function filterAppointments() {
+                var searchQuery = document.getElementById('searchQuery').value.toLowerCase();
+                var dateFilter = document.getElementById('dateFilter').value;
+                var statusFilter = document.getElementById('statusFilter').value;
+                var table = document.getElementById('appointmentsTable');
+                var rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+                var visibleCount = 0;
+
+                for (var i = 0; i < rows.length; i++) {
+                    var row = rows[i];
+                    var patientName = row.cells[1].textContent.toLowerCase();
+                    var treatment = row.cells[2].textContent.toLowerCase();
+                    var dateTime = row.cells[3].textContent;
+                    var status = row.cells[4].textContent.toLowerCase();
+                    
+                    var matchesSearch = searchQuery === '' || 
+                                      patientName.includes(searchQuery) || 
+                                      treatment.includes(searchQuery);
+                    
+                    var matchesDate = dateFilter === '' || dateTime.includes(formatDateForFilter(dateFilter));
+                    
+                    var matchesStatus = statusFilter === 'all' || status.includes(statusFilter);
+
+                    if (matchesSearch && matchesDate && matchesStatus) {
+                        row.style.display = '';
+                        visibleCount++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+
+                // Update results info
+                var resultsInfo = document.getElementById('resultsInfo');
+                if (searchQuery || dateFilter || statusFilter !== 'all') {
+                    resultsInfo.textContent = 'Showing ' + visibleCount + ' of ' + rows.length + ' appointments';
+                } else {
+                    resultsInfo.textContent = 'Showing all appointments';
+                }
+            }
+
+            // Clear all filters
+            function clearFilters() {
+                document.getElementById('searchQuery').value = '';
+                document.getElementById('dateFilter').value = '';
+                document.getElementById('statusFilter').value = 'all';
+                filterAppointments();
+            }
+
+            // Format date for filtering
+            function formatDateForFilter(dateString) {
+                var date = new Date(dateString);
+                var day = String(date.getDate()).padStart(2, '0');
+                var month = String(date.getMonth() + 1).padStart(2, '0');
+                var year = date.getFullYear();
+                return day + '/' + month + '/' + year;
+            }
+
+            // Table sorting function
+            function sortTable(tableId, columnIndex, dataType) {
+                var table = document.getElementById(tableId);
+                var tbody = table.tBodies[0];
+                var rows = Array.from(tbody.rows);
+                var isAscending = table.getAttribute('data-sort-direction') !== 'asc';
+
+                rows.sort(function(rowA, rowB) {
+                    var cellA = rowA.cells[columnIndex].textContent.trim();
+                    var cellB = rowB.cells[columnIndex].textContent.trim();
+
+                    if (dataType === 'number') {
+                        return isAscending ? 
+                            parseFloat(cellA) - parseFloat(cellB) : 
+                            parseFloat(cellB) - parseFloat(cellA);
+                    } else if (dataType === 'date') {
+                        var dateA = new Date(cellA.split('\n')[0].split('/').reverse().join('-'));
+                        var dateB = new Date(cellB.split('\n')[0].split('/').reverse().join('-'));
+                        return isAscending ? dateA - dateB : dateB - dateA;
+                    } else {
+                        return isAscending ? 
+                            cellA.localeCompare(cellB) : 
+                            cellB.localeCompare(cellA);
+                    }
+                });
+
+                // Re-append sorted rows
+                rows.forEach(function(row) {
+                    tbody.appendChild(row);
+                });
+
+                // Update sort direction
+                table.setAttribute('data-sort-direction', isAscending ? 'asc' : 'desc');
+
+                // Update sort icons
+                var headers = table.querySelectorAll('th.sortable i');
+                headers.forEach(function(icon) {
+                    icon.className = 'fa fa-sort';
+                });
+                
+                var currentHeader = table.querySelectorAll('th.sortable')[columnIndex].querySelector('i');
+                currentHeader.className = isAscending ? 'fa fa-sort-up' : 'fa fa-sort-down';
+            }
+
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert').fadeOut('slow');
+            }, 5000);
+        </script>
+    </body>
+</html>

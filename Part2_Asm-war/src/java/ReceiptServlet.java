@@ -78,23 +78,45 @@ public class ReceiptServlet extends HttpServlet {
             throws ServletException, IOException {
         
         try {
-            // Get customer from session
+            // Get user from session - can be either customer or counter staff
             HttpSession session = request.getSession();
             Customer loggedInCustomer = (Customer) session.getAttribute("customer");
+            Object counterStaff = session.getAttribute("counterStaff");
             
-            if (loggedInCustomer == null) {
+            // Check if either customer or counter staff is logged in
+            if (loggedInCustomer == null && counterStaff == null) {
                 response.sendRedirect(request.getContextPath() + "/login.jsp");
                 return;
             }
             
-            // Get appointment ID - handle both parameter names
+            // Get appointment ID - handle multiple parameter names
             String appointmentIdStr = request.getParameter("appointment_id");
             if (appointmentIdStr == null || appointmentIdStr.trim().isEmpty()) {
                 appointmentIdStr = request.getParameter("appointmentId");
             }
             
+            // If no appointmentId, try to get it from paymentId
             if (appointmentIdStr == null || appointmentIdStr.trim().isEmpty()) {
-                response.sendRedirect(request.getContextPath() + "/customer/appointment_history.jsp?error=invalid_id");
+                String paymentIdStr = request.getParameter("paymentId");
+                if (paymentIdStr != null && !paymentIdStr.trim().isEmpty()) {
+                    try {
+                        int paymentId = Integer.parseInt(paymentIdStr);
+                        Payment payment = paymentFacade.find(paymentId);
+                        if (payment != null && payment.getAppointment() != null) {
+                            appointmentIdStr = String.valueOf(payment.getAppointment().getId());
+                        }
+                    } catch (NumberFormatException e) {
+                        // Invalid paymentId format
+                    }
+                }
+            }
+            
+            if (appointmentIdStr == null || appointmentIdStr.trim().isEmpty()) {
+                if (loggedInCustomer != null) {
+                    response.sendRedirect(request.getContextPath() + "/customer/appointment_history.jsp?error=invalid_id");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/PaymentServlet?action=viewPayments&error=invalid_id");
+                }
                 return;
             }
             
@@ -103,27 +125,43 @@ public class ReceiptServlet extends HttpServlet {
             // Get appointment details
             Appointment appointment = appointmentFacade.find(appointmentId);
             if (appointment == null) {
-                response.sendRedirect(request.getContextPath() + "/customer/appointment_history.jsp?error=not_found");
+                if (loggedInCustomer != null) {
+                    response.sendRedirect(request.getContextPath() + "/customer/appointment_history.jsp?error=not_found");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/PaymentServlet?action=viewPayments&error=appointment_not_found");
+                }
                 return;
             }
             
-            // Verify appointment belongs to logged-in customer
-            if (appointment.getCustomer() == null || 
-                appointment.getCustomer().getId() != loggedInCustomer.getId()) {
-                response.sendRedirect(request.getContextPath() + "/customer/appointment_history.jsp?error=unauthorized");
-                return;
+            // Authorization check - different rules for customer vs staff
+            if (loggedInCustomer != null) {
+                // Customer can only access their own appointments
+                if (appointment.getCustomer() == null || 
+                    appointment.getCustomer().getId() != loggedInCustomer.getId()) {
+                    response.sendRedirect(request.getContextPath() + "/customer/appointment_history.jsp?error=unauthorized");
+                    return;
+                }
             }
+            // Counter staff can access any appointment (no additional check needed)
             
             // Verify appointment is completed
             if (!"completed".equals(appointment.getStatus())) {
-                response.sendRedirect(request.getContextPath() + "/customer/appointment_history.jsp?error=not_completed");
+                if (loggedInCustomer != null) {
+                    response.sendRedirect(request.getContextPath() + "/customer/appointment_history.jsp?error=not_completed");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/PaymentServlet?action=viewPayments&error=appointment_not_completed");
+                }
                 return;
             }
             
             // Get payment details
             Payment payment = findPaymentByAppointment(appointmentId);
             if (payment == null || !"paid".equals(payment.getStatus())) {
-                response.sendRedirect(request.getContextPath() + "/customer/appointment_history.jsp?error=payment_not_found");
+                if (loggedInCustomer != null) {
+                    response.sendRedirect(request.getContextPath() + "/customer/appointment_history.jsp?error=payment_not_found");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/PaymentServlet?action=viewPayments&error=payment_not_paid");
+                }
                 return;
             }
             
@@ -140,14 +178,26 @@ public class ReceiptServlet extends HttpServlet {
             
             // Save receipt record to database if it doesn't exist
             if (existingReceipt == null) {
-                saveReceiptRecord(appointment, payment, null); // No file path since we're streaming
+                saveReceiptRecord(appointment, payment); 
             }
             
         } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/customer/appointment_history.jsp?error=invalid_id");
+            HttpSession session = request.getSession();
+            Customer loggedInCustomer = (Customer) session.getAttribute("customer");
+            if (loggedInCustomer != null) {
+                response.sendRedirect(request.getContextPath() + "/customer/appointment_history.jsp?error=invalid_id");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/PaymentServlet?action=viewPayments&error=invalid_id");
+            }
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect(request.getContextPath() + "/customer/appointment_history.jsp?error=receipt_error");
+            HttpSession session = request.getSession();
+            Customer loggedInCustomer = (Customer) session.getAttribute("customer");
+            if (loggedInCustomer != null) {
+                response.sendRedirect(request.getContextPath() + "/customer/appointment_history.jsp?error=receipt_error");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/PaymentServlet?action=viewPayments&error=receipt_error");
+            }
         }
     }
     
@@ -519,13 +569,12 @@ public class ReceiptServlet extends HttpServlet {
     /**
      * Save receipt record to database
      */
-    private void saveReceiptRecord(Appointment appointment, Payment payment, String filePath) {
+    private void saveReceiptRecord(Appointment appointment, Payment payment) {
         try {
             Receipt receipt = new Receipt();
             receipt.setAppointment(appointment);
             receipt.setPayment(payment);
             receipt.setIssueDate(new Date());
-            receipt.setFilePath(filePath);
             
             receiptFacade.create(receipt);
             

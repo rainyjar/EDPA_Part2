@@ -14,7 +14,7 @@
     String successMsg = request.getParameter("success");
     String errorMsg = (String) request.getAttribute("error");
     
-    if (statusFilter == null) statusFilter = "all";
+    if (statusFilter == null) statusFilter = "pending";
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -22,7 +22,9 @@
         <title>Payment Processing - APU Medical Center</title>
         <%@ include file="/includes/head.jsp" %>
         <link rel="stylesheet" href="<%= request.getContextPath()%>/css/manager-homepage.css">
-        <style>
+        <link rel="stylesheet" href="<%= request.getContextPath()%>/css/manage-staff.css">
+
+       <style>
             .payment-card {
                 border: 1px solid #ddd;
                 border-radius: 8px;
@@ -187,7 +189,20 @@
                         <h3><i class="fa fa-list"></i> Payments 
                             (<%= payments != null ? payments.size() : 0%>)
                         </h3>
+                        <small class="text-muted">Status Filter: <%= statusFilter %></small>
                     </div>
+
+                    <!-- Debug Information -->
+                    <% if (payments == null) { %>
+                        <div class="alert alert-warning">
+                            <i class="fa fa-exclamation-triangle"></i> Payments list is null!
+                        </div>
+                    <% } else if (payments.isEmpty()) { %>
+                        <div class="alert alert-info">
+                            <i class="fa fa-info-circle"></i> No payments found with status: <strong><%= statusFilter %></strong>
+                            <br><small>Try changing the filter to "All Payments" to see if there are any payments in the system.</small>
+                        </div>
+                    <% } %>
 
                     <!-- Payments List -->
                     <div class="payments-list">

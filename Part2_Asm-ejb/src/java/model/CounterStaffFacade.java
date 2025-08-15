@@ -58,5 +58,25 @@ public class CounterStaffFacade extends AbstractFacade<CounterStaff> {
             return false;
         }
     }
+    
+    /**
+     * Find counter staff by IC/NRIC
+     * @param ic The IC/NRIC to search for
+     * @return The counter staff with the given IC/NRIC, or null if not found
+     */
+    public CounterStaff findByIc(String ic) {
+        try {
+            Query q = em.createQuery("SELECT cs FROM CounterStaff cs WHERE cs.ic = :ic");
+            q.setParameter("ic", ic);
+            List<CounterStaff> results = q.getResultList();
+            if (results.isEmpty()) {
+                return null;
+            }
+            return results.get(0);
+        } catch (Exception e) {
+            System.err.println("Error finding counter staff by IC " + ic + ": " + e.getMessage());
+            return null;
+        }
+    }
 
 }

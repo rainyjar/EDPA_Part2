@@ -1,4 +1,3 @@
-
 import java.io.BufferedReader;
 import model.Doctor;
 import model.DoctorFacade;
@@ -14,6 +13,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.servlet.annotation.MultipartConfig;
 import model.Customer;
+import model.CustomerFacade;
+import model.Appointment;
+import model.AppointmentFacade;
+import model.Feedback;
+import model.FeedbackFacade;
+import model.Payment;
+import model.PaymentFacade;
 
 @WebServlet("/DoctorServlet")
 @MultipartConfig(fileSizeThreshold = 1024 * 1024, // 1MB
@@ -24,13 +30,35 @@ public class DoctorServlet extends HttpServlet {
 
     @EJB
     private DoctorFacade doctorFacade;
+    
+    @EJB
+    private CustomerFacade customerFacade;
+    
+    @EJB
+    private AppointmentFacade appointmentFacade;
+    
+    @EJB
+    private FeedbackFacade feedbackFacade;
+    
+    @EJB
+    private PaymentFacade paymentFacade;
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String action = request.getParameter("action");
+        HttpSession session = request.getSession(false);
+        
+        // Check if it's a doctor-specific action
+        Doctor loggedInDoctor = (session != null) ? (Doctor) session.getAttribute("doctor") : null;
+        if (loggedInDoctor != null && "createPayment".equals(action)) {
+            handleCreatePayment(request, response, loggedInDoctor);
+            return;
+        }
+        
+        // Manager actions
         if (!isManagerLoggedIn(request, response)) {
             return;
         }
-        String action = request.getParameter("action");
 
         if ("register".equals(action)) {
             handleRegister(request, response);
@@ -87,6 +115,21 @@ public class DoctorServlet extends HttpServlet {
                 e.printStackTrace();
                 response.sendRedirect(request.getContextPath() + "/ManagerServlet?action=viewAll&error=system_error");
             }
+        }
+
+        // Doctor-specific actions (when doctor is logged in)
+        Doctor loggedInDoctor = (session != null) ? (Doctor) session.getAttribute("doctor") : null;
+        if (loggedInDoctor != null && "patientRecords".equals(action)) {
+            handlePatientRecords(request, response, loggedInDoctor);
+            return;
+        }
+        if (loggedInDoctor != null && "issuePayment".equals(action)) {
+            handleIssuePayment(request, response, loggedInDoctor);
+            return;
+        }
+        if (loggedInDoctor != null && "generateMC".equals(action)) {
+            handleGenerateMC(request, response, loggedInDoctor);
+            return;
         }
     }
 
@@ -236,6 +279,231 @@ public class DoctorServlet extends HttpServlet {
             // Already committed response (e.g., forward was called), can't redirect
             System.out.println("Warning: Response already committed. Skipping redirect.");
             return false;
+        }
+    }
+
+    private void handlePatientRecords(HttpServletRequest request, HttpServletResponse response, Doctor loggedInDoctor) 
+            throws ServletException, IOException {
+        try {
+            // Get search parameters
+            String searchQuery = request.getParameter("searchQuery");
+            String customerIdParam = request.getParameter("customerId");
+            
+            List<Customer> patients = customerFacade.findAll();
+            List<Appointment> doctorAppointments = appointmentFacade.findAll();
+            
+            // Filter appointments for this doctor to get patients (unique only)
+            List<Customer> doctorPatients = new java.util.ArrayList<>();
+            java.util.Set<Integer> seenPatientIds = new java.util.HashSet<>();
+            
+            for (Appointment apt : doctorAppointments) {
+                if (apt.getDoctor() != null && apt.getDoctor().getId() == loggedInDoctor.getId()) {
+                    Customer patient = apt.getCustomer();
+                    if (patient != null && !seenPatientIds.contains(patient.getId())) {
+                        doctorPatients.add(patient);
+                        seenPatientIds.add(patient.getId());
+                    }
+                }
+            }
+            
+            // If searching for a specific customer
+            if (customerIdParam != null && !customerIdParam.trim().isEmpty()) {
+                try {
+                    int customerId = Integer.parseInt(customerIdParam);
+                    Customer selectedPatient = customerFacade.find(customerId);
+                    
+                    if (selectedPatient != null) {
+                        // Get medical history for this patient
+                        List<Appointment> patientAppointments = new java.util.ArrayList<>();
+                        List<Feedback> patientFeedbacks = new java.util.ArrayList<>();
+                        
+                        for (Appointment apt : doctorAppointments) {
+                            if (apt.getCustomer() != null && apt.getCustomer().getId() == customerId) {
+                                patientAppointments.add(apt);
+                            }
+                        }
+                        
+                        // Get feedbacks for this patient
+                        List<Feedback> allFeedbacks = feedbackFacade.findAll();
+                        for (Feedback feedback : allFeedbacks) {
+                            if (feedback.getFromCustomer() != null && 
+                                feedback.getFromCustomer().getId() == customerId) {
+                                patientFeedbacks.add(feedback);
+                            }
+                        }
+                        
+                        request.setAttribute("selectedPatient", selectedPatient);
+                        request.setAttribute("patientAppointments", patientAppointments);
+                        request.setAttribute("patientFeedbacks", patientFeedbacks);
+                    }
+                } catch (NumberFormatException e) {
+                    request.setAttribute("error", "Invalid patient ID");
+                }
+            }
+            
+            // Filter patients based on search query
+            if (searchQuery != null && !searchQuery.trim().isEmpty()) {
+                List<Customer> filteredPatients = new java.util.ArrayList<>();
+                String query = searchQuery.toLowerCase();
+                
+                for (Customer patient : doctorPatients) {
+                    if (patient.getName().toLowerCase().contains(query) ||
+                        patient.getEmail().toLowerCase().contains(query) ||
+                        (patient.getIc() != null && patient.getIc().contains(query))) {
+                        filteredPatients.add(patient);
+                    }
+                }
+                doctorPatients = filteredPatients;
+            }
+            
+            request.setAttribute("patients", doctorPatients);
+            request.setAttribute("allDoctorAppointments", doctorAppointments);
+            request.setAttribute("loggedInDoctor", loggedInDoctor);
+            request.setAttribute("searchQuery", searchQuery);
+            
+            request.getRequestDispatcher("/doctor/patient_records.jsp").forward(request, response);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("error", "Error loading patient records: " + e.getMessage());
+            request.getRequestDispatcher("/doctor/patient_records.jsp").forward(request, response);
+        }
+    }
+    
+    /**
+     * Handle displaying the issue payment page for doctors
+     */
+    private void handleIssuePayment(HttpServletRequest request, HttpServletResponse response, Doctor loggedInDoctor)
+            throws ServletException, IOException {
+        try {
+            // Get doctor's completed appointments that don't have payments yet
+            List<Appointment> completedAppointments = appointmentFacade.findByDoctorAndStatus(loggedInDoctor.getId(), "completed");
+            
+            // Filter out appointments that already have payments
+            List<Appointment> appointmentsWithoutPayments = completedAppointments.stream()
+                .filter(appointment -> {
+                    try {
+                        Payment existingPayment = paymentFacade.findByAppointmentId(appointment.getId());
+                        return existingPayment == null;
+                    } catch (Exception e) {
+                        return true; // Include in case of error to be safe
+                    }
+                })
+                .collect(Collectors.toList());
+            
+            request.setAttribute("appointments", appointmentsWithoutPayments);
+            request.setAttribute("doctor", loggedInDoctor);
+            
+            // Format date and time
+            java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("dd MMM yyyy");
+            java.text.SimpleDateFormat timeFormat = new java.text.SimpleDateFormat("HH:mm");
+            request.setAttribute("dateFormat", dateFormat);
+            request.setAttribute("timeFormat", timeFormat);
+            
+            request.getRequestDispatcher("/doctor/issue_payment.jsp").forward(request, response);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("error", "Error loading appointments: " + e.getMessage());
+            request.getRequestDispatcher("/doctor/issue_payment.jsp").forward(request, response);
+        }
+    }
+    
+    private void handleCreatePayment(HttpServletRequest request, HttpServletResponse response, Doctor loggedInDoctor)
+            throws ServletException, IOException {
+        try {
+            // Get parameters
+            int appointmentId = Integer.parseInt(request.getParameter("appointmentId"));
+            double amount = Double.parseDouble(request.getParameter("amount"));
+            
+            // Validate amount
+            if (amount <= 0) {
+                request.setAttribute("error", "Payment amount must be greater than 0");
+                handleIssuePayment(request, response, loggedInDoctor);
+                return;
+            }
+            
+            // Get and validate appointment
+            Appointment appointment = appointmentFacade.find(appointmentId);
+            if (appointment == null) {
+                request.setAttribute("error", "Appointment not found");
+                handleIssuePayment(request, response, loggedInDoctor);
+                return;
+            }
+            
+            // Verify appointment belongs to this doctor
+            if (appointment.getDoctor() == null || appointment.getDoctor().getId() != loggedInDoctor.getId()) {
+                request.setAttribute("error", "Unauthorized access to appointment");
+                handleIssuePayment(request, response, loggedInDoctor);
+                return;
+            }
+            
+            // Verify appointment is completed
+            if (!"completed".equals(appointment.getStatus())) {
+                request.setAttribute("error", "Only completed appointments can have payment charges");
+                handleIssuePayment(request, response, loggedInDoctor);
+                return;
+            }
+            
+            // Check if payment already exists
+            Payment existingPayment = paymentFacade.findByAppointmentId(appointmentId);
+            if (existingPayment != null) {
+                request.setAttribute("error", "Payment already exists for this appointment");
+                handleIssuePayment(request, response, loggedInDoctor);
+                return;
+            }
+            
+            // Create payment record
+            Payment payment = new Payment();
+            payment.setAppointment(appointment);
+            payment.setAmount(amount);
+            payment.setStatus("pending");
+            payment.setPaymentDate(null);
+            payment.setPaymentMethod(null);
+            
+            paymentFacade.create(payment);
+            
+            request.setAttribute("success", "Payment charge of RM " + String.format("%.2f", amount) + " has been issued successfully. Customer and counter staff have been notified.");
+            handleIssuePayment(request, response, loggedInDoctor);
+            
+        } catch (NumberFormatException e) {
+            request.setAttribute("error", "Invalid appointment ID or amount");
+            handleIssuePayment(request, response, loggedInDoctor);
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("error", "Error creating payment: " + e.getMessage());
+            handleIssuePayment(request, response, loggedInDoctor);
+        }
+    }
+    
+    /**
+     * Handle displaying the generate MC page for doctors
+     */
+    private void handleGenerateMC(HttpServletRequest request, HttpServletResponse response, Doctor loggedInDoctor)
+            throws ServletException, IOException {
+        try {
+            // Get doctor's completed appointments
+            List<Appointment> completedAppointments = appointmentFacade.findByDoctorAndStatus(loggedInDoctor.getId(), "completed");
+            
+            request.setAttribute("completedAppointments", completedAppointments);
+            request.setAttribute("doctor", loggedInDoctor);
+            
+            // Check for success/error messages from parameters (for redirects)
+            String successMsg = request.getParameter("success");
+            String errorMsg = request.getParameter("error");
+            if (successMsg != null) {
+                request.setAttribute("success", successMsg);
+            }
+            if (errorMsg != null) {
+                request.setAttribute("error", errorMsg);
+            }
+            
+            request.getRequestDispatcher("/doctor/generate_mc.jsp").forward(request, response);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("error", "Error loading completed appointments: " + e.getMessage());
+            request.getRequestDispatcher("/doctor/generate_mc.jsp").forward(request, response);
         }
     }
 

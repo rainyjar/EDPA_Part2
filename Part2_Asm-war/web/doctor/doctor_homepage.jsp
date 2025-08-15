@@ -144,8 +144,8 @@
                     <div class="col-md-2 col-sm-6">
                         <div class="stat-card-wrapper">
                             <div class="stat-card counter-staff wow fadeInUp" data-wow-delay="0.7s">
-                                <span class="stat-number stat-payment">RM<%= currencyFormat.format(totalChargesIssued)%></span>
-                                <span class="stat-label">Charges Issued</span>
+                                <span class="stat-number stat-payment"><%= currencyFormat.format(totalChargesIssued)%></span>
+                                <span class="stat-label">Charges Issued (RM)</span>
                             </div>
                         </div>
                     </div>
@@ -166,13 +166,13 @@
                 <div class="row">
                     <!-- My Tasks -->
                     <div class="col-md-3 col-sm-6">
-                        <a href="<%= request.getContextPath()%>/DoctorServlet?action=viewMyTasks" style="text-decoration: none;">
+                        <a href="<%= request.getContextPath()%>/TreatmentServlet?action=myTasks" style="text-decoration: none;">
                             <div class="action-card wow fadeInUp" data-wow-delay="0.2s">
                                 <div class="action-icon counter-staff">
                                     <i class="fa fa-tasks"></i>
                                 </div>
                                 <div class="action-title">My Tasks</div>
-                                <div class="action-desc">View and check approved appointments assigned to me</div>
+                                <div class="action-desc">View and manage approved appointments assigned to me</div>
                             </div>
                         </a>
                     </div>
@@ -192,13 +192,13 @@
 
                     <!-- Appointment Histories -->
                     <div class="col-md-3 col-sm-6">
-                        <a href="<%= request.getContextPath()%>/DoctorServlet?action=appointmentHistories" style="text-decoration: none;">
+                        <a href="<%= request.getContextPath()%>/TreatmentServlet?action=viewAppointmentHistory" style="text-decoration: none;">
                             <div class="action-card wow fadeInUp" data-wow-delay="0.4s">
                                 <div class="action-icon counter-staff">
                                     <i class="fa fa-history"></i>
                                 </div>
-                                <div class="action-title">Appointment Histories</div>
-                                <div class="action-desc">Check completed appointments, charges and ratings</div>
+                                <div class="action-title">Appointment History</div>
+                                <div class="action-desc">View all appointment history with search and filter options</div>
                             </div>
                         </a>
                     </div>
@@ -221,26 +221,26 @@
                 <div class="row" style="margin-top: 20px;">
                     <!-- My Rating -->
                     <div class="col-md-3 col-sm-6">
-                        <a href="<%= request.getContextPath()%>/DoctorServlet?action=viewMyRatings" style="text-decoration: none;">
+                        <a href="<%= request.getContextPath()%>/DoctorHomepageServlet?action=viewRatings" style="text-decoration: none;">
                             <div class="action-card wow fadeInUp" data-wow-delay="0.6s">
                                 <div class="action-icon counter-staff">
                                     <i class="fa fa-star"></i>
                                 </div>
-                                <div class="action-title">My Rating</div>
+                                <div class="action-title">My Ratings</div>
                                 <div class="action-desc">View patient feedback and ratings received</div>
                             </div>
                         </a>
                     </div>
 
-                    <!-- My Profile -->
+                    <!-- Generate Medical Certificate -->
                     <div class="col-md-3 col-sm-6">
-                        <a href="<%= request.getContextPath()%>/profile.jsp" style="text-decoration: none;">
+                        <a href="<%= request.getContextPath()%>/DoctorServlet?action=generateMC" style="text-decoration: none;">
                             <div class="action-card wow fadeInUp" data-wow-delay="0.7s">
                                 <div class="action-icon counter-staff">
-                                    <i class="fa fa-user"></i>
+                                    <i class="fa fa-file-text-o"></i>
                                 </div>
-                                <div class="action-title">Profile</div>
-                                <div class="action-desc">Update personal information and settings</div>
+                                <div class="action-title">Generate MC</div>
+                                <div class="action-desc">Issue medical certificates for completed appointments</div>
                             </div>
                         </a>
                     </div>
@@ -316,7 +316,7 @@
                                         </p>
                                     </div>
                                     <div class="col-sm-4 text-right">
-                                        <a href="<%= request.getContextPath()%>/DoctorServlet?action=viewMyTasks&filter=approved"
+                                        <a href="<%= request.getContextPath()%>/TreatmentServlet?action=myTasks"
                                            class="btn btn-sm btn-warning">
                                             <i class="fa fa-stethoscope"></i> Start
                                         </a>
@@ -325,32 +325,45 @@
                             </div>
                             <% } %>
 
-                            <!-- Pending Charges -->
+                            <!-- Pending Payment Processing -->
                             <%
-                                // Count appointments that need payment processing
-                                int pendingCharges = 0;
+                                // Import the PaymentFacade for querying payment records
+                                model.PaymentFacade paymentFacade = new model.PaymentFacade();
+                                
+                                // Count completed appointments that have payments with "pending" status
+                                // This more accurately reflects appointments that need payment attention
+                                int pendingPaymentAppointments = 0;
                                 if (myRecentAppointments != null) {
                                     for (Appointment apt : myRecentAppointments) {
-                                        if ("completed".equals(apt.getStatus()) && apt.getReceipt() == null) {
-                                            pendingCharges++;
+                                        if ("completed".equals(apt.getStatus())) {
+                                            try {
+                                                // Check if this appointment has a pending payment
+                                                model.Payment payment = paymentFacade.findByAppointmentId(apt.getId());
+                                                if (payment != null && "pending".equals(payment.getStatus())) {
+                                                    pendingPaymentAppointments++;
+                                                }
+                                            } catch (Exception e) {
+                                                // Log error silently
+                                                System.out.println("Error checking payment for appointment " + apt.getId() + ": " + e.getMessage());
+                                            }
+                                        }
                                     }
                                 }
-                            }
-                            if (pendingCharges > 0) {%>
+                            %>
+                            <% if (pendingPaymentAppointments > 0) {%>
                             <div class="priority-card wow fadeInRight animated" data-wow-delay="0.6s" style="margin-bottom: 15px; padding: 15px; border-radius: 8px; visibility: visible; animation-duration: 0.6s; animation-name: fadeInLeft">
                                 <div class="row">
                                     <div class="col-sm-8">
                                         <h5 style="margin: 0; color: #28a745;">
-                                            <i class="fa fa-calculator"></i> Pending Charges
+                                            <i class="fa fa-calculator"></i> Pending Payments
                                         </h5>
                                         <p style="margin: 5px 0; color: #666;">
-                                            <%= pendingCharges%> completed appointments need payment processing
-                                        </p>
+                                            <%= pendingPaymentAppointments%> appointments require payment processing
                                     </div>
                                     <div class="col-sm-4 text-right">
                                         <a href="<%= request.getContextPath()%>/DoctorServlet?action=issuePayment" 
                                            class="btn btn-sm btn-success">
-                                            <i class="fa fa-money"></i> Process
+                                            <i class="fa fa-money"></i> Issue Charges
                                         </a>
                                     </div>
                                 </div>
@@ -358,7 +371,7 @@
                             <% } %>
 
                             <!-- If no priority tasks -->
-                            <% if ((myTodayAppointments == null || myTodayAppointments.size() == 0) && myApprovedAppointments == 0 && pendingCharges == 0) { %>
+                            <% if ((myTodayAppointments == null || myTodayAppointments.size() == 0) && myApprovedAppointments == 0 && pendingPaymentAppointments == 0) { %>
                             <div class="alert alert-success">
                                 <i class="fa fa-check-circle"></i>
                                 Great! No urgent tasks at the moment.
@@ -443,7 +456,7 @@
                             <% }%>
 
                             <div class="text-center" style="margin-top: 20px;">
-                                <a href="<%= request.getContextPath()%>/DoctorServlet?action=viewMyTasks" class="btn btn-success">
+                                <a href="<%= request.getContextPath()%>/DoctorServlet?action=myTasks" class="btn btn-success">
                                     <i class="fa fa-calendar"></i> View All My Tasks
                                 </a>
                             </div>

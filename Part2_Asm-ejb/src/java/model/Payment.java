@@ -115,7 +115,7 @@ public class Payment implements Serializable {
     @Override
     public boolean equals(Object object) {
         // TODO: Warning - this method won't work in the case the id fields are not set
-        if (!(object instanceof Receipt)) {
+        if (!(object instanceof Payment)) {
             return false;
         }
         Payment other = (Payment) object;
