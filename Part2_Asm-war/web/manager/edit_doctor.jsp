@@ -49,7 +49,7 @@
                     </div>
                     <% }%>
                     <form id="doctorForm" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/DoctorServlet?action=update&id=${doctor.id}" novalidate>
-
+                        <input type="hidden" id="originalNric" name="originalNric" value="${doctor.ic}">
                         <!-- Personal Information Section -->
                         <div class="form-row">
                             <div class="form-group">
@@ -89,7 +89,7 @@
                         </div>
 
                         <div class="form-row">
-                            <div class="form-group">
+                                <div class="form-group">
                                 <label for="nric">NRIC <span class="required">*</span></label>
                                 <input type="text" id="nric" name="nric" class="form-control doctor" 
                                        value="${doctor != null ? doctor.ic : ''}" required>

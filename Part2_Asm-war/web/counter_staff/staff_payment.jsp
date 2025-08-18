@@ -189,7 +189,6 @@
                         <h3><i class="fa fa-list"></i> Payments 
                             (<%= payments != null ? payments.size() : 0%>)
                         </h3>
-                        <small class="text-muted">Status Filter: <%= statusFilter %></small>
                     </div>
 
                     <!-- Debug Information -->
@@ -407,8 +406,75 @@
                 // Alternative: window.open('<%= request.getContextPath()%>/ReceiptServlet?paymentId=' + paymentId, '_blank');
             }
             
-            function generateMC(appointmentId) {
-                window.open('<%= request.getContextPath()%>/MedicalCertificateServlet?appointmentId=' + appointmentId, '_blank');
+                        function generateMC(appointmentId) {
+                // Show loading state
+                const button = event.target.closest('button');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Checking...';
+                button.disabled = true;
+                
+                // Check if MC exists for this appointment
+                $.ajax({
+                    url: '<%= request.getContextPath()%>/MedicalCertificateServlet',
+                    method: 'GET',
+                    data: {
+                        action: 'checkMC',
+                        appointmentId: appointmentId
+                    },
+                    success: function(response) {
+                        // Restore button state
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                        
+                        if (response.exists === true) {
+                            // MC exists, open in new window
+                            window.open('<%= request.getContextPath()%>/MedicalCertificateServlet?appointmentId=' + appointmentId, '_blank');
+                        } else {
+                            // No MC found, show error message
+                            showMCAlert('No MC records found for this appointment! Please inform the doctor to issue one if needed.');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        // Restore button state
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                        
+                        console.error('Error checking MC:', error);
+                        showMCAlert('Error checking MC records. Please try again or contact support.');
+                    }
+                });
+            }
+            
+            function showMCAlert(message) {
+                // Create a custom alert modal or use browser alert
+                if ($('#mcAlertModal').length === 0) {
+                    // Create modal if it doesn't exist
+                    const modalHTML = `
+                        <div class="modal fade" id="mcAlertModal" tabindex="-1" role="dialog">
+                            <div class="modal-dialog modal-sm" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-warning">
+                                        <h5 class="modal-title">
+                                            <i class="fa fa-exclamation-triangle"></i> MC Not Available
+                                        </h5>
+                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p id="mcAlertMessage"></p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">OK</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    $('body').append(modalHTML);
+                }
+                
+                // Set message and show modal
+                $('#mcAlertMessage').text(message);
+                $('#mcAlertModal').modal('show');
             }
         </script>
     </body>

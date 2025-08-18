@@ -1,8 +1,13 @@
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.sql.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.stream.Collectors;
+
 import javax.ejb.EJB;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
@@ -51,80 +56,99 @@ public class CounterStaffServlet extends HttpServlet {
             }
             response.sendRedirect("CounterStaffServlet"); // reload list
         } else if ("update".equals(action)) {
-            int id = Integer.parseInt(request.getParameter("id"));
-            CounterStaff counter_staff = counterStaffFacade.find(id);
+            try {
+                int id = Integer.parseInt(request.getParameter("id"));
+                CounterStaff staff = counterStaffFacade.find(id);
 
-            if (counter_staff != null) {
-                counter_staff.setName(request.getParameter("name"));
-                counter_staff.setEmail(request.getParameter("email"));
-                counter_staff.setPassword(request.getParameter("password"));
-                counter_staff.setPhone(request.getParameter("phone"));
-                counter_staff.setGender(request.getParameter("gender"));
-                counter_staff.setAddress(request.getParameter("address"));
-                counter_staff.setIc(request.getParameter("nric"));
-
-                try {
-                    String dobStr = request.getParameter("dob");
-                    java.util.Date utilDate = new SimpleDateFormat("yyyy-MM-dd").parse(dobStr);
-                    java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
-                    counter_staff.setDob(sqlDate);
-                } catch (ParseException e) {
-                    e.printStackTrace(); // log or handle
+                if (staff == null) {
+                    response.sendRedirect(request.getContextPath() + "/ManagerServlet?action=viewAll&error=staff_not_found");
+                    return;
                 }
 
-                Part file = request.getPart("profilePic");
-                try {
-                    String uploadedFileName = UploadImage.uploadImage(file, "profile_pictures");
-                    if (uploadedFileName != null) {
-                        counter_staff.setProfilePic(uploadedFileName);
-                    }
-                } catch (IllegalArgumentException e) {
-                    request.setAttribute("error", e.getMessage());
-                    request.setAttribute("counterStaff", counter_staff);
-                    request.getRequestDispatcher("/manager/edit_cs.jsp").forward(request, response);
+                if (!populateStaffFromRequest(request, staff, staff.getEmail())) {
+                    request.setAttribute("staff", staff);
+                    request.getRequestDispatcher("/CounterStaffServlet?action=edit&id=" + staff.getId()).forward(request, response);
                     return;
+                }
+
+                try {
+                    counterStaffFacade.edit(staff);
+                    response.sendRedirect(request.getContextPath() + "/ManagerServlet?action=viewAll&success=staff_updated");
                 } catch (Exception e) {
-                    e.printStackTrace();
-                    request.setAttribute("error", "Upload failed: " + e.getMessage());
-                    request.setAttribute("counterStaff", counter_staff);
-                    request.getRequestDispatcher("/manager/edit_cs.jsp").forward(request, response);
-                    return;
-                }
+                    // Handle database constraint violations
+                    String errorMsg = e.getMessage().toLowerCase();
+                    if (errorMsg.contains("constraint") || errorMsg.contains("unique")
+                            || errorMsg.contains("duplicate") || errorMsg.contains("nric")
+                            || errorMsg.contains("ic")) {
 
-                counterStaffFacade.edit(counter_staff);
-                request.setAttribute("success", "Counter staff updated successfully!");
-                request.setAttribute("counterStaff", counter_staff);
-                request.getRequestDispatcher("/manager/edit_cs.jsp").forward(request, response);
-            } else {
-                response.sendRedirect(request.getContextPath() + "/CounterStaffServlet?error=staff_not_found");
+                        request.setAttribute("error", "This NRIC is already registered to another user");
+                        request.setAttribute("staff", staff);
+                        request.getRequestDispatcher("/CounterStaffServlet?action=edit&id=" + staff.getId()).forward(request, response);
+                    } else {
+                        throw e;
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                response.sendRedirect(request.getContextPath() + "/ManagerServlet?action=viewAll&error=update_failed");
             }
         } else if ("register".equals(action)) {
             // Registration block with comprehensive validation
             try {
-                // Validate input
-                String validationError = validateStaffInput(request, null, null);
-                if (validationError != null) {
-                    request.setAttribute("error", validationError);
-                    preserveFormData(request);
-                    request.getRequestDispatcher("/manager/register_cs.jsp").forward(request, response);
-                    return;
-                }
-
-                String name = request.getParameter("name").trim();
-                String email = request.getParameter("email").trim();
+                // Read form data
+                String name = request.getParameter("name");
+                String email = request.getParameter("email");
                 String password = request.getParameter("password");
-                String phone = request.getParameter("phone").trim();
+                String phone = request.getParameter("phone");
                 String gender = request.getParameter("gender");
                 String dobStr = request.getParameter("dob");
                 String address = request.getParameter("address");
                 String ic = request.getParameter("nric");
 
-                // Parse date of birth
-                Date dob = null;
-                if (dobStr != null && !dobStr.isEmpty()) {
-                    dob = Date.valueOf(dobStr); // yyyy-MM-dd
+                // Basic validation
+                if (name == null || name.trim().isEmpty()
+                        || email == null || email.trim().isEmpty()
+                        || password == null || password.trim().isEmpty()
+                        || phone == null || phone.trim().isEmpty()
+                        || gender == null || dobStr == null || dobStr.trim().isEmpty()
+                        || address == null || address.trim().isEmpty()
+                        || ic == null || ic.trim().isEmpty()) {
+
+                    request.setAttribute("error", "All fields are required.");
+                    preserveFormData(request);
+                    request.getRequestDispatcher("/manager/register_cs.jsp").forward(request, response);
+                    return;
                 }
 
+                // Check if email already exists
+                if (counterStaffFacade.searchEmail(email.trim()) != null) {
+                    request.setAttribute("error", "Email address is already registered.");
+                    preserveFormData(request);
+                    request.getRequestDispatcher("/manager/register_cs.jsp").forward(request, response);
+                    return;
+                }
+
+                // Check if NRIC already exists
+                CounterStaff existingStaffWithNric = counterStaffFacade.findByIc(ic.trim());
+                if (existingStaffWithNric != null) {
+                    request.setAttribute("error", "NRIC is already registered to another staff member.");
+                    preserveFormData(request);
+                    request.getRequestDispatcher("/manager/register_cs.jsp").forward(request, response);
+                    return;
+                }
+
+                // Parse date of birth
+                Date dob = null;
+                try {
+                    dob = Date.valueOf(dobStr);
+                } catch (IllegalArgumentException e) {
+                    request.setAttribute("error", "Invalid date format.");
+                    preserveFormData(request);
+                    request.getRequestDispatcher("/manager/register_cs.jsp").forward(request, response);
+                    return;
+                }
+
+                // Handle profile picture upload
                 String uploadedFileName = null;
                 Part file = request.getPart("profilePic");
 
@@ -143,26 +167,41 @@ public class CounterStaffServlet extends HttpServlet {
                     return;
                 }
 
+                // Create new counter staff
                 CounterStaff cs = new CounterStaff();
-                cs.setName(name);
-                cs.setEmail(email);
+                cs.setName(name.trim());
+                cs.setEmail(email.trim());
                 cs.setPassword(password);
-                cs.setPhone(phone);
+                cs.setPhone(phone.trim());
                 cs.setGender(gender);
                 cs.setDob(dob);
                 cs.setProfilePic(uploadedFileName);
-                cs.setAddress(address);
-                cs.setIc(ic);
+                cs.setAddress(address.trim());
+                cs.setIc(ic.trim());
 
-                counterStaffFacade.create(cs);
-                request.setAttribute("success", "Counter staff registered successfully.");
-                request.getRequestDispatcher("manager/register_cs.jsp").include(request, response);
+                try {
+                    counterStaffFacade.create(cs);
+                    response.sendRedirect(request.getContextPath() + "/ManagerServlet?action=viewAll&success=staff_registered");
+                } catch (Exception e) {
+                    // Handle database constraint violations
+                    String errorMsg = e.getMessage().toLowerCase();
+                    if (errorMsg.contains("constraint") || errorMsg.contains("unique")
+                            || errorMsg.contains("duplicate") || errorMsg.contains("nric")
+                            || errorMsg.contains("ic")) {
+
+                        request.setAttribute("error", "NRIC is already registered to another user.");
+                    } else {
+                        request.setAttribute("error", "Failed to register counter staff: " + e.getMessage());
+                    }
+                    preserveFormData(request);
+                    request.getRequestDispatcher("/manager/register_cs.jsp").forward(request, response);
+                }
 
             } catch (Exception e) {
                 e.printStackTrace();
-                request.setAttribute("error", "Failed to register counter staff: " + e.getMessage());
+                request.setAttribute("error", "System error occurred. Please try again.");
                 preserveFormData(request);
-                request.getRequestDispatcher("manager/register_cs.jsp").include(request, response);
+                request.getRequestDispatcher("/manager/register_cs.jsp").forward(request, response);
             }
         }
     }
@@ -269,6 +308,82 @@ public class CounterStaffServlet extends HttpServlet {
         }
 
         return null; // No validation errors
+    }
+
+    private String readFormField(Part part) throws IOException {
+        if (part == null) {
+            return "";
+        }
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(part.getInputStream(), StandardCharsets.UTF_8))) {
+            return reader.lines().collect(Collectors.joining("\n")).trim();
+        }
+    }
+
+    private boolean populateStaffFromRequest(HttpServletRequest request, CounterStaff staff, String existingEmail) throws IOException, ServletException {
+        String name = readFormField(request.getPart("name"));
+        String email = readFormField(request.getPart("email"));
+        String password = readFormField(request.getPart("password"));
+        String phone = readFormField(request.getPart("phone"));
+        String gender = readFormField(request.getPart("gender"));
+        String dobStr = readFormField(request.getPart("dob"));
+        String nric = readFormField(request.getPart("nric"));
+        String address = readFormField(request.getPart("address"));
+
+        if (name.isEmpty() || email.isEmpty() || password.isEmpty() || phone.isEmpty()
+                || gender == null || dobStr.isEmpty() || nric.isEmpty() || address.isEmpty()) {
+            request.setAttribute("error", "All fields are required.");
+            return false;
+        }
+
+        if (!email.equals(existingEmail) && counterStaffFacade.searchEmail(email) != null) {
+            request.setAttribute("error", "Email address is already registered.");
+            return false;
+        }
+
+        // Check if NRIC already exists (excluding current staff)
+        if (staff.getId() != 0) {
+            // Editing existing staff - check if another staff has this NRIC
+            CounterStaff existingStaffWithNric = counterStaffFacade.findByIc(nric);
+            if (existingStaffWithNric != null && existingStaffWithNric.getId() != staff.getId()) {
+                request.setAttribute("error", "IC is already registered to another staff member.");
+                return false;
+            }
+        } else {
+            // New staff - check if IC exists anywhere
+            CounterStaff existingStaffWithNric = counterStaffFacade.findByIc(nric);
+            if (existingStaffWithNric != null) {
+                request.setAttribute("error", "IC is already registered to another staff member.");
+                return false;
+            }
+        }
+
+        try {
+            staff.setName(name);
+            staff.setEmail(email);
+            staff.setPassword(password);
+            staff.setPhone(phone);
+            staff.setGender(gender);
+            staff.setDob(Date.valueOf(dobStr));
+            staff.setIc(nric);
+            staff.setAddress(address);
+        } catch (Exception e) {
+            request.setAttribute("error", "Invalid input format.");
+            return false;
+        }
+
+        // Handle profile picture
+        Part file = request.getPart("profilePic");
+        try {
+            if (file != null && file.getSize() > 0) {
+                String uploadedFileName = UploadImage.uploadImage(file, "profile_pictures");
+                staff.setProfilePic(uploadedFileName);
+            }
+        } catch (Exception e) {
+            request.setAttribute("error", "Profile picture upload failed: " + e.getMessage());
+            return false;
+        }
+
+        return true;
     }
 
     // Helper method to preserve form data on error

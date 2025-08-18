@@ -96,23 +96,32 @@
     <body id="top">
         <%@ include file="/includes/header.jsp" %>
         <%@ include file="/includes/navbar.jsp" %>
-        
+
         <!-- PAGE HEADER -->
         <section class="page-header">
             <div class="container">
                 <div class="row">
                     <div class="col-md-12">
                         <h1 class="wow fadeInUp">
-                            <i class="fa fa-edit" style="color:white"></i>
+                            <i class="fa fa-calendar-check-o" style="color:white"></i>
                             <span style="color:white">Edit Schedule</span>
                         </h1>
-                        <p class="wow fadeInUp" data-wow-delay="0.4s" style="color:white">Update your availability schedule for patient appointments.</p>
+                        <p class="lead wow fadeInUp" data-wow-delay="0.2s" style="color: whitesmoke">
+                            Update your availability schedule for patient appointments.
+                        </p>
+                        <nav aria-label="breadcrumb" class="wow fadeInUp" data-wow-delay="0.3s">
+                            <ol class="breadcrumb" style="background: transparent; margin: 0;">
+                                <li class="breadcrumb-item">
+                                    <a href="http://localhost:8080/Part2_Asm-war/DoctorHomepageServlet" style="color: rgba(255,255,255,0.8);">Dashboard</a> 
+                                </li>
+                                <li class="breadcrumb-item active" style="color: white;">Edit Schedule</li>
+                            </ol>
+                        </nav>
                     </div>
                 </div>
             </div>
         </section>
-        </section>
-        
+               
         <!-- MAIN CONTENT -->
         <section>
             <div class="container">
@@ -130,7 +139,7 @@
                     <div class="col-md-8 offset-md-2">
                         <div class="edit-schedule-card wow fadeInUp" data-wow-delay="0.4s">
                             <div class="card-header">
-                                <h4><i class="fa fa-calendar-plus-o"></i> Update Schedule</h4>
+                                <h4 style="color: white;"><i class="fa fa-calendar-plus-o"></i> Update Schedule</h4>
                             </div>
                             <div class="card-body">
                                 <form action="${pageContext.request.contextPath}/ScheduleServlet" method="post">

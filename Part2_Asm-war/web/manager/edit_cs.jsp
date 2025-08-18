@@ -22,7 +22,7 @@
         <%@ include file="/includes/navbar.jsp" %>
 
         <div class="registration-container">
-            <a href="${pageContext.request.contextPath}/CounterStaffServlet?action=viewAll" class="back-btn" style="margin-top: 30px; margin-bottom: 30px">
+            <a href="${pageContext.request.contextPath}/ManagerServlet?action=viewAll" class="back-btn" style="margin-top: 30px; margin-bottom: 30px">
                 <i class="fa fa-arrow-left"></i> Back to Staff Management
             </a>
 
@@ -51,6 +51,7 @@
 
                     <form id="staffForm" method="post" enctype="multipart/form-data"
                           action="${pageContext.request.contextPath}/CounterStaffServlet?action=update&id=${counterStaff.id}" novalidate>
+                        <input type="hidden" id="originalNric" name="originalNric" value="${counterStaff.ic}">
 
                         <!-- Personal Information -->
                         <div class="form-row">

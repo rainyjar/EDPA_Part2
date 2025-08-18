@@ -597,7 +597,7 @@
                                             <strong class="text-success"><%= completedVisits %></strong>
                                         </div>
                                         <div class="col-4">
-                                            <small class="text-muted">Success Rate</small><br>
+                                            <small class="text-muted">Completion Rate</small><br>
                                             <strong class="text-info"><%= visitCount > 0 ? Math.round((double)completedVisits/visitCount*100) : 0 %>%</strong>
                                         </div>
                                     </div>

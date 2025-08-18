@@ -2,6 +2,7 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.sql.Date;
 import java.util.List;
@@ -15,11 +16,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.Part;
+import model.AppointmentFacade;
 import model.CounterStaff;
 import model.Customer;
 import model.CustomerFacade;
-import model.Doctor;
-import model.Manager;
 
 @WebServlet(urlPatterns = {"/CustomerServlet"})
 @MultipartConfig(fileSizeThreshold = 1024 * 1024, // 1MB
@@ -27,6 +27,9 @@ import model.Manager;
         maxRequestSize = 1024 * 1024 * 10) // 10MB
 
 public class CustomerServlet extends HttpServlet {
+
+    @EJB
+    private AppointmentFacade appointmentFacade;
 
     @EJB
     private CustomerFacade customerFacade;
@@ -128,34 +131,45 @@ public class CustomerServlet extends HttpServlet {
                 // Check if this is an AJAX request expecting JSON
                 String acceptHeader = request.getHeader("Accept");
                 boolean isAjaxRequest = acceptHeader != null && acceptHeader.contains("application/json");
-                
+
                 if (isAjaxRequest) {
                     // Return JSON response for AJAX requests
                     response.setContentType("application/json");
                     response.setCharacterEncoding("UTF-8");
-                    
-                    StringBuilder json = new StringBuilder();
-                    json.append("{\"customers\":[");
-                    
-                    if (customerList != null && !customerList.isEmpty()) {
-                        for (int i = 0; i < customerList.size(); i++) {
-                            Customer customer = customerList.get(i);
-                            if (i > 0) json.append(",");
-                            
+                    PrintWriter out = response.getWriter();
+
+                    try {
+                        // Start building JSON response
+                        StringBuilder json = new StringBuilder();
+                        json.append("{\"customers\":[");
+
+                        boolean first = true;
+                        for (Customer customer : customerList) {
+                            if (!first) {
+                                json.append(",");
+                            }
+                            first = false;
+
+                            // Count appointments for this customer
+                            int appointmentCount = appointmentFacade.countByCustomer(customer);
+
                             json.append("{")
-                                .append("\"id\":").append(customer.getId()).append(",")
-                                .append("\"name\":\"").append(escapeJson(customer.getName())).append("\",")
-                                .append("\"email\":\"").append(escapeJson(customer.getEmail())).append("\",")
-                                .append("\"phoneNumber\":\"").append(escapeJson(customer.getPhone())).append("\",")
-                                .append("\"appointmentCount\":").append(getCustomerAppointmentCount(customer.getId()))
-                                .append("}");
+                                    .append("\"id\":").append(customer.getId()).append(",")
+                                    .append("\"name\":\"").append(escapeJson(customer.getName())).append("\",")
+                                    .append("\"email\":\"").append(escapeJson(customer.getEmail())).append("\",")
+                                    .append("\"phoneNumber\":\"").append(escapeJson(customer.getPhone())).append("\",")
+                                    .append("\"gender\":\"").append(customer.getGender() != null ? escapeJson(customer.getGender()) : "").append("\",")
+                                    .append("\"appointmentCount\":").append(appointmentCount) // Add appointment count here
+                                    .append("}");
                         }
+
+                        json.append("]}");
+                        out.write(json.toString());
+                    } finally {
+                        out.close();
                     }
-                    
-                    json.append("]}");
-                    
-                    response.getWriter().write(json.toString());
                     System.out.println("CustomerServlet: Returning JSON response with " + (customerList != null ? customerList.size() : 0) + " customers");
+
                 } else {
                     // Regular HTML response for form submissions
                     request.setAttribute("customerList", customerList);
@@ -189,38 +203,42 @@ public class CustomerServlet extends HttpServlet {
     }
 
     private void handleUpdate(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        int id = Integer.parseInt(request.getParameter("id"));
-        Customer customer = customerFacade.find(id);
-        System.out.println("Session ID: " + request.getSession().getId());
-        System.out.println("Staff still in session: " + request.getSession().getAttribute("customer"));
+        try {
+            int id = Integer.parseInt(request.getParameter("id"));
+            Customer customer = customerFacade.find(id);
 
-        if (customer == null) {
-            response.sendRedirect(request.getContextPath() + "/CustomerServlet?action=viewAll&error=customer_not_found");
-            return;
+            if (customer == null) {
+                response.sendRedirect(request.getContextPath() + "/CustomerServlet?action=profile&error=customer_not_found");
+                return;
+            }
+
+            if (!populateCustomerFromRequest(request, customer, customer.getEmail())) {
+                request.setAttribute("customer", customer);
+                request.getRequestDispatcher("/customer/edit_profile.jsp").forward(request, response);
+                return;
+            }
+
+            try {
+                customerFacade.edit(customer);
+                response.sendRedirect(request.getContextPath() + "/CustomerServlet?action=profile&success=profile_updated");
+            } catch (Exception e) {
+                // Handle database constraint violations
+                String errorMsg = e.getMessage().toLowerCase();
+                if (errorMsg.contains("constraint") || errorMsg.contains("unique")
+                        || errorMsg.contains("duplicate") || errorMsg.contains("nric")
+                        || errorMsg.contains("ic")) {
+
+                    request.setAttribute("error", "This NRIC is already registered to another user");
+                    request.setAttribute("customer", customer);
+                    request.getRequestDispatcher("/customer/edit_profile.jsp").forward(request, response);
+                } else {
+                    throw e;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect(request.getContextPath() + "/CustomerServlet?action=profile&error=update_failed");
         }
-
-        if (!populateCustomerFromRequest(request, customer, customer.getEmail())) {
-            request.setAttribute("customer", customer);
-            response.sendRedirect(request.getContextPath() + "/CustomerServlet?action=edit&id=" + customer.getId() + "&error=input_invalid");
-            return;
-        }
-
-        customerFacade.edit(customer);
-        request.setAttribute("success", "Customer updated successfully.");
-        request.setAttribute("customer", customer);
-        response.sendRedirect(request.getContextPath() + "/CustomerServlet?action=viewAll&success=customer_updated");
-    }
-
-    private void handleDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        int id = Integer.parseInt(request.getParameter("id"));
-        Customer customer = customerFacade.find(id);
-        System.out.println("Session ID: " + request.getSession().getId());
-        System.out.println("Manager still in session: " + request.getSession().getAttribute("staff"));
-
-        if (customer != null) {
-            customerFacade.remove(customer);
-        }
-        response.sendRedirect(request.getContextPath() + "/CustomerServlet?action=viewAll&success=staff_deleted");
     }
 
     private boolean populateCustomerFromRequest(HttpServletRequest request, Customer customer, String existingEmail) throws IOException, ServletException {
@@ -233,7 +251,8 @@ public class CustomerServlet extends HttpServlet {
         String nric = readFormField(request.getPart("nric"));
         String address = readFormField(request.getPart("address"));
 
-        if (name.isEmpty() || email.isEmpty() || password.isEmpty() || phone.isEmpty() || gender == null || dobStr.isEmpty() || nric.isEmpty() || address.isEmpty()) {
+        if (name.isEmpty() || email.isEmpty() || password.isEmpty() || phone.isEmpty()
+                || gender == null || dobStr.isEmpty() || nric.isEmpty() || address.isEmpty()) {
             request.setAttribute("error", "All fields are required.");
             return false;
         }
@@ -241,6 +260,23 @@ public class CustomerServlet extends HttpServlet {
         if (!email.equals(existingEmail) && customerFacade.searchEmail(email) != null) {
             request.setAttribute("error", "Email address is already registered.");
             return false;
+        }
+
+        // Check if NRIC already exists (excluding current customer)
+        if (customer.getId() != 0) {
+            // Editing existing customer - check if another customer has this NRIC
+            Customer existingCustomerWithNric = customerFacade.findByIc(nric);
+            if (existingCustomerWithNric != null && existingCustomerWithNric.getId() != customer.getId()) {
+                request.setAttribute("error", "IC is already registered to another customer.");
+                return false;
+            }
+        } else {
+            // New customer - check if IC exists anywhere
+            Customer existingCustomerWithNric = customerFacade.findByIc(nric);
+            if (existingCustomerWithNric != null) {
+                request.setAttribute("error", "IC is already registered to another customer.");
+                return false;
+            }
         }
 
         try {
@@ -252,7 +288,6 @@ public class CustomerServlet extends HttpServlet {
             customer.setDob(Date.valueOf(dobStr));
             customer.setIc(nric);
             customer.setAddress(address);
-
         } catch (Exception e) {
             request.setAttribute("error", "Invalid input format.");
             return false;
@@ -271,6 +306,18 @@ public class CustomerServlet extends HttpServlet {
         }
 
         return true;
+    }
+
+    private void handleDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        int id = Integer.parseInt(request.getParameter("id"));
+        Customer customer = customerFacade.find(id);
+        System.out.println("Session ID: " + request.getSession().getId());
+        System.out.println("Manager still in session: " + request.getSession().getAttribute("staff"));
+
+        if (customer != null) {
+            customerFacade.remove(customer);
+        }
+        response.sendRedirect(request.getContextPath() + "/CustomerServlet?action=viewAll&success=staff_deleted");
     }
 
     private void preserveFormData(HttpServletRequest request) throws IOException, ServletException {
@@ -325,12 +372,12 @@ public class CustomerServlet extends HttpServlet {
                         String customerEmail = customer.getEmail() != null ? customer.getEmail().toLowerCase() : "";
                         String customerPhone = customer.getPhone() != null ? customer.getPhone().toLowerCase() : "";
                         String customerId = String.valueOf(customer.getId());
-                        
-                        matchesSearch = customerName.contains(query) || 
-                                       customerEmail.contains(query) || 
-                                       customerPhone.contains(query) ||
-                                       customerId.equals(query);
-                        
+
+                        matchesSearch = customerName.contains(query)
+                                || customerEmail.contains(query)
+                                || customerPhone.contains(query)
+                                || customerId.equals(query);
+
                         // Debug individual customer matching
                         System.out.println("Customer " + customer.getId() + " (" + customer.getName() + ", " + customer.getEmail() + ", " + customer.getPhone() + ") - Matches search: " + matchesSearch);
                     }
@@ -340,7 +387,7 @@ public class CustomerServlet extends HttpServlet {
                     if (genderFilter != null && !"all".equals(genderFilter)) {
                         String customerGender = customer.getGender();
                         matchesGender = genderFilter.equals(customerGender);
-                        
+
                         // Debug gender matching
                         System.out.println("Customer " + customer.getId() + " - Gender: '" + customerGender + "', Filter: '" + genderFilter + "', Matches: " + matchesGender);
                     }
@@ -349,7 +396,7 @@ public class CustomerServlet extends HttpServlet {
                     if (finalMatch) {
                         System.out.println("Customer " + customer.getId() + " (" + customer.getName() + ") - INCLUDED in results");
                     }
-                    
+
                     return finalMatch;
                 })
                 .sorted((m1, m2) -> Integer.compare(m1.getId(), m2.getId())) // Sort by ID for consistency
@@ -373,12 +420,14 @@ public class CustomerServlet extends HttpServlet {
 
     // Helper method to escape JSON strings
     private String escapeJson(String str) {
-        if (str == null) return "";
+        if (str == null) {
+            return "";
+        }
         return str.replace("\\", "\\\\")
-                  .replace("\"", "\\\"")
-                  .replace("\n", "\\n")
-                  .replace("\r", "\\r")
-                  .replace("\t", "\\t");
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
 
     // Helper method to get customer appointment count (placeholder - you may want to implement this properly)

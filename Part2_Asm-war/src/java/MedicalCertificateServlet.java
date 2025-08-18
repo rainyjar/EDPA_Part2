@@ -45,12 +45,44 @@ public class MedicalCertificateServlet extends HttpServlet {
             case "download":
                 handleDownload(request, response);
                 break;
+            case "checkMC":
+                handleCheckMC(request, response);
+                break;
             default:
                 // Default: try to download MC by appointment ID
                 handleDownload(request, response);
                 break;
         }
     }
+
+    private void handleCheckMC(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+    
+    response.setContentType("application/json");
+    response.setCharacterEncoding("UTF-8");
+    
+    try {
+        String appointmentIdStr = request.getParameter("appointmentId");
+        if (appointmentIdStr == null || appointmentIdStr.trim().isEmpty()) {
+            response.getWriter().write("{\"exists\": false, \"error\": \"Invalid appointment ID\"}");
+            return;
+        }
+        
+        int appointmentId = Integer.parseInt(appointmentIdStr);
+        
+        // Check if MC exists for this appointment
+        boolean mcExists = mcFacade.existsByAppointmentId(appointmentId);
+        
+        // Return JSON response
+        response.getWriter().write("{\"exists\": " + mcExists + "}");
+        
+    } catch (NumberFormatException e) {
+        response.getWriter().write("{\"exists\": false, \"error\": \"Invalid appointment ID format\"}");
+    } catch (Exception e) {
+        e.printStackTrace();
+        response.getWriter().write("{\"exists\": false, \"error\": \"System error occurred\"}");
+    }
+}
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)

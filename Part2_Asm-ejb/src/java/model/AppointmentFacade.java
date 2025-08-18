@@ -174,4 +174,27 @@ public class AppointmentFacade extends AbstractFacade<Appointment> {
             return new ArrayList<>();
         }
     }
+
+    /**
+     * Count appointments for a specific customer
+     * @param customer The customer to count appointments for
+     * @return The number of appointments for this customer
+     */
+    public int countByCustomer(Customer customer) {
+        try {
+            if (customer == null) return 0;
+            
+            Query query = em.createQuery(
+                "SELECT COUNT(a) FROM Appointment a WHERE a.customer.id = :customerId"
+            );
+            query.setParameter("customerId", customer.getId());
+            
+            Long result = (Long) query.getSingleResult();
+            return result.intValue();
+        } catch (Exception e) {
+            System.out.println("Error counting appointments for customer: " + e.getMessage());
+            return 0;
+        }
+    }
+
 }

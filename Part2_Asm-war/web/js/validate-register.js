@@ -1,11 +1,15 @@
 $(document).ready(function () {
+    const isEditForm = $('#originalNric').length > 0 && $('#originalNric').val().trim() !== '';
+    console.log('Form type detection: ' + (isEditForm ? 'EDIT form' : 'NEW REGISTRATION form'));
+    console.log('Original NRIC value:', $('#originalNric').val());
+    
     // Common file upload handling
     $('#profilePic').on('change', function () {
         const file = this.files[0];
         const label = $('#fileLabel');
         const labelSpan = $('#fileLabel span');
         const labelIcon = $('#fileLabel i');
-        const errorMsg = $('#profilePicError'); // target only this
+        const errorMsg = $('#profilePicError');
 
         // Reset state
         label.removeClass('is-valid-label is-invalid-label');
@@ -33,10 +37,8 @@ $(document).ready(function () {
                 label.addClass('is-valid-label');
                 labelIcon.addClass('fa-check');
                 $('#profilePic').addClass('is-valid');
-                errorMsg.hide().text(''); // hide previous error if any
-
+                errorMsg.hide().text('');
             }
-
         } else {
             labelSpan.text('Choose Profile Picture');
             labelIcon.removeClass('fa-check fa-times');
@@ -48,22 +50,25 @@ $(document).ready(function () {
 
     // Form submission handlers
     $('#doctorForm, #staffForm, #managerForm, #customerForm').submit(function (e) {
+        e.preventDefault(); // Always prevent default first
+        
         let formType = this.id.replace('Form', '');
-        let isValid = validateForm(formType);
-        if (!isValid) {
-            e.preventDefault();
-            scrollToFirstError();
-        } else {
-            showLoadingState('#submitBtn', 'Loading...');
-        }
+        console.log('Form submission started for:', formType);
+        
+        // Validate form asynchronously
+        validateFormAsync(formType, $(this));
     });
 
-    function validateForm(type) {
-        let isValid = true;
-
+    // Async validation function
+    function validateFormAsync(type, formElement) {
+        console.log('Starting async validation for:', type);
+        
         // Reset validation styles
         $('.form-control').removeClass('is-invalid is-valid');
-        $('.invalid-feedback').empty();
+        $('.invalid-feedback').empty().hide();
+        
+        let validationPromises = [];
+        let isValid = true;
 
         // Validate name
         const name = $('#name').val().trim();
@@ -169,56 +174,6 @@ $(document).ready(function () {
             }
         }
 
-        // Validate NRIC (Malaysia format: 12 digits, typically xxxxxx-xx-xxxx)
-        const nric = $('#nric').val().trim();
-        const nricRegex = /^\d{6}-\d{2}-\d{4}$/;
-        if (!nric) {
-            showError('#nric', 'NRIC is required');
-            isValid = false;
-        } else if (!nricRegex.test(nric)) {
-            showError('#nric', 'Please enter a valid NRIC (e.g. 990101-14-5678)');
-            isValid = false;
-        } else {
-            // Check if NRIC is already in use
-            const currentUserId = $('#userId').val() || 0; // Get current user ID if editing
-            
-            // Determine user type based on form
-            let userType = '';
-            if (type === 'doctor') {
-                userType = 'doctor';
-            } else if (type === 'staff') {
-                userType = 'counterstaff';
-            } else if (type === 'manager') {
-                userType = 'manager';
-            } else {
-                userType = 'customer';
-            }
-            
-            $.ajax({
-                url: `${window.location.origin}/Part2_Asm-war/CheckNRICServlet`,
-                method: 'GET',
-                data: { 
-                    nric: nric, 
-                    userId: currentUserId,
-                    userType: userType
-                },
-                async: false, // Make synchronous to ensure validation completes before form submission
-                success: function(response) {
-                    if (response === 'taken') {
-                        showError('#nric', 'This NRIC is already registered to another user');
-                        isValid = false;
-                    } else {
-                        showValid('#nric');
-                    }
-                },
-                error: function() {
-                    // If check fails, allow submission but log warning
-                    console.warn('NRIC uniqueness check failed');
-                    showValid('#nric');
-                }
-            });
-        }
-
         // Validate address
         const address = $('#address').val().trim();
         if (!address) {
@@ -231,7 +186,7 @@ $(document).ready(function () {
             showValid('#address');
         }
 
-        // Validate specialization
+        // Validate specialization for doctors
         if (type === 'doctor') {
             const specialization = $('#specialization').val().trim();
             if (!specialization) {
@@ -247,23 +202,99 @@ $(document).ready(function () {
 
         // Validate profile picture
         const profilePic = $('#profilePic')[0].files[0];
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-        const maxSize = 5 * 1024 * 1024;
+        if (!isEditForm) { // Only require for new registrations
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+            const maxSize = 5 * 1024 * 1024;
 
-        if (!profilePic) {
-            showError('#profilePic', 'Profile picture is required');
-            isValid = false;
-        } else if (!allowedTypes.includes(profilePic.type)) {
-            showError('#profilePic', 'Only JPEG, PNG, and GIF images are allowed');
-            isValid = false;
-        } else if (profilePic.size > maxSize) {
-            showError('#profilePic', 'Image size must be less than 5MB');
-            isValid = false;
-        } else {
-            showValid('#profilePic');
+            if (!profilePic) {
+                showError('#profilePic', 'Profile picture is required');
+                isValid = false;
+            } else if (!allowedTypes.includes(profilePic.type)) {
+                showError('#profilePic', 'Only JPEG and PNG images are allowed');
+                isValid = false;
+            } else if (profilePic.size > maxSize) {
+                showError('#profilePic', 'Image size must be less than 5MB');
+                isValid = false;
+            } else {
+                showValid('#profilePic');
+            }
         }
 
-        return isValid;
+        // Validate NRIC (async)
+        const nric = $('#nric').val().trim();
+        const nricRegex = /^\d{6}-\d{2}-\d{4}$/;
+
+        if (!nric) {
+            showError('#nric', 'NRIC is required');
+            isValid = false;
+        } else if (!nricRegex.test(nric)) {
+            showError('#nric', 'Please enter a valid NRIC (e.g. 990101-14-5678)');
+            isValid = false;
+        } else if (isEditForm && nric.trim() === $('#originalNric').val().trim()) {
+            // If editing and NRIC hasn't changed, skip the uniqueness check
+            console.log('NRIC unchanged during edit - skipping uniqueness check');
+            showValid('#nric');
+        } else {
+            // NRIC uniqueness check (async)
+            let nricPromise = $.Deferred();
+            validationPromises.push(nricPromise);
+            
+            const currentUserId = $('#userId').val() || 0;
+            let userType = determineUserType(type);
+            
+            $.ajax({
+                url: `${window.location.origin}/Part2_Asm-war/CheckNRICServlet`,
+                method: 'GET',
+                data: {
+                    nric: nric,
+                    userId: currentUserId,
+                    userType: userType
+                },
+                success: function(response) {
+                    if (response === 'taken') {
+                        showError('#nric', 'This NRIC is already registered to another user');
+                        nricPromise.resolve(false);
+                    } else {
+                        showValid('#nric');
+                        nricPromise.resolve(true);
+                    }
+                },
+                error: function() {
+                    console.warn('NRIC uniqueness check failed');
+                    showValid('#nric');
+                    nricPromise.resolve(true);
+                }
+            });
+        }
+
+        // Wait for all async validations to complete
+        $.when.apply($, validationPromises).done(function() {
+            console.log('All async validations completed');
+            
+            // Check if any async validation failed
+            let asyncResults = Array.prototype.slice.call(arguments);
+            let allAsyncValid = asyncResults.every(result => result !== false);
+            
+            if (isValid && allAsyncValid) {
+                console.log('Form validation passed - submitting form');
+                showLoadingState('#submitBtn', 'Registering...');
+                formElement[0].submit(); // Submit the actual form
+            } else {
+                console.log('Form validation failed');
+                scrollToFirstError();
+            }
+        });
+    }
+
+    // Helper function to determine user type
+    function determineUserType(type) {
+        switch(type) {
+            case 'doctor': return 'doctor';
+            case 'staff': return 'counterstaff';
+            case 'manager': return 'manager';
+            case 'customer': return 'customer';
+            default: return 'customer';
+        }
     }
 
     // Show error message
@@ -300,7 +331,8 @@ $(document).ready(function () {
     function scrollToFirstError() {
         const firstError = $('.is-invalid').first();
         if (firstError.length) {
-            $('html, body').animate({scrollTop: firstError.offset().top - 100}, 500);
+            $('html, body').animate({ scrollTop: firstError.offset().top - 100 }, 500);
+            firstError.focus();
         }
     }
 
@@ -309,5 +341,6 @@ $(document).ready(function () {
         const submitBtn = $(buttonSelector);
         submitBtn.addClass('loading');
         submitBtn.find('.btn-text').text(loadingText);
+        submitBtn.prop('disabled', true);
     }
 });

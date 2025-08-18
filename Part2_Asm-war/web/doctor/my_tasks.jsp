@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.Calendar" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="model.Appointment" %>
 <%@ page import="model.Doctor" %>
@@ -120,6 +121,10 @@
                     <button type="button" class="close" data-dismiss="alert">&times;</button>
                     <i class="fa fa-exclamation-triangle"></i> <%= errorParam%>
                 </div>
+                <% String err = request.getParameter("error");
+                    if ("complete_not_allowed".equals(err)) { %>
+                <div class="alert alert-warning">You may only mark an appointment completed from its scheduled time until the end of the same day.</div>
+                <% } %>
                 <% }%>
 
                 <!-- SEARCH AND FILTER SECTION -->
@@ -226,10 +231,32 @@
                                     </td>
                                     <td>
                                         <div class="action-buttons">
+                                            <%
+                                                // compute appointment epoch millis (combine date + time)
+                                                Calendar cal = Calendar.getInstance();
+                                                if (appointment.getAppointmentDate() != null) {
+                                                    cal.setTime(appointment.getAppointmentDate());
+                                                    if (appointment.getAppointmentTime() != null) {
+                                                        Calendar tcal = Calendar.getInstance();
+                                                        tcal.setTime(appointment.getAppointmentTime());
+                                                        cal.set(Calendar.HOUR_OF_DAY, tcal.get(Calendar.HOUR_OF_DAY));
+                                                        cal.set(Calendar.MINUTE, tcal.get(Calendar.MINUTE));
+                                                        cal.set(Calendar.SECOND, tcal.get(Calendar.SECOND));
+                                                        cal.set(Calendar.MILLISECOND, 0);
+                                                    } else {
+                                                        cal.set(Calendar.HOUR_OF_DAY, 0);
+                                                        cal.set(Calendar.MINUTE, 0);
+                                                        cal.set(Calendar.SECOND, 0);
+                                                        cal.set(Calendar.MILLISECOND, 0);
+                                                    }
+                                                }
+                                                long apptMillis = cal.getTimeInMillis();
+                                            %>
                                             <button class="btn btn-sm btn-complete" 
                                                     data-appointment-id="<%= appointment.getId()%>" 
+                                                    data-appointment-millis="<%= apptMillis%>"
                                                     data-patient-name="<%= appointment.getCustomer() != null ? appointment.getCustomer().getName() : "N/A"%>"
-                                                    onclick="showCompleteModal(this)" 
+                                                    onclick="onCompleteClick(this)"
                                                     title="Mark as Completed">
                                                 <i class="fa fa-check"></i> Complete
                                             </button>
@@ -401,6 +428,104 @@
                 var currentHeader = table.querySelectorAll('th.sortable')[columnIndex].querySelector('i');
                 currentHeader.className = isAscending ? 'fa fa-sort-up' : 'fa fa-sort-down';
             }
+
+                        (function () {
+                function isSameDay(timestamp1, timestamp2) {
+                    const date1 = new Date(timestamp1);
+                    const date2 = new Date(timestamp2);
+                    return date1.getFullYear() === date2.getFullYear() &&
+                           date1.getMonth() === date2.getMonth() &&
+                           date1.getDate() === date2.getDate();
+                }
+                
+                // For completed appointments, allow if:
+                // 1. It's the same day as the appointment (today), OR
+                // 2. It's today and appointment was scheduled in the past
+                function isAllowedToComplete(apptMillis) {
+                    const now = Date.now();
+                    const today = new Date();
+                    const apptDate = new Date(apptMillis);
+                    
+                    // Check if appointment day is same as today OR is in the past
+                    return isSameDay(apptMillis, now) || apptDate < today;
+                }
+                
+                // On page load, process all buttons
+                document.addEventListener('DOMContentLoaded', function () {
+                    document.querySelectorAll('.btn-complete').forEach(function (btn) {
+                        const apptMillis = parseInt(btn.getAttribute('data-appointment-millis'), 10) || 0;
+                        
+                        // If not allowed to complete, disable button
+                        if (!isAllowedToComplete(apptMillis)) {
+                            // Disable the button
+                            btn.classList.add('disabled');
+                            btn.setAttribute('disabled', 'disabled');
+                            
+                            // Add visual indicator
+                            btn.innerHTML = '<i class="fa fa-clock-o"></i> Complete <i class="fa fa-question-circle text-warning"></i>';
+                            
+                            // Set tooltip
+                            btn.setAttribute('data-toggle', 'tooltip');
+                            btn.setAttribute('data-placement', 'top');
+                            btn.setAttribute('data-html', 'true');
+                            btn.setAttribute('title', '<strong>Can\'t complete yet</strong><br>Appointments can only be completed on their scheduled day');
+                            
+                            // Create tooltip
+                            $(btn).tooltip({
+                                template: '<div class="tooltip" role="tooltip"><div class="arrow"></div><div class="tooltip-inner bg-warning text-dark" style="max-width: 250px;"></div></div>'
+                            });
+                        }
+                    });
+                    
+                    // Initialize all tooltips
+                    $('[data-toggle="tooltip"]').tooltip();
+                });
+                
+                // Handle clicks on disabled buttons
+                $(document).on('click', '.btn-complete.disabled', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const btn = $(this);
+                    const apptMillis = parseInt(btn.attr('data-appointment-millis'), 10) || 0;
+                    const apptDate = new Date(apptMillis);
+                    
+                    // Format date for display
+                    const options = {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    };
+                    const formattedDate = apptDate.toLocaleDateString('en-US', options);
+                    
+                    // Show alert
+                    $('#timeRestrictionAlert').remove();
+                    const alertHtml = `
+                        <div id="timeRestrictionAlert" class="alert alert-warning alert-dismissible fade show" role="alert">
+                            <h5><i class="fa fa-clock-o"></i> Time-Restricted Action</h5>
+                            <p>This appointment (scheduled for <strong>${formattedDate}</strong>) can only be completed on its scheduled day.</p>
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    `;
+                    
+                    $('.staff-management-section').prepend(alertHtml);
+                    
+                    // Scroll to the alert
+                    $('html, body').animate({
+                        scrollTop: $('#timeRestrictionAlert').offset().top - 100
+                    }, 500);
+                    
+                    return false;
+                });
+                
+                // Simple handler for complete button click
+                window.onCompleteClick = function (el) {
+                    showCompleteModal(el);
+                };
+            })();
 
             // Auto-hide alerts after 5 seconds
             setTimeout(function () {

@@ -1,6 +1,8 @@
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.List;
+
 import javax.ejb.EJB;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
@@ -260,10 +262,10 @@ public class Profile extends HttpServlet {
                 }
             }
 
-            // Only do uniqueness check if this is not the current user's IC
-            if (!isCurrentUserIc) {
-                // Skip the uniqueness check for now - this is handled by the database
-                // If it fails, our try-catch will catch the exception
+            // Check if IC already exists (excluding current user)
+            if (isIcTaken(ic, userInfo)) {
+                response.sendRedirect(request.getContextPath() + "/profile.jsp?error=ic_taken");
+                return;
             }
         }
 
@@ -273,25 +275,67 @@ public class Profile extends HttpServlet {
             return;
         }
 
-        // Process date of birth only if provided
+             // Process date of birth only if provided
         java.sql.Date dob = null;
         if (dobStr != null && !dobStr.trim().isEmpty()) {
             try {
                 java.util.Date utilDate = new java.text.SimpleDateFormat("yyyy-MM-dd").parse(dobStr);
                 dob = new java.sql.Date(utilDate.getTime());
-
+        
                 // Check if date is in the future
                 if (dob.after(new java.sql.Date(System.currentTimeMillis()))) {
                     response.sendRedirect(request.getContextPath() + "/profile.jsp?error=future_date");
                     return;
                 }
+                
+                // Calculate age based on date of birth
+                java.util.Calendar dobCal = java.util.Calendar.getInstance();
+                dobCal.setTime(dob);
+                java.util.Calendar today = java.util.Calendar.getInstance();
+                int age = today.get(java.util.Calendar.YEAR) - dobCal.get(java.util.Calendar.YEAR);
+                if (today.get(java.util.Calendar.DAY_OF_YEAR) < dobCal.get(java.util.Calendar.DAY_OF_YEAR)) {
+                    age--;
+                }
+                
+                // Apply minimum age requirements based on user type (matching validate-register.js)
+                int minAge = 1;
+                String ageErrorMessage = "Invalid age requirement";
+                
+                switch (userInfo.userType) {
+                    case "doctor":
+                        minAge = 18;
+                        ageErrorMessage = "Doctor must be at least 18 years old";
+                        break;
+                    case "staff":
+                        minAge = 16;
+                        ageErrorMessage = "Staff member must be at least 16 years old";
+                        break;
+                    case "manager":
+                        minAge = 21;
+                        ageErrorMessage = "Manager must be at least 21 years old";
+                        break;
+                    case "customer":
+                        minAge = 1;
+                        ageErrorMessage = "Customer must be at least 1 year old";
+                        break;
+                }
+                
+                if (age < minAge) {
+                    response.sendRedirect(request.getContextPath() + "/profile.jsp?error=min_age&message=" + 
+                        java.net.URLEncoder.encode(ageErrorMessage, "UTF-8"));
+                    return;
+                } else if (age > 100) {
+                    response.sendRedirect(request.getContextPath() + "/profile.jsp?error=invalid_age");
+                    return;
+                }
+                
             } catch (Exception e) {
                 e.printStackTrace(); // Log the error for debugging
                 response.sendRedirect(request.getContextPath() + "/profile.jsp?error=invalid_date");
                 return;
             }
         }
-
+        
         try {
             // Update user object based on type
             updateUserFields(userInfo.user, userInfo.userType, name, email, phone, gender, dob, ic, address);
@@ -306,13 +350,17 @@ public class Profile extends HttpServlet {
 
             // Check if this is a uniqueness constraint violation (likely IC/NRIC constraint)
             String errorMsg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
-
+            
+            // First check if IC was being updated
+            boolean updatingIC = (ic != null && !ic.trim().isEmpty());
+            
+            // Check for constraint violations
             if (errorMsg.contains("constraint") || errorMsg.contains("unique")
                     || errorMsg.contains("duplicate") || errorMsg.contains("violat")
                     || errorMsg.contains("ic") || errorMsg.contains("nric")) {
-                // NRIC/IC already in use
+                // This is a constraint violation - most likely IC already taken
                 response.sendRedirect(request.getContextPath() + "/profile.jsp?error=ic_taken");
-            } else if (ic != null && !ic.trim().isEmpty()) {
+            } else if (updatingIC) {
                 // If we were trying to update NRIC and got a different error
                 response.sendRedirect(request.getContextPath() + "/profile.jsp?error=nric_update_failed");
             } else {
@@ -429,6 +477,60 @@ public class Profile extends HttpServlet {
         }
 
         return false; // Email is available
+    }
+
+    // Add this method to your Profile class
+    private boolean isIcTaken(String ic, UserInfo userInfo) {
+        if (ic == null || ic.trim().isEmpty()) {
+            return false;
+        }
+        
+        // Skip check if user is keeping their own IC
+        if (ic.equals(userInfo.ic)) {
+            return false;
+        }
+        
+        // Check all user types for IC conflicts
+        try {
+            // Check customers
+            List<Customer> customers = customerFacade.findAll();
+            for (Customer c : customers) {
+                if (ic.equals(c.getIc())) {
+                    return true;
+                }
+            }
+            
+            // Check doctors
+            List<Doctor> doctors = doctorFacade.findAll();
+            for (Doctor d : doctors) {
+                if (ic.equals(d.getIc())) {
+                    return true;
+                }
+            }
+            
+            // Check counter staff
+            List<CounterStaff> staffList = counterStaffFacade.findAll();
+            for (CounterStaff s : staffList) {
+                if (ic.equals(s.getIc())) {
+                    return true;
+                }
+            }
+            
+            // Check managers
+            List<Manager> managers = managerFacade.findAll();
+            for (Manager m : managers) {
+                if (ic.equals(m.getIc())) {
+                    return true;
+                }
+            }
+            
+        } catch (Exception e) {
+            System.out.println("Error checking IC uniqueness: " + e.getMessage());
+            // If there's an error checking, assume it might be taken to be safe
+            return true;
+        }
+        
+        return false;
     }
 
     private void updateUserFields(Object user, String userType, String name, String email, String phone, String gender, java.sql.Date dob, String ic, String address) {

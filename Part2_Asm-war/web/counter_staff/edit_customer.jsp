@@ -61,6 +61,7 @@
 
                     <form id="customerForm" method="post" enctype="multipart/form-data"
                           action="${pageContext.request.contextPath}/CustomerServlet?action=update&id=${customer.id}" novalidate>
+                        <input type="hidden" id="originalNric" name="originalNric" value="${customer.ic}">
 
                         <!-- Personal Information -->
                         <div class="form-row">

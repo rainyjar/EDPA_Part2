@@ -1,3 +1,4 @@
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -18,6 +19,8 @@ import model.Treatment;
 import model.Customer;
 import model.CustomerFacade;
 import model.FeedbackFacade;
+import model.Payment;
+import model.PaymentFacade;
 import model.TreatmentFacade;
 
 @WebServlet(urlPatterns = {"/DoctorHomepageServlet"})
@@ -35,6 +38,9 @@ public class DoctorHomepageServlet extends HttpServlet {
     @EJB
     private AppointmentFacade appointmentFacade;
 
+    @EJB
+    private PaymentFacade paymentFacade;
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -50,6 +56,19 @@ public class DoctorHomepageServlet extends HttpServlet {
         String action = request.getParameter("action");
 
         if ("dashboard".equals(action)) {
+            try {
+                // Get pending payments for this doctor
+                System.out.println("DEBUG: Checking pending payments for doctor ID " + loggedInDoctor.getId());
+                List<Payment> pendingPayments = paymentFacade.findByDoctorAndStatus(loggedInDoctor.getId(), "pending");
+                int pendingPaymentCount = (pendingPayments != null) ? pendingPayments.size() : 0;
+                request.setAttribute("pendingPayments", pendingPaymentCount);
+
+                System.out.println("Found " + pendingPaymentCount + " pending payments for doctor ID " + loggedInDoctor.getId());
+            } catch (Exception e) {
+                System.out.println("Error checking pending payments: " + e.getMessage());
+                e.printStackTrace();
+                request.setAttribute("pendingPayments", 0);
+            }
             loadDashboardData(request, loggedInDoctor);
             request.getRequestDispatcher("/doctor/doctor_homepage.jsp").forward(request, response);
         } else if ("viewRatings".equals(action)) {
@@ -57,7 +76,7 @@ public class DoctorHomepageServlet extends HttpServlet {
             try {
                 List<Feedback> feedbacks = feedbackFacade.findByDoctorId(loggedInDoctor.getId());
                 request.setAttribute("feedbackList", feedbacks);
-                
+
                 // Calculate average rating for this doctor
                 double averageRating = 0.0;
                 try {

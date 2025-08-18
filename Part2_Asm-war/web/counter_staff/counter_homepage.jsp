@@ -433,7 +433,7 @@
                         <% }%>
 
                         <div class="text-center" style="margin-top: 20px;">
-                            <a href="<%= request.getContextPath()%>/counter_staff/manage_appointments.jsp" class="btn btn-success">
+                            <a href="<%= request.getContextPath()%>/AppointmentServlet?action=manage" class="btn btn-success">
                                 <i class="fa fa-calendar"></i> View All Appointments
                             </a>
                         </div>

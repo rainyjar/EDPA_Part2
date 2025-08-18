@@ -51,6 +51,7 @@
 
                     <form id="managerForm" method="post" enctype="multipart/form-data"
                           action="${pageContext.request.contextPath}/ManagerServlet?action=update&id=${manager.id}" novalidate>
+                        <input type="hidden" id="originalNric" name="originalNric" value="${manager.ic}">
 
                         <!-- Personal Information -->
                         <div class="form-row">

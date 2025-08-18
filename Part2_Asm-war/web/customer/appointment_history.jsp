@@ -405,7 +405,11 @@
                                     <div class="info-row">
                                         <div class="info-label">Payment Status:</div>
                                         <div class="info-value">
-                                            <span class="status-badge payment-pending">PENDING</span>
+                                             <% if ("overdue".equals(appointment.getStatus())) { %>
+                                                <span class="status-badge payment-norecord" style="background:#999;">NO RECORD</span>
+                                            <% } else { %>
+                                                <span class="status-badge payment-pending">PENDING</span>
+                                            <% } %>
                                         </div>
                                     </div>
                                     <div class="info-row">

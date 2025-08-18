@@ -1470,7 +1470,7 @@ public class AppointmentServlet extends HttpServlet {
 
             String appointmentIdStr = request.getParameter("appointmentId");
             String doctorIdStr = request.getParameter("doctorId");
-            String staffMessage = request.getParameter("staff_message");
+            String staffMessage = request.getParameter("staffMessage");
 
             if (appointmentIdStr == null || appointmentIdStr.trim().isEmpty()
                     || doctorIdStr == null || doctorIdStr.trim().isEmpty()) {
@@ -2010,106 +2010,82 @@ public class AppointmentServlet extends HttpServlet {
      * appointment is overdue if its date and time have passed but status is
      * still "pending", "approved", or "reschedule"
      */
-    private void updateOverdueAppointments() {
+        private void updateOverdueAppointments() {
         try {
-            System.out.println("=== AUTOMATIC OVERDUE UPDATE STARTED ===");
-
-            // Get current date and time for comparison
-            Date currentDateTime = new Date();
-            System.out.println("Current system time: " + currentDateTime);
-
-            // Get all appointments that could potentially be overdue
-            // (Status: pending, approved, reschedule - exclude completed, cancelled, overdue)
+            System.out.println("=== LOGIN: UPDATING OVERDUE APPOINTMENTS ===");
+    
+            // Get current date/time
+            Calendar currentCal = Calendar.getInstance();
+            Date currentDateTime = currentCal.getTime();
+            
+            // Create a calendar for "yesterday" to establish the grace period
+            Calendar yesterdayCal = Calendar.getInstance();
+            yesterdayCal.add(Calendar.DATE, -1);
+            yesterdayCal.set(Calendar.HOUR_OF_DAY, 23);
+            yesterdayCal.set(Calendar.MINUTE, 59);
+            yesterdayCal.set(Calendar.SECOND, 59);
+            Date yesterdayEndOfDay = yesterdayCal.getTime();
+            
             List<Appointment> allAppointments = appointmentFacade.findAll();
-
+    
             if (allAppointments == null || allAppointments.isEmpty()) {
                 System.out.println("No appointments found in database");
                 return;
             }
-
-            int totalAppointments = allAppointments.size();
-            int checkedAppointments = 0;
+    
             int updatedAppointments = 0;
-
-            System.out.println("Total appointments in database: " + totalAppointments);
-
+    
             for (Appointment appointment : allAppointments) {
                 try {
-                    // Skip null appointments
                     if (appointment == null) {
                         continue;
                     }
-
-                    checkedAppointments++;
-
-                    // Only check appointments that can become overdue
+    
                     String currentStatus = appointment.getStatus();
                     if (currentStatus == null
-                            || !(currentStatus.equals("pending")
-                            || currentStatus.equals("approved")
-                            || currentStatus.equals("reschedule"))) {
+                            || !(currentStatus.equals("pending") || currentStatus.equals("approved") || currentStatus.equals("reschedule"))) {
                         continue;
                     }
-
-                    // Check if appointment date and time are set
-                    if (appointment.getAppointmentDate() == null
-                            || appointment.getAppointmentTime() == null) {
-                        System.out.println("Appointment ID " + appointment.getId()
-                                + " has missing date/time, skipping");
+    
+                    if (appointment.getAppointmentDate() == null || appointment.getAppointmentTime() == null) {
                         continue;
                     }
-
-                    // Combine appointment date and time for accurate comparison
+    
+                    // Combine appointment date and time
                     Calendar appointmentCalendar = Calendar.getInstance();
                     appointmentCalendar.setTime(appointment.getAppointmentDate());
-
+    
                     Calendar timeCalendar = Calendar.getInstance();
                     timeCalendar.setTime(appointment.getAppointmentTime());
-
-                    // Set the time components on the appointment date
-                    appointmentCalendar.set(Calendar.HOUR_OF_DAY,
-                            timeCalendar.get(Calendar.HOUR_OF_DAY));
-                    appointmentCalendar.set(Calendar.MINUTE,
-                            timeCalendar.get(Calendar.MINUTE));
+    
+                    appointmentCalendar.set(Calendar.HOUR_OF_DAY, timeCalendar.get(Calendar.HOUR_OF_DAY));
+                    appointmentCalendar.set(Calendar.MINUTE, timeCalendar.get(Calendar.MINUTE));
                     appointmentCalendar.set(Calendar.SECOND, 0);
                     appointmentCalendar.set(Calendar.MILLISECOND, 0);
-
+    
                     Date appointmentDateTime = appointmentCalendar.getTime();
-
-                    // Check if appointment datetime has passed
-                    if (appointmentDateTime.before(currentDateTime)) {
-                        System.out.println("OVERDUE DETECTED - Appointment ID: " + appointment.getId()
-                                + ", Status: '" + currentStatus + "'"
-                                + ", Scheduled: " + appointmentDateTime
-                                + ", Current: " + currentDateTime);
-
-                        // Update status to overdue
+    
+                    // Change: Only mark as overdue if the appointment was from a previous day
+                    // (Before end of yesterday)
+                    if (appointmentDateTime.before(yesterdayEndOfDay)) {
                         appointment.setStatus("overdue");
                         appointmentFacade.edit(appointment);
                         updatedAppointments++;
-
-                        System.out.println("✓ Updated appointment ID " + appointment.getId()
-                                + " from '" + currentStatus + "' to 'overdue'");
+    
+                        System.out.println("✓ Updated appointment ID " + appointment.getId() + " to overdue");
                     }
-
-                } catch (Exception appointmentException) {
-                    System.out.println("Error processing appointment ID "
-                            + (appointment != null ? appointment.getId() : "unknown")
-                            + ": " + appointmentException.getMessage());
-                    // Continue with next appointment
+    
+                } catch (Exception e) {
+                    System.out.println("Error processing appointment: " + e.getMessage());
                 }
             }
-
-            System.out.println("=== OVERDUE UPDATE SUMMARY ===");
-            System.out.println("Total appointments checked: " + checkedAppointments);
-            System.out.println("Appointments updated to overdue: " + updatedAppointments);
-            System.out.println("Overdue update completed successfully");
-            System.out.println("==============================");
-
+    
+            System.out.println("Login overdue update: " + updatedAppointments + " appointments updated");
+            System.out.println("=== LOGIN OVERDUE UPDATE COMPLETED ===");
+    
         } catch (Exception e) {
-            System.out.println("ERROR in automatic overdue update: " + e.getMessage());
-            e.printStackTrace();
-            // Don't rethrow - this should not break the main flow
+            System.out.println("ERROR in login overdue update: " + e.getMessage());
+            // Don't throw - login should still work even if this fails
         }
     }
 

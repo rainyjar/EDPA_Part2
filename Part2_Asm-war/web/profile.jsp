@@ -182,6 +182,13 @@
                                     Please enter a valid date of birth!
                                     <% } else if ("future_date".equals(errorMsg)) { %>
                                     Date of birth cannot be in the future!
+                                    <% } else if ("min_age".equals(errorMsg)) { %>
+                                    <% String ageMessage = request.getParameter("message"); %>
+                                    <% if (ageMessage != null && !ageMessage.isEmpty()) {%>
+                                    <%= ageMessage%>
+                                    <% } else { %>
+                                    Age does not meet the minimum requirement for your role.
+                                    <% } %>
                                     <% } else if ("no_file".equals(errorMsg)) { %>
                                     Please select a file to upload!
                                     <% } else if ("invalid_file_type".equals(errorMsg)) { %>
@@ -329,8 +336,8 @@
                                             </small>
                                         </div>
                                     </div>
-                                    <% } %>
-                                   
+                                    <% }%>
+
                                     <!-- Submit Button -->
                                     <div class="text-center" style="margin-top: 40px; padding-top: 30px; border-top: 2px solid #e8ecf0;">
                                         <button type="submit" class="btn btn-custom btn-primary-custom" id="submitBtn">
@@ -366,70 +373,70 @@
         </form>
 
         <!-- Change Password Modal -->
-<!--        <div id="changePasswordModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 class="modal-title">
-                        <i class="fa fa-key" style="margin-right: 10px; color: #4a90e2;"></i>
-                        Change Password
-                    </h3>
-                    <span class="close" onclick="closeChangePasswordModal()">&times;</span>
-                </div>
-                <div class="modal-body">
-
-                <form action="<%= request.getContextPath()%>/Profile" method="post" id="changePasswordForm">
-                    <input type="hidden" name="action" value="changePassword">
-
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fa fa-lock"></i> Current Password *
-                        </label>
-                        <div class="input-group">
-                            <input type="password" class="form-control" name="currentPassword" required>
+        <!--        <div id="changePasswordModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title">
+                                <i class="fa fa-key" style="margin-right: 10px; color: #4a90e2;"></i>
+                                Change Password
+                            </h3>
+                            <span class="close" onclick="closeChangePasswordModal()">&times;</span>
+                        </div>
+                        <div class="modal-body">
+        
+                        <form action="<%= request.getContextPath()%>/Profile" method="post" id="changePasswordForm">
+                            <input type="hidden" name="action" value="changePassword">
+        
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fa fa-lock"></i> Current Password *
+                                </label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" name="currentPassword" required>
+                                </div>
+                            </div>
+        
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fa fa-key"></i> New Password *
+                                </label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" name="newPassword" id="newPassword" 
+                                           onkeyup="checkPasswordStrength(); checkPasswordMatch();" 
+                                           oninput="checkPasswordMatch();" required>
+                                </div>
+                                <div id="passwordStrength" class="password-strength"></div>
+                                <small class="form-text">
+                                    <i class="fa fa-info-circle"></i> Password must be at least 6 characters long
+                                </small>
+                            </div>
+        
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fa fa-check-circle"></i> Confirm New Password *
+                                </label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" name="confirmPassword" 
+                                           onkeyup="checkPasswordMatch();" 
+                                           oninput="checkPasswordMatch();" required>
+                                </div>
+                                <small id="passwordMatch" class="form-text"></small>
+                            </div>
+        
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-custom btn-primary-custom">
+                                    <i class="fa fa-save"></i> Change Password
+                                </button>
+                                <button type="button" class="btn btn-custom btn-secondary-custom" onclick="closeChangePasswordModal()">
+                                    <i class="fa fa-times"></i> Cancel
+                                </button>
+                            </div>
+                        </form>
                         </div>
                     </div>
+                </div>-->
 
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fa fa-key"></i> New Password *
-                        </label>
-                        <div class="input-group">
-                            <input type="password" class="form-control" name="newPassword" id="newPassword" 
-                                   onkeyup="checkPasswordStrength(); checkPasswordMatch();" 
-                                   oninput="checkPasswordMatch();" required>
-                        </div>
-                        <div id="passwordStrength" class="password-strength"></div>
-                        <small class="form-text">
-                            <i class="fa fa-info-circle"></i> Password must be at least 6 characters long
-                        </small>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fa fa-check-circle"></i> Confirm New Password *
-                        </label>
-                        <div class="input-group">
-                            <input type="password" class="form-control" name="confirmPassword" 
-                                   onkeyup="checkPasswordMatch();" 
-                                   oninput="checkPasswordMatch();" required>
-                        </div>
-                        <small id="passwordMatch" class="form-text"></small>
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-custom btn-primary-custom">
-                            <i class="fa fa-save"></i> Change Password
-                        </button>
-                        <button type="button" class="btn btn-custom btn-secondary-custom" onclick="closeChangePasswordModal()">
-                            <i class="fa fa-times"></i> Cancel
-                        </button>
-                    </div>
-                </form>
-                </div>
-            </div>
-        </div>-->
-
-<div id="changePasswordModal" class="modal">
+        <div id="changePasswordModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeChangePasswordModal()">&times;</span>
                 <h3 style="margin-bottom: 25px; color: #333;">Change Password</h3>

@@ -1,11 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 import javax.ejb.EJB;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -21,6 +18,9 @@ import model.Doctor;
 import model.DoctorFacade;
 import model.Manager;
 import model.ManagerFacade;
+import model.Appointment;
+import model.AppointmentFacade;
+
 
 /**
  *
@@ -41,6 +41,9 @@ public class Login extends HttpServlet {
     @EJB
     private CustomerFacade customerFacade;
 
+    @EJB
+    private AppointmentFacade appointmentFacade;
+
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
@@ -48,9 +51,9 @@ public class Login extends HttpServlet {
         // Handle logout
         String logout = request.getParameter("logout");
         String action = request.getParameter("action");
-        
-        if ((logout != null && logout.equals("true")) || 
-            (action != null && action.equals("logout"))) {
+
+        if ((logout != null && logout.equals("true"))
+                || (action != null && action.equals("logout"))) {
             HttpSession session = request.getSession(false);
             if (session != null) {
                 session.invalidate();
@@ -59,7 +62,7 @@ public class Login extends HttpServlet {
             response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
             response.setHeader("Pragma", "no-cache");
             response.setDateHeader("Expires", 0);
-            
+
             response.sendRedirect("login.jsp");
             return;
         }
@@ -121,13 +124,18 @@ public class Login extends HttpServlet {
                 s.setAttribute("user", user);
                 s.setAttribute("role", role);
 
+                if (user != null) {
+                    // Update overdue appointments for all user types
+                    updateOverdueAppointments();
+                }
+
                 // Set the name based on role
                 if (user instanceof Manager) {
                     s.setAttribute("manager", ((Manager) user));
                     response.sendRedirect("ManagerHomepageServlet");
                 } else if (user instanceof Doctor) {
                     s.setAttribute("doctor", (Doctor) user);
-                    response.sendRedirect("DoctorHomepageServlet");
+                    response.sendRedirect("DoctorHomepageServlet?action=dashboard");
                 } else if (user instanceof CounterStaff) {
                     s.setAttribute("staff", (CounterStaff) user);
                     response.sendRedirect("CounterStaffServletJam?action=dashboard");
@@ -141,6 +149,85 @@ public class Login extends HttpServlet {
                 request.setAttribute("error", "Login failed: " + e.getMessage());
                 request.getRequestDispatcher("login.jsp").forward(request, response);
             }
+        }
+    }
+
+        private void updateOverdueAppointments() {
+        try {
+            System.out.println("=== LOGIN: UPDATING OVERDUE APPOINTMENTS ===");
+    
+            // Get current date/time
+            Calendar currentCal = Calendar.getInstance();
+            Date currentDateTime = currentCal.getTime();
+            
+            // Create a calendar for "yesterday" to establish the grace period
+            Calendar yesterdayCal = Calendar.getInstance();
+            yesterdayCal.add(Calendar.DATE, -1);
+            yesterdayCal.set(Calendar.HOUR_OF_DAY, 23);
+            yesterdayCal.set(Calendar.MINUTE, 59);
+            yesterdayCal.set(Calendar.SECOND, 59);
+            Date yesterdayEndOfDay = yesterdayCal.getTime();
+            
+            List<Appointment> allAppointments = appointmentFacade.findAll();
+    
+            if (allAppointments == null || allAppointments.isEmpty()) {
+                System.out.println("No appointments found in database");
+                return;
+            }
+    
+            int updatedAppointments = 0;
+    
+            for (Appointment appointment : allAppointments) {
+                try {
+                    if (appointment == null) {
+                        continue;
+                    }
+    
+                    String currentStatus = appointment.getStatus();
+                    if (currentStatus == null
+                            || !(currentStatus.equals("pending") || currentStatus.equals("approved") || currentStatus.equals("reschedule"))) {
+                        continue;
+                    }
+    
+                    if (appointment.getAppointmentDate() == null || appointment.getAppointmentTime() == null) {
+                        continue;
+                    }
+    
+                    // Combine appointment date and time
+                    Calendar appointmentCalendar = Calendar.getInstance();
+                    appointmentCalendar.setTime(appointment.getAppointmentDate());
+    
+                    Calendar timeCalendar = Calendar.getInstance();
+                    timeCalendar.setTime(appointment.getAppointmentTime());
+    
+                    appointmentCalendar.set(Calendar.HOUR_OF_DAY, timeCalendar.get(Calendar.HOUR_OF_DAY));
+                    appointmentCalendar.set(Calendar.MINUTE, timeCalendar.get(Calendar.MINUTE));
+                    appointmentCalendar.set(Calendar.SECOND, 0);
+                    appointmentCalendar.set(Calendar.MILLISECOND, 0);
+    
+                    Date appointmentDateTime = appointmentCalendar.getTime();
+    
+                    // Change: Only mark as overdue if the appointment was from a previous day
+                    // (Before end of yesterday)
+                    if (appointmentDateTime.before(yesterdayEndOfDay)) {
+                        appointment.setStatus("overdue");
+                        appointmentFacade.edit(appointment);
+                        updatedAppointments++;
+    
+                        System.out.println("✓ Updated appointment ID " + appointment.getId() + " to overdue");
+                    }
+    
+                } catch (Exception e) {
+                    System.out.println("Error processing appointment: " + e.getMessage());
+                }
+            }
+    
+            System.out.println("Login overdue update: " + updatedAppointments + " appointments updated");
+            System.out.println("=== LOGIN OVERDUE UPDATE COMPLETED ===");
+    
+        } catch (Exception e) {
+            System.out.println("ERROR in login overdue update: " + e.getMessage());
+            // Don't throw - login should still work even if this fails
         }
     }
 

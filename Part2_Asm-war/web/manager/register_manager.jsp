@@ -90,7 +90,8 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="nric">NRIC <span class="required">*</span></label>
-                                <input type="text" id="nric" name="nric" class="form-control manager" required>
+                                <input type="text" id="nric" name="nric" class="form-control manager" 
+                                       value="${formManager != null ? formManager.ic : ''}" required>
                                 <div class="invalid-feedback" id="icError"></div>
                             </div>
 

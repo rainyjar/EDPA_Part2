@@ -282,19 +282,41 @@
                             </div>
 
                             <!-- Today's Appointments -->
-                            <% if (myTodayAppointments != null && myTodayAppointments.size() > 0) {%>
+                            <%
+                                // Check if there are REAL approved appointments today (not just a non-empty list)
+                                boolean hasRealTodayAppointments = false;
+                                int todayApprovedCount = 0;
+                                if (myTodayAppointments != null && !myTodayAppointments.isEmpty()) {
+                                    java.util.Date today = new java.util.Date();
+                                    java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd");
+                                    String todayStr = dateFormat.format(today);
+
+                                    for (Appointment apt : myTodayAppointments) {
+                                        if (apt.getAppointmentDate() != null && "approved".equals(apt.getStatus())) {
+                                            String aptDateStr = dateFormat.format(apt.getAppointmentDate());
+                                            if (aptDateStr.equals(todayStr)) {
+                                                hasRealTodayAppointments = true;
+                                                todayApprovedCount++;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Only show the card if there are REAL approved appointments today
+                                if (hasRealTodayAppointments) {
+                            %>
                             <div class="priority-card wow fadeInRight animated" data-wow-delay="0.2s" style="margin-bottom: 15px; padding: 15px; border-radius: 8px; visibility: visible; animation-duration: 0.2s; animation-name: fadeInLeft">
                                 <div class="row">
                                     <div class="col-sm-8">
                                         <h5 style="margin: 0; color: #dc3545;">
-                                            <i class="fa fa-calendar-check-o"></i> Today's Appointments
+                                            <i class="fa fa-calendar-check-o"></i> Today's Approved Appointments
                                         </h5>
                                         <p style="margin: 5px 0; color: #666;">
-                                            <%= myTodayAppointments.size()%> appointments scheduled for today
+                                            <%= todayApprovedCount%> approved appointment<%= todayApprovedCount > 1 ? "s" : ""%> scheduled for today
                                         </p>
                                     </div>
                                     <div class="col-sm-4 text-right">
-                                        <a href="<%= request.getContextPath()%>/DoctorServlet?action=viewMyTasks&filter=today" 
+                                        <a href="<%= request.getContextPath()%>/TreatmentServlet?action=myTasks&dateFilter=today" 
                                            class="btn btn-sm btn-danger">
                                             <i class="fa fa-eye"></i> View
                                         </a>
@@ -309,7 +331,7 @@
                                 <div class="row">
                                     <div class="col-sm-8">
                                         <h5 style="margin: 0; color: #ffc107;">
-                                            <i class="fa fa-user-md"></i> Approved Appointments
+                                            <i class="fa fa-user-md"></i> Total Approved Appointments
                                         </h5>
                                         <p style="margin: 5px 0; color: #666;">
                                             <%= myApprovedAppointments%> appointments ready for consultation
@@ -327,28 +349,13 @@
 
                             <!-- Pending Payment Processing -->
                             <%
-                                // Import the PaymentFacade for querying payment records
-                                model.PaymentFacade paymentFacade = new model.PaymentFacade();
-                                
-                                // Count completed appointments that have payments with "pending" status
-                                // This more accurately reflects appointments that need payment attention
-                                int pendingPaymentAppointments = 0;
-                                if (myRecentAppointments != null) {
-                                    for (Appointment apt : myRecentAppointments) {
-                                        if ("completed".equals(apt.getStatus())) {
-                                            try {
-                                                // Check if this appointment has a pending payment
-                                                model.Payment payment = paymentFacade.findByAppointmentId(apt.getId());
-                                                if (payment != null && "pending".equals(payment.getStatus())) {
-                                                    pendingPaymentAppointments++;
-                                                }
-                                            } catch (Exception e) {
-                                                // Log error silently
-                                                System.out.println("Error checking payment for appointment " + apt.getId() + ": " + e.getMessage());
-                                            }
-                                        }
-                                    }
+                                // Get pending payments from request attributes (loaded by servlet)
+                                Integer pendingPaymentAppointments = (Integer) request.getAttribute("pendingPayments");
+                                System.out.println("DEBUG JSP: pendingPayments attribute = " + pendingPaymentAppointments);
+                                if (pendingPaymentAppointments == null) {
+                                    pendingPaymentAppointments = 0;
                                 }
+                                System.out.println("DEBUG JSP: Final pendingPayments value = " + pendingPaymentAppointments);
                             %>
                             <% if (pendingPaymentAppointments > 0) {%>
                             <div class="priority-card wow fadeInRight animated" data-wow-delay="0.6s" style="margin-bottom: 15px; padding: 15px; border-radius: 8px; visibility: visible; animation-duration: 0.6s; animation-name: fadeInLeft">
@@ -358,7 +365,8 @@
                                             <i class="fa fa-calculator"></i> Pending Payments
                                         </h5>
                                         <p style="margin: 5px 0; color: #666;">
-                                            <%= pendingPaymentAppointments%> appointments require payment processing
+                                            <%= pendingPaymentAppointments%> appointment<%= pendingPaymentAppointments > 1 ? "s" : ""%> require payment processing
+                                        </p>
                                     </div>
                                     <div class="col-sm-4 text-right">
                                         <a href="<%= request.getContextPath()%>/DoctorServlet?action=issuePayment" 
@@ -369,7 +377,6 @@
                                 </div>
                             </div>
                             <% } %>
-
                             <!-- If no priority tasks -->
                             <% if ((myTodayAppointments == null || myTodayAppointments.size() == 0) && myApprovedAppointments == 0 && pendingPaymentAppointments == 0) { %>
                             <div class="alert alert-success">
@@ -456,7 +463,7 @@
                             <% }%>
 
                             <div class="text-center" style="margin-top: 20px;">
-                                <a href="<%= request.getContextPath()%>/DoctorServlet?action=myTasks" class="btn btn-success">
+                                <a href="<%= request.getContextPath()%>/TreatmentServlet?action=viewAppointmentHistory" class="btn btn-success">
                                     <i class="fa fa-calendar"></i> View All My Tasks
                                 </a>
                             </div>

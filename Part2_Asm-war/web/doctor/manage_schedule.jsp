@@ -93,21 +93,30 @@
     <body id="top">
         <%@ include file="/includes/header.jsp" %>
         <%@ include file="/includes/navbar.jsp" %>
-        
+
         <!-- PAGE HEADER -->
         <section class="page-header">
             <div class="container">
                 <div class="row">
                     <div class="col-md-12">
                         <h1 class="wow fadeInUp">
-                            <i class="fa fa-calendar" style="color:white"></i>
+                            <i class="fa fa-calendar-check-o" style="color:white"></i>
                             <span style="color:white">Manage Schedule</span>
                         </h1>
-                        <p class="wow fadeInUp" data-wow-delay="0.4s" style="color:white">Set your available times for patient appointments. Note that the clinic operates Monday to Friday, and lunch break is from 12:00 PM to 1:00 PM.</p>
+                        <p class="lead wow fadeInUp" data-wow-delay="0.2s" style="color: whitesmoke">
+                            Set your available times for patient appointments. Note that the clinic operates Monday to Friday, and lunch break is from 12:00 PM to 1:00 PM.
+                        </p>
+                        <nav aria-label="breadcrumb" class="wow fadeInUp" data-wow-delay="0.3s">
+                            <ol class="breadcrumb" style="background: transparent; margin: 0;">
+                                <li class="breadcrumb-item">
+                                    <a href="http://localhost:8080/Part2_Asm-war/DoctorHomepageServlet" style="color: rgba(255,255,255,0.8);">Dashboard</a> 
+                                </li>
+                                <li class="breadcrumb-item active" style="color: white;">Manage Schedule</li>
+                            </ol>
+                        </nav>
                     </div>
                 </div>
             </div>
-        </section>
         </section>
         
         <!-- MAIN CONTENT -->

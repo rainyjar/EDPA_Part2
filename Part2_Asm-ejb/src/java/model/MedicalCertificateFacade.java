@@ -47,4 +47,24 @@ public class MedicalCertificateFacade extends AbstractFacade<MedicalCertificate>
             return new java.util.ArrayList<>();
         }
     }
+
+        /**
+     * Check if a medical certificate exists for the given appointment ID
+     * @param appointmentId The appointment ID to check
+     * @return true if MC exists, false otherwise
+     */
+    public boolean existsByAppointmentId(int appointmentId) {
+        try {
+            Long count = em.createQuery(
+                "SELECT COUNT(mc) FROM MedicalCertificate mc WHERE mc.appointment.id = :appointmentId", 
+                Long.class)
+                .setParameter("appointmentId", appointmentId)
+                .getSingleResult();
+            
+            return count > 0;
+        } catch (Exception e) {
+            System.out.println("Error checking MC existence: " + e.getMessage());
+            return false;
+        }
+    }
 }

@@ -149,27 +149,44 @@ public class DoctorServlet extends HttpServlet {
         request.getRequestDispatcher("manager/register_doctor.jsp").forward(request, response);
     }
 
-    private void handleUpdate(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        int id = Integer.parseInt(request.getParameter("id"));
-        Doctor doctor = doctorFacade.find(id);
-        System.out.println("Session ID: " + request.getSession().getId());
-        System.out.println("Manager still in session: " + request.getSession().getAttribute("manager"));
-
-        if (doctor == null) {
-            response.sendRedirect(request.getContextPath() + "/ManagerServlet?action=viewAll&error=doctor_not_found");
-            return;
+       private void handleUpdate(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        try {
+            int id = Integer.parseInt(request.getParameter("id"));
+            Doctor doctor = doctorFacade.find(id);
+    
+            if (doctor == null) {
+                response.sendRedirect(request.getContextPath() + "/ManagerServlet?action=viewAll&error=doctor_not_found");
+                return;
+            }
+    
+            if (!populateDoctorFromRequest(request, doctor, doctor.getEmail())) {
+                request.setAttribute("doctor", doctor);
+                request.getRequestDispatcher("/DoctorServlet?action=edit&id=" + doctor.getId()).forward(request, response);
+                return;
+            }
+    
+            try {
+                doctorFacade.edit(doctor);
+                request.setAttribute("success", "Doctor updated successfully.");
+                response.sendRedirect(request.getContextPath() + "/ManagerServlet?action=viewAll&success=doctor_updated");
+            } catch (Exception e) {
+                // Handle database constraint violations
+                String errorMsg = e.getMessage().toLowerCase();
+                if (errorMsg.contains("constraint") || errorMsg.contains("unique") || 
+                    errorMsg.contains("duplicate") || errorMsg.contains("nric") || 
+                    errorMsg.contains("ic")) {
+                    
+                    request.setAttribute("error", "This NRIC is already registered to another user");
+                    request.setAttribute("doctor", doctor);
+                    request.getRequestDispatcher("/DoctorServlet?action=edit&id=" + doctor.getId()).forward(request, response);
+                } else {
+                    throw e; // Re-throw if not a constraint violation
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect(request.getContextPath() + "/ManagerServlet?action=viewAll&error=update_failed");
         }
-
-        if (!populateDoctorFromRequest(request, doctor, doctor.getEmail())) {
-            request.setAttribute("doctor", doctor);
-            response.sendRedirect(request.getContextPath() + "/DoctorServlet?action=edit&id=" + doctor.getId() + "&error=input_invalid");
-            return;
-        }
-
-        doctorFacade.edit(doctor);
-        request.setAttribute("success", "Doctor updated successfully.");
-        request.setAttribute("doctor", doctor);
-        response.sendRedirect(request.getContextPath() + "/ManagerServlet?action=viewAll&success=doctor_updated");
     }
 
     private void handleDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -203,6 +220,23 @@ public class DoctorServlet extends HttpServlet {
         if (!email.equals(existingEmail) && doctorFacade.searchEmail(email) != null) {
             request.setAttribute("error", "Email address is already registered.");
             return false;
+        }
+
+        // ADD THIS: Check if NRIC already exists (excluding current doctor)
+        if (doctor.getId() != 0) {
+            // Editing existing doctor - check if another doctor has this NRIC
+            Doctor existingDoctorWithNric = doctorFacade.findByIc(nric);
+            if (existingDoctorWithNric != null && existingDoctorWithNric.getId() != doctor.getId()) {
+                request.setAttribute("error", "IC is already registered to another doctor.");
+                return false;
+            }
+        } else {
+            // New doctor - check if IC exists anywhere
+            Doctor existingDoctorWithNric = doctorFacade.findByIc(nric);
+            if (existingDoctorWithNric != null) {
+                request.setAttribute("error", "IC is already registered to another doctor.");
+                return false;
+            }
         }
 
         try {

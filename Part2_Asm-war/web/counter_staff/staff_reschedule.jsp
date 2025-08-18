@@ -36,6 +36,7 @@
     <title>Reschedule Appointment - APU Medical Center</title>
     <%@ include file="/includes/head.jsp" %>
     <link rel="stylesheet" href="<%= request.getContextPath() %>/css/staff-appointment-booking.css">
+     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/user-reg-edit.css" />
     <style>
         .current-appointment {
             background: #f8f9fa;
@@ -80,6 +81,9 @@
     <section class="appointment-container staff-booking">
         <div class="container">
             <div class="row">
+                <a href="${pageContext.request.contextPath}/CounterStaffServletJam?action=dashboard" class="back-btn" style="margin-bottom: 30px">
+                    <i class="fa fa-arrow-left"></i> Back to Dashboard
+                </a>
                 <div class="col-md-8 col-md-offset-2">
                     <img src="<%= request.getContextPath() %>/images/cust_homepage/appointment-image.jpg" class="img-responsive">
                     <div class="appointment-form-wrapper">
