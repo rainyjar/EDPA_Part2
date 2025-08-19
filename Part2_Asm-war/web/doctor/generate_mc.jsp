@@ -286,9 +286,20 @@
                                     </div>
                                     
                                     <div class="text-center">
-                                        <button type="button" class="btn btn-primary btn-sm" onclick="selectAppointment(<%= appointment.getId() %>)">
-                                            <i class="fa fa-plus"></i> Generate MC for this Appointment
-                                        </button>
+                                        <% 
+                                            Map<Integer, Boolean> mcExistsMap = (Map<Integer, Boolean>)request.getAttribute("mcExistsMap");
+                                            boolean mcExists = mcExistsMap != null && mcExistsMap.containsKey(appointment.getId()) && mcExistsMap.get(appointment.getId());
+                                        %>
+                                        
+                                        <% if (mcExists) { %>
+                                            <button type="button" class="btn btn-success btn-sm" disabled>
+                                                <i class="fa fa-check-circle"></i> MC Already Generated
+                                            </button>
+                                        <% } else { %>
+                                            <button type="button" class="btn btn-primary btn-sm" onclick="selectAppointment(<%= appointment.getId() %>)">
+                                                <i class="fa fa-plus"></i> Generate MC for this Appointment
+                                            </button>
+                                        <% } %>
                                     </div>
                                 </div>
                             <% } %>

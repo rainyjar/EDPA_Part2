@@ -175,6 +175,19 @@ public class AppointmentFacade extends AbstractFacade<Appointment> {
         }
     }
 
+        public List<Appointment> findCompletedByDoctorId(int doctorId) {
+        try {
+            return em.createQuery(
+                "SELECT a FROM Appointment a WHERE a.doctor.id = :doctorId AND a.status = 'completed'", 
+                Appointment.class)
+                .setParameter("doctorId", doctorId)
+                .getResultList();
+        } catch (Exception e) {
+            System.out.println("Error finding completed appointments: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
     /**
      * Count appointments for a specific customer
      * @param customer The customer to count appointments for

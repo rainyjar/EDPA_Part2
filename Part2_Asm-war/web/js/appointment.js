@@ -873,7 +873,8 @@ function showConfirmationModal() {
     const selectedDoctorId = document.getElementById('selected_doctor_id').value;
     const selectedTime = document.getElementById('selected_time_slot').value;
     const customerMessage = document.getElementById('customer_message').value;
-    
+    const staffMessage = document.getElementById('staff_message').value;
+
     // Find doctor name
     let doctorName = 'Unknown Doctor';
     if (window.doctorData) {
@@ -889,7 +890,8 @@ function showConfirmationModal() {
     document.getElementById('confirm-date').textContent = selectedDate;
     document.getElementById('confirm-time').textContent = selectedTime;
     document.getElementById('confirm-message').textContent = customerMessage || 'No specific concerns mentioned.';
-    
+    document.getElementById('confirm-message').textContent = staffMessage || 'No specific concerns mentioned.';
+
     // Show modal
     const modal = document.getElementById('confirmationModal');
     if (modal) {

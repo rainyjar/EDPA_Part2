@@ -155,8 +155,8 @@
                     <div class="col-md-2 col-sm-6">
                         <div class="stat-card-wrapper">
                             <div class="stat-card counter-staff wow fadeInUp" data-wow-delay="0.7s">
-                                <span class="stat-number stat-payment">RM<%= currencyFormat.format(todayPayment)%></span>
-                                <span class="stat-label">Payment Collected</span>
+                                <span class="stat-number stat-payment"><%= currencyFormat.format(todayPayment)%></span>
+                                <span class="stat-label">Payment Collected (RM)</span>
                             </div>
                         </div>
                     </div>

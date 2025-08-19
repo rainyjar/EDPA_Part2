@@ -316,7 +316,7 @@
                                         </p>
                                     </div>
                                     <div class="col-sm-4 text-right">
-                                        <a href="<%= request.getContextPath()%>/TreatmentServlet?action=myTasks&dateFilter=today" 
+                                        <a href="<%= request.getContextPath()%>/TreatmentServlet?action=myTasks" 
                                            class="btn btn-sm btn-danger">
                                             <i class="fa fa-eye"></i> View
                                         </a>

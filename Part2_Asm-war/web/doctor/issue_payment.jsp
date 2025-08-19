@@ -163,7 +163,7 @@
                         <h4>No Appointments Available for Payment</h4>
                         <p>All completed appointments already have payment charges issued, or there are no completed appointments yet.</p>
                         <p style="margin-top: 20px;">
-                            <a href="<%= request.getContextPath()%>/DoctorHomepageServlet" class="btn btn-secondary">
+                            <a href="<%= request.getContextPath()%>/DoctorHomepageServlet?action=dashboard" class="btn btn-secondary">
                                 <i class="fa fa-arrow-left" style="font-size: small;"></i> Back to Dashboard
                             </a>
                         </p>

@@ -55,14 +55,30 @@ public class DoctorHomepageServlet extends HttpServlet {
 
         String action = request.getParameter("action");
 
-        if ("dashboard".equals(action)) {
+                if ("dashboard".equals(action)) {
             try {
-                // Get pending payments for this doctor
+                // Get pending payments for this doctor - revised logic
                 System.out.println("DEBUG: Checking pending payments for doctor ID " + loggedInDoctor.getId());
-                List<Payment> pendingPayments = paymentFacade.findByDoctorAndStatus(loggedInDoctor.getId(), "pending");
-                int pendingPaymentCount = (pendingPayments != null) ? pendingPayments.size() : 0;
+                
+                // Step 1: Get all completed appointments by this doctor
+                List<Appointment> completedAppointments = appointmentFacade.findCompletedByDoctorId(loggedInDoctor.getId());
+                int pendingPaymentCount = 0;
+                
+                // Step 2: Check which ones don't have a payment with an amount
+                if (completedAppointments != null) {
+                    for (Appointment appointment : completedAppointments) {
+                        // Get payment for this appointment
+                        Payment payment = paymentFacade.findByAppointmentId(appointment.getId());
+                        
+                        // If no payment exists or amount is 0, consider it pending
+                        if (payment == null || payment.getAmount() <= 0) {
+                            pendingPaymentCount++;
+                            System.out.println("DEBUG: Found pending payment for appointment ID: " + appointment.getId());
+                        }
+                    }
+                }
+                
                 request.setAttribute("pendingPayments", pendingPaymentCount);
-
                 System.out.println("Found " + pendingPaymentCount + " pending payments for doctor ID " + loggedInDoctor.getId());
             } catch (Exception e) {
                 System.out.println("Error checking pending payments: " + e.getMessage());
@@ -71,7 +87,7 @@ public class DoctorHomepageServlet extends HttpServlet {
             }
             loadDashboardData(request, loggedInDoctor);
             request.getRequestDispatcher("/doctor/doctor_homepage.jsp").forward(request, response);
-        } else if ("viewRatings".equals(action)) {
+        }else if ("viewRatings".equals(action)) {
             // Handle doctor ratings view
             try {
                 List<Feedback> feedbacks = feedbackFacade.findByDoctorId(loggedInDoctor.getId());

@@ -934,6 +934,7 @@ public class AppointmentServlet extends HttpServlet {
             String appointmentDateStr = request.getParameter("appointment_date");
             String appointmentTimeStr = request.getParameter("appointment_time");
             String customerMessage = request.getParameter("customer_message");
+            String staffMessage = request.getParameter("staff_message");
 
             // Validate required fields
             ValidationResult validation = validateBookingData(
@@ -1020,6 +1021,7 @@ public class AppointmentServlet extends HttpServlet {
             newAppointment.setAppointmentDate(appointmentDate);
             newAppointment.setAppointmentTime(appointmentTime);
             newAppointment.setCustMessage(customerMessage != null ? customerMessage.trim() : "");
+            newAppointment.setStaffMessage(staffMessage != null ? staffMessage.trim() : "");
 
             // Set status based on who is booking
             // All bookings start as "pending" so any counter staff can accept and assign a doctor

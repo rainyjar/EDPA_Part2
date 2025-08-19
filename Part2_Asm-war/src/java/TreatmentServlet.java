@@ -22,6 +22,8 @@ import model.Prescription;
 import model.PrescriptionFacade;
 import model.Treatment;
 import model.TreatmentFacade;
+import model.Payment;
+import model.PaymentFacade;
 
 @WebServlet(urlPatterns = {"/TreatmentServlet"})
 @MultipartConfig(maxFileSize = 5 * 1024 * 1024) // 5MB max file size
@@ -38,6 +40,9 @@ public class TreatmentServlet extends HttpServlet {
 
     @EJB
     private DoctorFacade doctorFacade;
+
+    @EJB
+    private PaymentFacade paymentFacade;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -795,6 +800,12 @@ public class TreatmentServlet extends HttpServlet {
                     appointment.setDocMessage(docMessage.trim());
                 }
                 appointmentFacade.edit(appointment);
+
+                 // Create payment record with pending status
+                Payment payment = new Payment();
+                payment.setAppointment(appointment);
+                payment.setStatus("pending");
+                paymentFacade.create(payment);
 
                 String successMessage = "Appointment completed successfully.";
                 response.sendRedirect("TreatmentServlet?action=myTasks&success="

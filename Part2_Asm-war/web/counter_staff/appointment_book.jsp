@@ -239,8 +239,8 @@
                             <div class="form-section hidden" id="message-section">
                                 <h4 class="section-title"><i class="fa fa-comment"></i> Step 4: Medical Concerns (Optional)</h4>
                                 <div class="form-group">
-                                    <label for="customer_message">Describe customer's medical concerns or specific requests:</label>
-                                    <textarea id="customer_message" name="customer_message" class="form-control" 
+                                    <label for="staff_message">Describe customer's medical concerns or specific requests:</label>
+                                    <textarea id="staff_message" name="staff_message" class="form-control" 
                                              rows="4" placeholder="Please describe the customer's symptoms, concerns, or any specific requests for the consultation..."></textarea>
                                     <small class="form-text text-muted">This information will help the doctor prepare for the consultation.</small>
                                 </div>
@@ -869,8 +869,8 @@
                 const date = document.getElementById('appointment_date').value;
                 const doctorId = document.getElementById('selected_doctor_id').value;
                 const timeSlot = document.getElementById('selected_time_slot').value;
-                const message = document.getElementById('customer_message').value;
-                
+                const message = document.getElementById('staff_message').value;
+
                 const selectedDoctor = window.doctorData.find(d => d.id == doctorId);
                 const selectedTimeBtn = document.querySelector('.time-slot-btn.selected, .time-slot-btn.btn-primary');
                 const timeDisplay = selectedTimeBtn ? selectedTimeBtn.getAttribute('data-display-time') : timeSlot;

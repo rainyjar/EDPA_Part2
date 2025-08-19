@@ -9,7 +9,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.sql.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import javax.servlet.annotation.MultipartConfig;
 import model.Customer;
@@ -18,6 +20,7 @@ import model.Appointment;
 import model.AppointmentFacade;
 import model.Feedback;
 import model.FeedbackFacade;
+import model.MedicalCertificateFacade;
 import model.Payment;
 import model.PaymentFacade;
 
@@ -27,6 +30,9 @@ import model.PaymentFacade;
         maxRequestSize = 1024 * 1024 * 10) // 10MB
 
 public class DoctorServlet extends HttpServlet {
+
+    @EJB
+    private MedicalCertificateFacade medicalCertificateFacade;
 
     @EJB
     private DoctorFacade doctorFacade;
@@ -414,18 +420,18 @@ public class DoctorServlet extends HttpServlet {
             List<Appointment> completedAppointments = appointmentFacade.findByDoctorAndStatus(loggedInDoctor.getId(), "completed");
             
             // Filter out appointments that already have payments
-            List<Appointment> appointmentsWithoutPayments = completedAppointments.stream()
+            List<Appointment> appointmentsNeedingPaymentAmount = completedAppointments.stream()
                 .filter(appointment -> {
                     try {
                         Payment existingPayment = paymentFacade.findByAppointmentId(appointment.getId());
-                        return existingPayment == null;
+                        return existingPayment == null || existingPayment.getAmount() <= 0;
                     } catch (Exception e) {
                         return true; // Include in case of error to be safe
                     }
                 })
                 .collect(Collectors.toList());
             
-            request.setAttribute("appointments", appointmentsWithoutPayments);
+            request.setAttribute("appointments", appointmentsNeedingPaymentAmount);
             request.setAttribute("doctor", loggedInDoctor);
             
             // Format date and time
@@ -446,62 +452,51 @@ public class DoctorServlet extends HttpServlet {
     private void handleCreatePayment(HttpServletRequest request, HttpServletResponse response, Doctor loggedInDoctor)
             throws ServletException, IOException {
         try {
-            // Get parameters
             int appointmentId = Integer.parseInt(request.getParameter("appointmentId"));
             double amount = Double.parseDouble(request.getParameter("amount"));
             
-            // Validate amount
+            // Validate the amount
             if (amount <= 0) {
-                request.setAttribute("error", "Payment amount must be greater than 0");
+                request.setAttribute("error", "Payment amount must be greater than 0.");
                 handleIssuePayment(request, response, loggedInDoctor);
                 return;
             }
             
-            // Get and validate appointment
-            Appointment appointment = appointmentFacade.find(appointmentId);
-            if (appointment == null) {
-                request.setAttribute("error", "Appointment not found");
-                handleIssuePayment(request, response, loggedInDoctor);
-                return;
-            }
-            
-            // Verify appointment belongs to this doctor
-            if (appointment.getDoctor() == null || appointment.getDoctor().getId() != loggedInDoctor.getId()) {
-                request.setAttribute("error", "Unauthorized access to appointment");
-                handleIssuePayment(request, response, loggedInDoctor);
-                return;
-            }
-            
-            // Verify appointment is completed
-            if (!"completed".equals(appointment.getStatus())) {
-                request.setAttribute("error", "Only completed appointments can have payment charges");
-                handleIssuePayment(request, response, loggedInDoctor);
-                return;
-            }
-            
-            // Check if payment already exists
+            // Find the existing payment for this appointment
             Payment existingPayment = paymentFacade.findByAppointmentId(appointmentId);
+            
             if (existingPayment != null) {
-                request.setAttribute("error", "Payment already exists for this appointment");
-                handleIssuePayment(request, response, loggedInDoctor);
-                return;
+                // Update the existing payment with the amount
+                existingPayment.setAmount(amount);
+                paymentFacade.edit(existingPayment);
+                
+                request.setAttribute("success", "Payment amount has been set successfully.");
+            } else {
+                // This should rarely happen (only if payment record wasn't created at completion)
+                Appointment appointment = appointmentFacade.find(appointmentId);
+                
+                if (appointment == null) {
+                    request.setAttribute("error", "Appointment not found.");
+                    handleIssuePayment(request, response, loggedInDoctor);
+                    return;
+                }
+                
+                // Create a new payment record as fallback
+                Payment payment = new Payment();
+                payment.setAppointment(appointment);
+                payment.setAmount(amount);
+                payment.setStatus("pending");
+                payment.setPaymentDate(null);
+                paymentFacade.create(payment);
+                
+                request.setAttribute("success", "Payment record created successfully.");
             }
             
-            // Create payment record
-            Payment payment = new Payment();
-            payment.setAppointment(appointment);
-            payment.setAmount(amount);
-            payment.setStatus("pending");
-            payment.setPaymentDate(null);
-            payment.setPaymentMethod(null);
-            
-            paymentFacade.create(payment);
-            
-            request.setAttribute("success", "Payment charge of RM " + String.format("%.2f", amount) + " has been issued successfully. Customer and counter staff have been notified.");
+            // Redirect back to the payment page
             handleIssuePayment(request, response, loggedInDoctor);
             
         } catch (NumberFormatException e) {
-            request.setAttribute("error", "Invalid appointment ID or amount");
+            request.setAttribute("error", "Invalid appointment ID or payment amount.");
             handleIssuePayment(request, response, loggedInDoctor);
         } catch (Exception e) {
             e.printStackTrace();
@@ -514,14 +509,22 @@ public class DoctorServlet extends HttpServlet {
      * Handle displaying the generate MC page for doctors
      */
     private void handleGenerateMC(HttpServletRequest request, HttpServletResponse response, Doctor loggedInDoctor)
-            throws ServletException, IOException {
+        throws ServletException, IOException {
         try {
             // Get doctor's completed appointments
             List<Appointment> completedAppointments = appointmentFacade.findByDoctorAndStatus(loggedInDoctor.getId(), "completed");
             
-            request.setAttribute("completedAppointments", completedAppointments);
-            request.setAttribute("doctor", loggedInDoctor);
+            // Add MC status information to each appointment
+            Map<Integer, Boolean> mcExistsMap = new HashMap<>();
+            for (Appointment appointment : completedAppointments) {
+                boolean hasMC = medicalCertificateFacade.existsByAppointmentId(appointment.getId());
+                mcExistsMap.put(appointment.getId(), hasMC);
+            }
             
+            request.setAttribute("completedAppointments", completedAppointments);
+            request.setAttribute("mcExistsMap", mcExistsMap);
+            request.setAttribute("doctor", loggedInDoctor);
+                
             // Check for success/error messages from parameters (for redirects)
             String successMsg = request.getParameter("success");
             String errorMsg = request.getParameter("error");
